@@ -13,9 +13,9 @@ def arrange_index(df, rm_index: int, col_name: str, to_index: int):
     return df
 
 
-def preprocess_dataframe(filepath, filename):
+def preprocess_dataframe(filepath: str, filename: str):
     """
-    * Creates a video_id column while adding the video_ids
+    * Creates a video_id column while adding the videoids
     to the row from the filename parameter.
     * Splits the 'cid' column, creates a new column 'cid_reply',
     and arranges the index column in relation to 'cid'.
@@ -29,14 +29,14 @@ def preprocess_dataframe(filepath, filename):
     return df
 
 
-def init_dataframe_batches(filepaths, video_ids):
+def init_dataframe_batches(filepaths, videoids):
     """Iterates over the files to dataframes
     """
-    for filepath, vid_ids in zip(filepaths, video_ids):
-        yield preprocess_dataframe(filepath, vid_ids)
+    for filepath, vidid in zip(filepaths, videoids):
+        yield preprocess_dataframe(filepath, vidid)
 
 
-def insert_data_to_sqlite(df, table_name: str, db_name: str):
+def json_tosql(df, table_name: str, db_name: str):
     """Inserts Data to SQLite from a Dataframe
 
     PARAMETERS
@@ -97,8 +97,8 @@ conn.close()
 
 if __name__ == '__main__':
 
-    json_files, video_ids = get_directory_files('downloads')
-    batches = init_dataframe_batches(json_files, video_ids)
+    json_files, videoids = get_directory_files('downloads')
+    batches = init_dataframe_batches(json_files, videoids)
 
     for batch in tqdm(batches):
-        insert_data_to_sqlite(batch, 'videos', 'ycc_web_sqlite2')
+        json_tosql(batch, 'videos', 'ycc_web_sqlite2')
