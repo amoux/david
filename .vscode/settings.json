@@ -1,0 +1,5 @@
+{
+    "python.linting.pep8Enabled": true,
+    "python.linting.enabled": true,
+    "python.pythonPath": "/home/ego/anaconda3/envs/vuepoint/bin/python"
+}

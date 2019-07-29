@@ -1,0 +1,23 @@
+{
+  "file": "data/ycc_tensorboard.csv",
+  "input_type": "csv",
+  "separator": ",",
+  "columns_to_select": "text",
+  "columns_joining_token": ". ",
+  "folder": "/mnt/drive_4/Vuepoint-Backups/vuepoint_v3.2/Gensim-Tensorboard/models/ycc_web",
+  "size": 50,
+  "alpha": 0.025,
+  "window": 5,
+  "min_count": 5,
+  "max_vocab_size": null,
+  "sample": 0.001,
+  "seed": 1,
+  "workers": 4,
+  "min_alpha": 0.0001,
+  "sg": 0,
+  "hs": 0,
+  "negative": 10,
+  "cbow_mean": 1,
+  "iter": 5,
+  "null_word": 0
+}
