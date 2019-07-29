@@ -2,7 +2,7 @@ from googleapiclient.discovery import build
 from .keys import ChannelKeys
 
 
-def _records_fromterm(Qsearch, max_results=10):
+def records_fromterm(Qsearch, max_results=10):
     """Calls the `search().list([_Qsearch_])` method to retrieve
     Return list of matching records up to `max_results`.
     """
@@ -43,7 +43,7 @@ def get_video_content(Qsearch, max_results=10):
     DEV = CK.dev
 
     youtube = build(DEV.service, DEV.version, developerKey=DEV.key)
-    search_response = _records_fromterm(Qsearch, max_results)
+    search_response = records_fromterm(Qsearch, max_results)
 
     search_results = []
     for search in search_response.get("items", []):

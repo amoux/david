@@ -1,7 +1,7 @@
 
 import emoji as _emoji
 from textblob import TextBlob as _TextBlob
-from .textstatistics import prep_textcolumn
+from .preprocessing import prep_textcolumn as _preptext
 
 
 def trim_whitespaces(text):
@@ -86,9 +86,8 @@ def reduce_dataframesize(df: object, by_wordcount: int):
     return df
 
 
-def textmetrics(df: object, text_col: str,
-                gettags=False, sentiment=False,
-                min_wordcount=None
+def textmetrics(df: object, text_col: str, gettags=False, sentiment=False,
+                min_wordcount=0
                 ):
     """Gathers Statistical Metrics from Texts.
     The collection of functions only work by passing a dataframe object.
@@ -131,12 +130,12 @@ def textmetrics(df: object, text_col: str,
         >>> `sentiSubjectivity` : 'subjectivity score with Textblob, (float).'
         >>> `sentimentLabel`    : 'labels row w\one (pos, neg, neutral) tag.'
     """
-    df = prep_textcolumn(df, text_col)
+    df = _preptext(df, text_col)
     df = extract_textmetrics(df, text_col)
     if gettags:
         df = extract_authortags(df, text_col)
     if sentiment:
         df = sentiment_fromtexts(df, text_col)
-    if min_wordcount > 0 and not None:
+    if min_wordcount > 0:
         df = reduce_dataframesize(df, min_wordcount)
     return df

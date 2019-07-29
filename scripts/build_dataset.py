@@ -4,42 +4,41 @@ import re
 import pandas as pd
 from glob import glob
 
-from vuepoint.pipeline.textstatistics import textmetrics
+from david.pipeline.textstatistics import textmetrics
 
 
-def assing_videoid_labels(filename: str):
-    filename = re.sub('downloads/', '', str(filename))
-    filename = re.sub('.json', '', filename)
-    search_query, video_id = filename.split('/')
-    return search_query, video_id
+def get_videolabels(fname: str, path='downloads/', ftype='.json'):
+    # this is an useless function. it only worked for one type of thing.
+    fname = fname.replace(path, '').replace(ftype, '')
+    query, videoid = fname.split('/')
+    return query, videoid
 
 
-def save_dataset_to_directory(df: object, dirname: str, filename: str):
+def dataset_tosavedir(df: object, fname: str, dirname: str):
     if not os.path.exists(dirname):
-        dirpath = os.makedirs(dirname)
-    csv_filename = filename + '.csv'
-    save_path = os.path.join(dirpath, csv_filename)
-    df.to_csv(save_path)
+        os.makedirs(dirname)
+    elif os.path.exists(dirname):
+        fname = (fname + '.csv')
+        fullpath = os.path.join(dirname, fname)
+    df.to_csv(fullpath)
 
 
 if __name__ == "__main__":
 
-    dataset_filename = input('\nenter name (only) of folder to preprocess: ')
-    prodigy_dirname = input('\nenter name of the folder to save in prodigy: ')
-    DATASET_PATH = str(f'downloads/{dataset_filename}/*.json')
-    PRODIGY_DIRPATH = str(f'prodigy/working_datasets/{prodigy_dirname}')
+    fname = input('\nenter name (only) of folder to preprocess: ')
+    dirname = input('\nenter name of the folder to save in prodigy: ')
+    DATASET_PATH = f'downloads/{fname}/*.json'
+    PRODIGY_DIRPATH = f'prodigy/working_datasets/{dirname}'
 
     joined_datasets = []
     for dataset in glob(DATASET_PATH):
         df = pd.read_json(dataset, encoding='utf-8', lines=True)
-        search_query, video_id = assing_videoid_labels(dataset)
-        df['search_query'] = search_query
-        df['video_id'] = video_id
+        query, videoid = get_videolabels(dataset)
+        df['query'] = query
+        df['videoid'] = videoid
         joined_datasets.append(df)
 
 datasets = pd.concat(joined_datasets, ignore_index=True)
-datasets = examinetext(datasets, 'text', 9)
-save_dataset_to_directory(datasets, PRODIGY_DIRPATH,
-                          filename=dataset_filename)
-
+datasets = textmetrics(datasets, 'text', 9)
+dataset_tosavedir(datasets, PRODIGY_DIRPATH, fname)
 print("done saving dataset to prodigy directory!")

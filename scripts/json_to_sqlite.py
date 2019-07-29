@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 
 
-def arrange_index(df, rm_index: int, col_name: str, to_index: int):
+def arrange_index(df: object, col_name: str, rm_index: int, to_index: int):
     columns = list(df.columns.values)
     columns.pop(rm_index)
     columns.insert(to_index, col_name)
@@ -14,52 +14,50 @@ def arrange_index(df, rm_index: int, col_name: str, to_index: int):
 
 
 def preprocess_dataframe(filepath: str, filename: str):
-    """
-    * Creates a video_id column while adding the videoids
-    to the row from the filename parameter.
-    * Splits the 'cid' column, creates a new column 'cid_reply',
-    and arranges the index column in relation to 'cid'.
+    """Creates a `video_id` column while adding the videoids
+    to the row from the filename parameter. Splits the `cid column`,
+    creates a new column `cid_reply`, and arranges the index column
+    in relation to `cid`.
     """
     df = pd.read_json(filepath, encoding='utf-8', lines=True)
     df['video_id'] = filename.strip('.json')
     df[['cid', 'cid_reply']] = pd.DataFrame(
-        [x.split('.') for x in df['cid'].tolist()]
-    )
-    df = arrange_index(df, 5, 'cid_reply', 2)
+        [x.split('.') for x in df['cid'].tolist()])
+    df = arrange_index(df, 'cid_reply', rm_index=5, to_index=2)
     return df
 
 
-def init_dataframe_batches(filepaths, videoids):
-    """Iterates over the files to dataframes
+def from_dataframebatch(filepaths: list, videoids: list):
+    """Iterates over the files to dataframes.
     """
-    for filepath, vidid in zip(filepaths, videoids):
-        yield preprocess_dataframe(filepath, vidid)
+    for file, vid in zip(filepaths, videoids):
+        yield preprocess_dataframe(file, vid)
 
 
-def json_tosql(df, table_name: str, db_name: str):
-    """Inserts Data to SQLite from a Dataframe
+def json2sql(df: object, col_name: str, db_name: str):
+    """Inserts Data to SQLite from a Dataframe.
 
     PARAMETERS
     ----------
-    df : (object)
+    `df` : (object)
         A pandas.Dataframe containing the rows
         specified in the table dictionary.
 
-    table_name : (str)
+    `col_name` : (str)
         The name of the table, if it exists it will append rows
         containing new data. Otherwise it creates a new table name
         and assigns Datatypes according to the df.
 
-    db_name : (str)
+    `db_name` : (str)
         The connection name of the datbase
     """
-    sqlite_address = f"sqlite:///{db_name}.db"
-    db = dataset.connect(sqlite_address)
+    sql = f"sqlite:///{db_name}.db"
+    db = dataset.connect(sql)
     db.begin()
-    sql_table = db[table_name]
+    sqltable = db[col_name]
     try:
         for _, col in df.iterrows():
-            sql_table.insert(
+            sqltable.insert(
                 dict(
                     author=col['author'],
                     cid=col['cid'],
@@ -74,7 +72,7 @@ def json_tosql(df, table_name: str, db_name: str):
         db.rollback()
 
 
-def get_directory_files(dirname):
+def getdirpaths(dirname: str):
     """
     * Gets all the paths to all files found in the root
     directory.
@@ -97,8 +95,7 @@ conn.close()
 
 if __name__ == '__main__':
 
-    json_files, videoids = get_directory_files('downloads')
-    batches = init_dataframe_batches(json_files, videoids)
-
+    jsonfiles, videoids = getdirpaths('downloads')
+    batches = from_dataframebatch(jsonfiles, videoids)
     for batch in tqdm(batches):
-        json_tosql(batch, 'videos', 'ycc_web_sqlite2')
+        json2sql(batch, 'videos', 'ycc_web_sqlite2')

@@ -132,6 +132,14 @@ def _get_channel_comments(youtube_id, sleep=1):
         time.sleep(sleep)
 
 
+def make_dirpath(dirname, filename):
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    elif os.path.exists(dirname):
+        fullpath = os.path.join(dirname, filename)
+    return fullpath
+
+
 def download_comments(filename: str, youtube_id: str, limit=None):
     """Download Comments from a Youtube VideoID
 
@@ -156,16 +164,3 @@ def download_comments(filename: str, youtube_id: str, limit=None):
             if limit and count >= limit:
                 break
     print(f'done extracting comments')
-
-
-def make_dirpath(dirname, filename):
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-    else:
-        return os.path.join(dirname, filename)
-
-
-# def save_to(youtube_id: str, limit: int, filename: str, dirname: str):
-#     download_path = make_dirpath(dirname, filename)
-#     download_comments(youtube_id, download_path, limit)
-#
