@@ -4,38 +4,17 @@ from textblob import TextBlob as _TextBlob
 from .preprocessing import prep_textcolumn as _preptext
 
 
-def trim_whitespaces(text):
-    try:
-        text = " ".join(text.split())
-    except ZeroDivisionError:
-        pass
-    return text
-
-
-def avgwords(words):
-    # this function is not necessary... removing it for now.
-    try:
-        avgwords = (sum(len(w.split()) for w in words)/len(words))
-    except ZeroDivisionError as err:
-        msg = f"Division error, column found with 0 values: {err}"
-        raise Exception(msg)
-    else:
-        return avgwords
-
-
 def extract_emojis(str):
-    emojis = ''.join(x for x in str if x in _emoji.UNICODE_EMOJI)
+    emojis = ''.join(e for e in str if e in _emoji.UNICODE_EMOJI)
     return emojis
 
 
-def get_polarityscore(text):
-    polarity = _TextBlob(text).sentiment.polarity
-    return polarity
+def sentiment_polarity(text: str):
+    return _TextBlob(text).sentiment.polarity
 
 
-def get_subjectivityscore(text):
-    subjectivity = _TextBlob(text).sentiment.subjectivity
-    return subjectivity
+def sentiment_subjectivity(text: str):
+    return _TextBlob(text).sentiment.subjectivity
 
 
 def sentiment_labeler(df: object):
@@ -54,9 +33,8 @@ def sentiment_labeler(df: object):
 
 
 def extract_textmetrics(df: object, text_col: str):
-    df['text'] = df[text_col].apply(trim_whitespaces)
-    # wordCounts: [-1] to get an exact value of word counts in the string
-    df['wordCount'] = df[text_col].apply(lambda x: (len(str(x).split()))-1)
+    # wordCounts: -1 to get an exact value of word counts in the string
+    df['wordCount'] = df[text_col].apply(lambda x: len(str(x).split()))
     df['wordStrLen'] = df[text_col].str.len()
     df['charIsDigitCount'] = df[text_col].str.findall(r'[0-9]').str.len()
     df['charIsUpperCount'] = df[text_col].str.findall(r'[A-Z]').str.len()
@@ -73,8 +51,8 @@ def extract_authortags(df: object, text_col: str):
 
 
 def sentiment_fromtexts(df: object, text_col: str):
-    df['sentiPolarity'] = df[text_col].apply(get_polarityscore)
-    df['sentiSubjectivity'] = df[text_col].apply(get_subjectivityscore)
+    df['sentiPolarity'] = df[text_col].apply(sentiment_polarity)
+    df['sentiSubjectivity'] = df[text_col].apply(sentiment_subjectivity)
     df['sentimentLabel'] = sentiment_labeler(df)
     return df
 
@@ -87,7 +65,7 @@ def reduce_dataframesize(df: object, by_wordcount: int):
 
 
 def textmetrics(df: object, text_col: str, gettags=False, sentiment=False,
-                min_wordcount=0
+                min_wordcount: int = 0
                 ):
     """Gathers Statistical Metrics from Texts.
     The collection of functions only work by passing a dataframe object.
