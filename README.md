@@ -1,9 +1,9 @@
-# David NLP Framework 
+# David NLP Framework
 
-> David is a DeepLeaning framework for social analytics.
+*A system that uses the power of NLP to benefit content creators discover new insights from what their audience says.*
+
+> David is a deep learning framework for Vuepoint's text analytics platform.
 
 ![](https://fromdirectorstevenspielberg.com/wp-content/uploads/2017/07/15.jpg?raw=true)
 
-* A system that uses the power of NLP to help content creators hear their audience.
-The goal of our text analytics platform is to help increase the exposure on YouTube videos from historical text data. 
-Make it easier for creators to get their videos in front of more viewers.
+The goal for David is to assist content creators to increase the exposure on YouTube and their videos in the presence of more viewers. From live/historical textual information.
