@@ -1,4 +1,4 @@
-# David NLP Framework
+# David (NLP) Framework
 
 *A system that uses the power of NLP to benefit content creators discover new insights from what their audience says.*
 
