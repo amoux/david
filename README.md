@@ -1,5 +1,9 @@
-# david.Apiv1
+# David NLP Framework 
 
-> David is an NLP framework for social analytics.
+> David is a DeepLeaning framework for social analytics.
 
-* Improved DOCS soon:
+![](https://fromdirectorstevenspielberg.com/wp-content/uploads/2017/07/15.jpg?raw=true)
+
+* A system that uses the power of NLP to help content creators hear their audience.
+The goal of our text analytics platform is to help increase the exposure on YouTube videos from historical text data. 
+Make it easier for creators to get their videos in front of more viewers.
