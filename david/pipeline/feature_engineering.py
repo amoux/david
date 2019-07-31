@@ -1,9 +1,10 @@
 
 import emoji as _emoji
-from textblob import TextBlob as _TextBlob
-from .preprocessing import prep_textcolumn as _preptext
+import numpy as _np
 from spacy.lang import en as _en
-import numpy as np
+from textblob import TextBlob as _TextBlob
+
+from .preprocessing import prep_textcolumn as _preptext
 
 _STOPWORDS = _en.STOP_WORDS
 
@@ -37,9 +38,9 @@ def sentiment_labeler(df: object):
 
 
 def count_none_stopwords(df: object, text_col: str):
-    '''Returns the count of words not consider as `STOPWORDS`
+    '''Returns the count of words not consider as `STOPWORDS`.
 
-    Uses the set found in Spacy's API; `spacy.lang.en.STOPWORDS`
+    Uses the set found in Spacy's API; `spacy.lang.en.STOPWORDS`.
     '''
     df['notStopwordsCount'] = df[text_col].apply(lambda texts: len(
         [w for w in texts.split(' ') if w not in _STOPWORDS]))
@@ -50,9 +51,9 @@ def avgword_length(df: object, text_col: str):
     '''Returns the average word-length in a text column.
     NOTE: The returned value is without words consider as `STOPWORDS`.
 
-    Uses the set found in Spacy's API; `spacy.lang.en.STOPWORDS`
+    Uses the set found in Spacy's API; `spacy.lang.en.STOPWORDS`.
     '''
-    df['wordAvgLength'] = df[text_col].apply(lambda texts: np.mean(
+    df['wordAvgLength'] = df[text_col].apply(lambda texts: _np.mean(
         [len(w) for w in texts.split(' ') if w not in _STOPWORDS]
     ) if len([len(w) for w in texts.split(' ') if w not in _STOPWORDS]
              ) > 0 else 0)
