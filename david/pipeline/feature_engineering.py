@@ -62,13 +62,13 @@ def avgword_length(df: object, text_col: str):
 
 def extract_textmetrics(df: object, text_col: str):
     # wordCounts: -1 to get an exact value of word counts in the string
-    df['hasStopwordsCount'] = df[text_col].apply(lambda x: len(str(x).split()))
     df['wordStrLen'] = df[text_col].str.len()
+    df = avgword_length(df, text_col)
     df['charIsDigitCount'] = df[text_col].str.findall(r'[0-9]').str.len()
     df['charIsUpperCount'] = df[text_col].str.findall(r'[A-Z]').str.len()
     df['charIsLowerCount'] = df[text_col].str.findall(r'[a-z]').str.len()
+    df['hasStopwordsCount'] = df[text_col].apply(lambda x: len(str(x).split()))
     df = count_none_stopwords(df, text_col)
-    df = avgword_length(df, text_col)
     return df
 
 
