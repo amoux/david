@@ -12,30 +12,29 @@ from nltk.stem import LancasterStemmer, WordNetLemmatizer
 
 
 class Text:
-    def __init__(self):
-        self.corpus_path = "../resources/comments"
 
-    def datasets(self):
+    def _datasets(self):
         resource = os.path.abspath()
 
-    def strip_html(self, text: str):
+    def _html_textparser(self, text: str):
         soup = BeautifulSoup(text, "html.parser")
         return soup.get_text()
 
-    def remove_between_square_brackets(self, text: str):
+    def _html_betweenbrackets(self, text: str):
+        # remove between square brackets
         return re.sub("\[[^]*\]", "", text)
 
-    def denoise_text(self, text: str):
-        text = self.strip_html(text)
-        text = self.remove_between_square_brackets(text)
+    def strip_htmlfromtext(self, text: str):
+        text = self._html_textparser(text)
+        text = self._html_betweenbrackets(text)
         return text
 
-    def replace_contractions(self, text: str):
-        return contractions.fix(text)
+    def replace_contractions(self, text: str, leftovers=True, slang=True):
+        return contractions.fix(text, leftovers, slang)
 
     def remove_non_ascii(words: list):
-        """Remove non-ASCII characters from list of tokenized words
-        """
+        '''Remove non-ASCII characters from list of tokenized words.
+        '''
         new_words = []
         for word in words:
             new_word = unicodedata.normalize('NFKD', word).encode(
@@ -44,10 +43,9 @@ class Text:
         return new_words
 
     def to_lowercase(self, words: list):
-        """
-        Convert all characters to lowercase from
-        list of tokenized words
-        """
+        '''Convert all characters to lowercase from
+        list of tokenized words.
+        '''
         new_words = []
         for word in words:
             new_word = word.lower()
@@ -55,8 +53,8 @@ class Text:
         return new_words
 
     def remove_punctuation(self, words: list):
-        """Remove punctuation from list of tokenized words
-        """
+        '''Remove punctuation from list of tokenized words
+        '''
         new_words = []
         for word in words:
             new_word = re.sub(r'[^\w\s]', '', word)
@@ -65,10 +63,9 @@ class Text:
         return new_words
 
     def replace_numbers(self, words: list):
-        """
-        Replace all interger occurrences in list of
+        '''Replace all interger occurrences in list of
         tokenized words with textual representation
-        """
+        '''
         engine = inflect.engine()
         new_words = []
         for word in words:
@@ -80,8 +77,8 @@ class Text:
         return new_words
 
     def remove_stopwords(self, words: list):
-        """Remove stop words from list of tokenized words
-        """
+        '''Remove stop words from list of tokenized words.
+        '''
         new_words = []
         for word in words:
             if word not in stopwords.words('english'):
@@ -89,8 +86,8 @@ class Text:
         return new_words
 
     def stem_words(self, words: list):
-        """Stem words in list of tokenized words
-        """
+        '''Stem words in list of tokenized words.
+        '''
         stemmer = LancasterStemmer()
         stems = []
         for word in words:
@@ -99,8 +96,8 @@ class Text:
         return stems
 
     def lemmatize_verbs(self, words: list):
-        """Lemmatize verbs in list of tokenized words
-        """
+        '''Lemmatize verbs in list of tokenized words
+        '''
         lemmatizer = WordNetLemmatizer()
         lemmas = []
         for word in words:
@@ -109,8 +106,8 @@ class Text:
         return lemmas
 
     def stem_and_lemmatize(self, words: list):
-        """RETURNS: stems, lemmas = stem_and_lemmatize(words)
-        """
+        '''RETURNS: stems, lemmas = stem_and_lemmatize(words)
+        '''
         stems = self.stem_words(words)
         lemmas = self.lemmatize_verbs(words)
         return stems, lemmas
@@ -128,7 +125,7 @@ class Text:
         lemm=None,
         stemm=None,
     ):
-        if denoise_text:
+        if strip_htmlfromtext:
             texts = [x for x in self.denoise(texts)]
         if rm_contractions:
             texts = [x for x in self.replace_contractions(texts)]
@@ -150,61 +147,62 @@ class Text:
         return texts
 
 
-def get_list_of_files(dirname):
-    """For the given path, get the List of all files
+def listfiles_in_directorytree(dirname: str):
+    '''For the given path, get the List of all files
     in the directory tree.
-    """
-    # create a list of file and sub directories
-    # names in the given directory
-    file_list = os.listdir(dirname)
-    all_files = list()
+
+    >>> `add` : 'return a list of files and sub-directories'
+    '''
+    # create a list of files and sub-directories names in the given directory.
+    entries = os.listdir(dirname)
     # iterate over all the entries
-    for entry in file_list:
+    allfiles = list()
+    for entry in entries:
         # create full path
         fullpath = os.path.join(dirname, entry)
         # if entry is a directory then get the list of files in this directory
         if os.path.isdir(fullpath):
-            all_files = all_files + get_list_of_files(fullpath)
+            allfiles = allfiles + listfiles_in_directorytree(fullpath)
         else:
-            all_files.append(fullpath)
+            allfiles.append(fullpath)
 
 
-def get_directory_files(dirname, file_endswith='.json'):
-    """Get the path for any specific file type, for example:
-    '.txt', '.csv'
-    """
+def getpaths_by_filetype(dirname: str, file_endswith='.json'):
+    '''Get the path for any specific file type.
+    file_endswith : e.g. `.txt, .csv`
+    '''
     filepaths = []
-    all_files = get_directory_files(dirname)
-    for file in all_files:
+    allfiles = getpaths_by_filetype(dirname)
+    for file in allfiles:
         if file.endswith(file_endswith):
             filepaths.append(file)
     return filepaths
 
 
-# def strip_html(text: str):
+# def _html_textparser(text: str):
 #     soup = BeautifulSoup(text, "html.parser")
 #     return soup.get_text()
 
 
-# def remove_between_square_brackets(text: str):
+# def _html_betweenbrackets(text: str):
 #     return re.sub('\[[^]]*\]', '', text)
 
 
-# def denoise_text(text: str):
-#     text = strip_html(text)
-#     text = remove_between_square_brackets(text)
+# def strip_htmlfromtext(text: str):
+#     text = _html_textparser(text)
+#     text = _html_betweenbrackets(text)
 #     return text
 
 
 # def replace_contractions(text: str):
-#     """Replace contractions in string of text
-#     """
+#     '''Replace contractions in string of text
+#     '''
 #     return contractions.fix(text)
 
 
 # def remove_non_ascii(words: list):
-#     """Remove non-ASCII characters from list of tokenized words
-#     """
+#     '''Remove non-ASCII characters from list of tokenized words
+#     '''
 #     new_words = []
 #     for word in words:
 #         new_word = unicodedata.normalize('NFKD', word).encode(
@@ -214,10 +212,10 @@ def get_directory_files(dirname, file_endswith='.json'):
 
 
 # def to_lowercase(words: list):
-#     """
+#     '''
 #     Convert all characters to lowercase from
 #     list of tokenized words
-#     """
+#     '''
 #     new_words = []
 #     for word in words:
 #         new_word = word.lower()
@@ -226,8 +224,8 @@ def get_directory_files(dirname, file_endswith='.json'):
 
 
 # def remove_punctuation(words: list):
-#     """Remove punctuation from list of tokenized words
-#     """
+#     '''Remove punctuation from list of tokenized words
+#     '''
 #     new_words = []
 #     for word in words:
 #         new_word = re.sub(r'[^\w\s]', '', word)
@@ -237,10 +235,10 @@ def get_directory_files(dirname, file_endswith='.json'):
 
 
 # def replace_numbers(words: list):
-#     """
+#     '''
 #     Replace all interger occurrences in list of
 #     tokenized words with textual representation
-#     """
+#     '''
 #     p = inflect.engine()
 #     new_words = []
 #     for word in words:
@@ -253,8 +251,8 @@ def get_directory_files(dirname, file_endswith='.json'):
 
 
 # def remove_stopwords(words: list):
-#     """Remove stop words from list of tokenized words
-#     """
+#     '''Remove stop words from list of tokenized words
+#     '''
 #     new_words = []
 #     for word in words:
 #         if word not in stopwords.words('english'):
@@ -263,8 +261,8 @@ def get_directory_files(dirname, file_endswith='.json'):
 
 
 # def stem_words(words: list):
-#     """Stem words in list of tokenized words
-#     """
+#     '''Stem words in list of tokenized words
+#     '''
 #     stemmer = LancasterStemmer()
 #     stems = []
 #     for word in words:
@@ -274,8 +272,8 @@ def get_directory_files(dirname, file_endswith='.json'):
 
 
 # def lemmatize_verbs(words: list):
-#     """Lemmatize verbs in list of tokenized words
-#     """
+#     '''Lemmatize verbs in list of tokenized words
+#     '''
 #     lemmatizer = WordNetLemmatizer()
 #     lemmas = []
 #     for word in words:
@@ -294,10 +292,10 @@ def get_directory_files(dirname, file_endswith='.json'):
 
 
 # def stem_and_lemmatize(words: list):
-#     """
+#     '''
 #     RETURNS:
 #     stems, lemmas = stem_and_lemmatize(words)
-#     """
+#     '''
 #     stems = stem_words(words)
 #     lemmas = lemmatize_verbs(words)
 #     return stems, lemmas

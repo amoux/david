@@ -11,32 +11,32 @@ import luigi.contrib.spark
 
 
 class ExternalStreams(luigi.ExternalTask):
-    """Example of a possible external data dump
+    '''Example of a possible external data dump
     To depend on external targets (typically at
     the top of your dependency graph), you can define
     an ExternalTask like this.
-    """
+    '''
     date = luigi.DateParameter()
 
     def output(self):
-        """Returns the target output for this task.
+        '''Returns the target output for this task.
         In this case, it expects a file to be present in HDFS.
         :return: the target output for this task.
         :rtype: object (:py:class:`luigi.target.Target`)
-        """
+        '''
         return luigi.contrib.hdfs.HdfsTarget(
             self.date.strftime('data/streams_%Y-%m-%d.tsv'))
 
 
 class Streams(luigi.Task):
-    """Faked version right now, just generates bogus data.
-    """
+    '''Faked version right now, just generates bogus data.
+    '''
     date = luigi.DateParameter()
 
     def run(self):
-        """Generates bogus data and writes it into
+        '''Generates bogus data and writes it into
         the `:py:meth: ~.Streams.output target`.
-        """
+        '''
         with self.output().open('w') as output:
             for _ in range(1000):
                 output.write('{} {} {}\n'.format(
@@ -45,59 +45,59 @@ class Streams(luigi.Task):
                     random.randint(0, 999)))
 
     def output(self):
-        """
+        '''
         Returns the target output for this task.
         In this case, a successful execution of this task
         will create a file in the local file system.
 
         :return: the target output for this task.
         :rtype: object (:py:class:`luigi.target.Target`)
-        """
+        '''
         return luigi.LocalTarget(self.date.strftime(
             'data/streams_%Y_%m_%d_faked.tsv'))
 
 
 class StreamsHdfs(Streams):
-    """This task performs the same work as :py:class:`~.Streams`
+    '''This task performs the same work as :py:class:`~.Streams`
     but its output is written to HDFS.
     This class uses :py:meth:`~.Streams.run` and
     overrides :py:meth:`~.Streams.output` so
     redefine HDFS as its target.
-    """
+    '''
 
     def output(self):
-        """Returns the target output for this task.
+        '''Returns the target output for this task.
         In this case, a successful execution of
         this task will create a file in HDFS.
         :return: the target output for this task.
         :rtype: object (:py:class:`luigi.target.Target`)
-        """
+        '''
         return luigi.contrib.hdfs.HdfsTarget(self.date.strftime(
             'data/streams_%Y_%m_%d_faked.tsv'))
 
 
 class AggregateArtists(luigi.Task):
-    """This task runs over the target data returned by
+    '''This task runs over the target data returned by
     :py:meth:`~/.Streams.output` and writes the result into its
     :py:meth:`~.AggregateArtists.output` target (local file).
-    """
+    '''
     date_interval = luigi.DateIntervalParameter()
 
     def output(self):
-        """Returns the target output for this task.
+        '''Returns the target output for this task.
         In this case, a successful execution of this
         task will create a file on the local filesystem.
         :return: the target output for this task.
         :rtype: object (:py:class:`luigi.target.Target`)
-        """
+        '''
         return luigi.LocalTarget(
             "data/artist_streams_{}.tsv".format(self.date_interval))
 
     def requires(self):
-        """This task's dependencies:
+        '''This task's dependencies:
         * :py:class:`~.Streams`
         :return: list of object (:py:class:`luigi.task.Task`)
-        """
+        '''
         return [Streams(date) for date in self.date_interval]
 
     def run(self):
@@ -115,11 +115,11 @@ class AggregateArtists(luigi.Task):
 
 
 class AggregateArtistsSpark(luigi.contrib.spark.SparkSubmitTask):
-    """This task runs a :py:class:`luigi.contrib.spark.SparkSubmitTask` task
+    '''This task runs a :py:class:`luigi.contrib.spark.SparkSubmitTask` task
     over each target data returned by :py:meth:`~/.StreamsHdfs.output` and
     writes the result into its :py:meth:`~.AggregateArtistsSpark.output`
     target (a file in HDFS).
-    """
+    '''
     date_interval = luigi.DateIntervalParameter()
     # The Pyspark script to run.
     # For Spark applications written in Java or Scala,
@@ -130,20 +130,20 @@ class AggregateArtistsSpark(luigi.contrib.spark.SparkSubmitTask):
     master = 'local[*]'
 
     def output(self):
-        """Returns the target output for this task.
+        '''Returns the target output for this task.
         In this case, a successful execution of this
         task will create a file in HDFS.
         :return: the target output for this task.
         :rtype: object (:py:class:`luigi.target.Target`)
-        """
+        '''
         return luigi.contrib.hdfs.HdfsTarget(
             "data/artist_streams_%s.tsv" % self.date_interval)
 
     def requires(self):
-        """This task's dependencies:
+        '''This task's dependencies:
         * :py:class:`~.StreamsHdfs`
         :return: list of object (:py:class:`luigi.task.Task`)
-        """
+        '''
         return [StreamsHdfs(date) for date in self.date_interval]
 
     def app_options(self):
@@ -155,34 +155,34 @@ class AggregateArtistsSpark(luigi.contrib.spark.SparkSubmitTask):
 
 
 class Top10Artists(luigi.Task):
-    """This task runs over the target data returned by
+    '''This task runs over the target data returned by
     :py:meth:`~/.AggregateArtists.output` or
     :py:meth:`~/.AggregateArtistsSpark.output` in case
     :py:attr:`~/.Top10Artists.use_spark` is set and writes the result into its
     :py:meth:`~.Top10Artists.output` target (a file in local filesystem).
-    """
+    '''
     date_interval = luigi.DateIntervalParameter()
     use_spark = luigi.BoolParameter()
 
     def requires(self):
-        """This task's dependencies:
+        '''This task's dependencies:
         * :py:class:`~.AggregateArtists` or
         * :py:class:`~.AggregateArtistsSpark` if
         :py:attr:`~/.Top10Artists.use_spark` is set.
         :return: object (:py:class:`luigi.task.Task`)
-        """
+        '''
         if self.use_spark:
             return AggregateArtistsSpark(self.date_interval)
         else:
             return AggregateArtists(self.date_interval)
 
     def output(self):
-        """Returns the target output for this task.
+        '''Returns the target output for this task.
         In this case, a successful execution of this
         task will create a file on the local filesystem.
         :return: the target output for this task.
         :rtype: object (:py:class:`luigi.target.Target`)
-        """
+        '''
         return luigi.LocalTarget(
             "data/top_artists_%s.tsv" % self.date_interval)
 
@@ -206,7 +206,7 @@ class Top10Artists(luigi.Task):
 
 
 class ArtistToplistToDatabase(luigi.contrib.postgres.CopyToTable):
-    """
+    '''
     This task runs a :py:class:`luigi.contrib.postgres.CopyToTable` task
     over the target data returned by :py:meth:`~/.Top10Artists.output` and
     writes the result into its :py:meth:`~.ArtistToplistToDatabase.output`
@@ -214,7 +214,7 @@ class ArtistToplistToDatabase(luigi.contrib.postgres.CopyToTable):
     :py:class:`luigi.contrib.postgres.PostgresTarget` (a table in PostgreSQL).
     This class uses :py:meth:`luigi.contrib.postgres.CopyToTable.run`
     and :py:meth:`luigi.contrib.postgres.CopyToTable.output`.
-    """
+    '''
     date_interval = luigi.DateIntervalParameter()
     use_spark = luigi.BoolParameter()
 
@@ -230,10 +230,10 @@ class ArtistToplistToDatabase(luigi.contrib.postgres.CopyToTable):
                ("streams", "INT")]
 
     def requires(self):
-        """This task's dependencies:
+        '''This task's dependencies:
         * :py:class:`~.Top10Artists`
         :return: list of object (:py:class:`luigi.task.Task`)
-        """
+        '''
         return Top10Artists(self.date_interval, self.use_spark)
 
 

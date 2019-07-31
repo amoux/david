@@ -1,10 +1,12 @@
 # CONFIGURATIONS FOR YOUTUBE API V3
 
 from functools import namedtuple
+from os import environ
+
 
 # DEVELOPER
 
-_API_DEV_KEY = 'AIzaSyBl9PWdQsBgEVjlJtwn-3cmkP2h3-PMjC8'
+_YOUTUBE_API_V3KEY = environ.get('YOUTUBE_API_V3KEY')
 API_SERVICE_NAME = 'youtube'
 API_VERSION = 'v3'
 
@@ -52,7 +54,7 @@ class ChannelKeys:
         if list_type == "dev":
             dev = namedtuple(
                 'DevSettings', ['key', 'service', 'version'])
-            return dev(_API_DEV_KEY, API_SERVICE_NAME, API_VERSION)
+            return dev(_YOUTUBE_API_V3KEY, API_SERVICE_NAME, API_VERSION)
 
 
 # FULL KEYS THAT CAN BE SEARCHED
