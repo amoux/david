@@ -4,7 +4,7 @@ import re
 import pandas as pd
 from glob import glob
 
-from david.pipeline.textstatistics import textmetrics
+from david.pipeline.feature_engineering import textmetrics
 
 
 def get_videolabels(fname: str, path='downloads/', ftype='.json'):

@@ -2,6 +2,10 @@
 import emoji as _emoji
 from textblob import TextBlob as _TextBlob
 from .preprocessing import prep_textcolumn as _preptext
+from spacy.lang import en as _en
+import numpy as np
+
+_STOPWORDS = _en.STOP_WORDS
 
 
 def extract_emojis(str):
@@ -32,13 +36,38 @@ def sentiment_labeler(df: object):
     return labels
 
 
+def count_none_stopwords(df: object, text_col: str):
+    '''Returns the count of words not consider as `STOPWORDS`
+
+    Uses the set found in Spacy's API; `spacy.lang.en.STOPWORDS`
+    '''
+    df['notStopwordsCount'] = df[text_col].apply(lambda texts: len(
+        [w for w in texts.split(' ') if w not in _STOPWORDS]))
+    return df
+
+
+def avgword_length(df: object, text_col: str):
+    '''Returns the average word-length in a text column.
+    NOTE: The returned value is without words consider as `STOPWORDS`.
+
+    Uses the set found in Spacy's API; `spacy.lang.en.STOPWORDS`
+    '''
+    df['wordAvgLength'] = df[text_col].apply(lambda texts: np.mean(
+        [len(w) for w in texts.split(' ') if w not in _STOPWORDS]
+    ) if len([len(w) for w in texts.split(' ') if w not in _STOPWORDS]
+             ) > 0 else 0)
+    return df
+
+
 def extract_textmetrics(df: object, text_col: str):
     # wordCounts: -1 to get an exact value of word counts in the string
-    df['wordCount'] = df[text_col].apply(lambda x: len(str(x).split()))
+    df['hasStopwordsCount'] = df[text_col].apply(lambda x: len(str(x).split()))
     df['wordStrLen'] = df[text_col].str.len()
     df['charIsDigitCount'] = df[text_col].str.findall(r'[0-9]').str.len()
     df['charIsUpperCount'] = df[text_col].str.findall(r'[A-Z]').str.len()
     df['charIsLowerCount'] = df[text_col].str.findall(r'[a-z]').str.len()
+    df = count_none_stopwords(df, text_col)
+    df = avgword_length(df, text_col)
     return df
 
 
