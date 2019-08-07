@@ -24,11 +24,6 @@ class TextPreprocess(pd.DataFrame):
     def missing_values(self):
         return self.isnull().sum()
 
-    def prep_textcolumn(self, text_col='text'):
-        '''Prep texts by normalizing whitespaces.
-        '''
-        self[text_col] = self[text_col].str.strip()
-
     def remove_whitespaces(self, text: str):
         '''Remove more than one space.
         '''
@@ -79,6 +74,10 @@ class TextPreprocess(pd.DataFrame):
     def _TextLemmatizer(self, texts: list):
         WordNet = _WordNetLemmatizer()
         return ' '.join([WordNet.lemmatize(w) for w in texts])
+
+    def normalize_whitespaces(self, text_col='text'):
+        '''Prep texts by normalizing whitespaces.'''
+        self[text_col] = self[text_col].str.strip()
 
     def lower_text(self, text_col='text'):
         self[text_col] = self[text_col].str.lower()
@@ -151,7 +150,7 @@ class TextPreprocess(pd.DataFrame):
         removes all numbers urls, hashtags, mention
         tags found in the columns.
         '''
-        self.prep_textcolumn(text_col)
+        self.normalize_whitespaces(text_col)
         if contractions:
             self.replace_contractions(text_col)
         if standardize:
