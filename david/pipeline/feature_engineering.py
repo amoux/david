@@ -19,12 +19,11 @@ class TextMetrics(pd.DataFrame):
         super().__init__(pd.read_json(file_path, encoding='utf-8', lines=True))
 
     def to_textfile(self, filename, text_column='text'):
-        '''Save the texts from a column to a text file.
-        '''
         with open(filename, 'w', encoding='utf-8') as txt:
             lines = self[text_column].tolist()
             for line in lines:
-                txt.write('%s\n' % line)
+                if len(line) != 0:
+                    txt.write('%s\n' % line)
             txt.close()
 
     def missing_values(self):
