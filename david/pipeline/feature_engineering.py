@@ -26,7 +26,8 @@ class TextMetrics(pd.DataFrame):
         with open(filename, 'w', encoding='utf-8') as txt:
             lines = self[text_column].tolist()
             for line in lines:
-                txt.write('%s\n' & line)
+                if len(line) != 0:
+                    txt.write('%s\n' % line)
             txt.close()
 
     def missing_values(self):
