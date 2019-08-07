@@ -20,6 +20,14 @@ def remove_whitespaces(text: str):
     return text
 
 
+def tokenize(self, sent):
+    '''Return the tokens of a sentence including punctuation
+    >>> tokenize('Bob dropped the apple. Where is the apple?')
+    ['Bob','dropped','the','apple', '.','Where','is','the','apple','?']
+    '''
+    return [x.strip() for x in _re.split(r'(\W+)?', sent) if x.strip()]
+
+
 def remove_duplicatewords(word: str):
     '''Recommended use after preprocessing texts. For better results
     `Lemmatization` is one way to further improve word matches.
