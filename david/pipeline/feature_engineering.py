@@ -61,10 +61,9 @@ class TextMetrics(pd.DataFrame):
         self['stringLength'] = self[text_col].str.len()
 
     def word_metrics(self, text_col='text'):
-        '''Returns the count of words not consider as `STOPWORDS`.
-        Uses the set found in Spacy's API; `spacy.lang.en.STOPWORDS`.
-        avgWordLength is the average word length in a text column.
-        Uses the set from Spacy's API; `spacy.lang.en.STOPWORDS`.
+        '''This function applies the `spacy.lang.en.STOPWORDS`
+        set to all computations; for capturing metrics of actual
+        words and stopwords detected within a string.
         '''
         self['avgWordLength'] = self[text_col].apply(
             lambda x: _np.mean(self.avgwords(x))
@@ -98,38 +97,40 @@ class TextMetrics(pd.DataFrame):
         self['authorHashTag'] = self[text_col].str.extract(r'(\#\w+)')
         self['authorEmoji'] = self[text_col].apply(self.extract_emojis)
 
-    def slice_dataframe(self, from_table='stringLength', by_min_count=0):
-        '''Note: For safety, it must be returned to a new variable name in
-        order for slicing to work. This avoids having to start a new instance
-        if the results where not satisfactory. SEE EXAMPLES BELOW!
+    def slice_dataframe(self, from_table='stringLength', by_setvalue=0):
+        '''Note: For slicing a dataframe, you must call this method via
+        a new variable name for slicing to work. Creating a new instance
+        avoids having to restart a new session if the outcomes obtained
+        after slicing were not adequate. SEE EXAMPLES BELOW!
 
         `from_table`: (str, default='stringLength')
-            The table to use as a way to slice the dataframe. You can also
-            use the values from 'isStopwordCount'. For example, if the minimum
-            value for isStopwordCount = 2, then using a value [10 <-> 20] to
-            slice the dataframe; will remove text-rows (small senteces) which
-            are't usefull. Recommened before modeling/text-preprocessing steps.
+            The table to use as a way to slice the dataframe.
+            You can additionally use the values from 'isStopwordCount.' For
+            instance, if the minimum value for `isStopwordCount=2`, then
+            applying a value [10 <-> 20] to slice the dataframe; will remove
+            text-rows (small sentences) which are not valuable in context.
+            Recommended before modeling and text-preprocessing steps.
 
-        `by_min_count`: (int)
-            The minimum number of values in a column to use as
-            a rule to slice a dataframe.
+        `by_setvalue`: (int)
+            The minimum number of values in a column to use as a rule to slice
+            a dataframe.
 
         * Doesn't work:
-        >>> metrics.slice_dataframe(by_min_count=40)
+        >>> metrics.slice_dataframe(by_setvalue=40)
         >>> metrics.text.describe()
           count 3361
           unique 3294
 
         * Works:
-        >>> reduced = metrics.slice_dataframe(by_min_count=40)
+        >>> reduced = metrics.slice_dataframe(by_setvalue=40)
         >>> reduced.text.describe()
           count 151
           unique 151
         '''
-        if by_min_count == 0:
+        if by_setvalue == 0:
             raise Exception('You must pass a value greater than zero!')
         else:
-            return self[self[from_table] > int(by_min_count)]
+            return self[self[from_table] > int(by_setvalue)]
 
     def get_all_metrics(self, text_col='text', string=True, words=True,
                         characters=True, sentiment=False, gettags=False):
