@@ -54,7 +54,6 @@ class TextMetrics(pd.DataFrame):
         return [len(w) for w in words.split(' ') if w not in _STOPWORDS]
 
     def normalize_whitespaces(self, text_col='text'):
-        '''Prep texts by normalizing whitespaces.'''
         self[text_col] = self[text_col].str.strip()
 
     def string_metric(self, text_col='text'):
