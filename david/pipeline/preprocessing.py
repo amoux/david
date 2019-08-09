@@ -162,4 +162,4 @@ class TextPreprocess(pd.DataFrame):
         if rm_duplicates:
             self.remove_duplicatewords_andchars(text_col)
         if lower_text:
-            self.lower_text()
+            self.lower_text(text_col)
