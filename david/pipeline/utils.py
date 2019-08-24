@@ -1,7 +1,8 @@
 import time
 from collections import namedtuple
 
-
+# collection of regex patterns,
+# all match patterns are intended for youtube content.
 REGX_POINTERS = {
     'match_titles': "(-?([A-Z].\\s)?([A-Z][a-z]+)\\s?)+([A-Z]'([A-Z][a-z]+))?",
     'match_quotes': '"(?:\\.|(\\")|[^""\n])*"',
@@ -11,7 +12,7 @@ REGX_POINTERS = {
 }
 
 DATASET_PATHS = {
-    'creator_videoid_info': "david/datasets/ycd_csv/ycc_creators_video_info.csv",
+    'creators_info': "david/datasets/ycd_csv/ycc_creators_video_info.csv",
     'web_tensorboard': "david/datasets/ycd_csv/ycd_web_tensorboard.csv",
     'web_md': "david/datasets/ycd_csv/ycc_web_md.csv",
     'web_lg': "david/datasets/ycd_csv/ycc_web_lg.csv"
