@@ -1,4 +1,5 @@
 from googleapiclient.discovery import build
+
 from .keys import ChannelKeys
 
 
@@ -56,7 +57,7 @@ def get_video_content(Qsearch, max_results=10):
             # results for individual videos
             response = youtube.videos().list(
                 part='statistics,snippet', id=search['id']['videoId']
-                ).execute()
+            ).execute()
             response_stats = response['items'][0]['statistics']
             response_snippet = response['items'][0]['snippet']
             for key in CK.CHANNEL_CONTENT_KEYS:

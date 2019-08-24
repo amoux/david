@@ -50,6 +50,14 @@ class TextMetrics(pd.DataFrame):
                 labels.append("neutral")
         return labels
 
+    def label(score):
+        if score > 0:
+            return ('positive')
+        elif score < 0:
+            return ('negative')
+        else:
+            return ('neutral')
+
     def avgwords(self, words: list):
         return [len(w) for w in words.split(' ') if w not in _STOPWORDS]
 

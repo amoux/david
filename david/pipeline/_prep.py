@@ -1,7 +1,8 @@
 import re as _re
 import string as _string
-import contractions as _contractions
 from itertools import groupby
+
+import contractions as _contractions
 import pandas as pd
 from nltk.stem.wordnet import WordNetLemmatizer as _WordNetLemmatizer
 
@@ -106,6 +107,29 @@ class TextPreprocess(pd.DataFrame):
             lambda x: self.remove_duplicatewords(x))
         self[text_col] = self[text_col].apply(
             lambda x: self.reduce_repeatingchars(x))
+
+    @staticmethod
+    def process_fromchunks(infile='', sep=',', chunksize=1000,
+                           outfile='df_output.csv', text_col='text',
+                           standardize=True, contractions=True,
+                           lemmatize=False, normalize=True,
+                           rm_duplicates=True, lower_text=False):
+        '''NOTE: This function needs to be tested and optimized.
+        Chunking is importantly usefull for any large corpus so its
+        not another feature. Its a must have feature here!
+        For more info on this features see the notes and tests i took
+        for this function on a jupyter notebook! DONT FORGET!
+
+        Jupyter-Notebooks/David/02_pipe/chunking-testing-spacy-language-detection.ipynb
+        '''
+
+        df_chunks = pd.read_csv(infile, sep=sep, chunksize=chunksize)
+        tempchunks = []
+        for df in df_chunks:
+            self.clean_all_text(df, text_col, standardize,
+                                contractions, lemmatize, normalize,
+                                rm_duplicates, lower_text)
+        return pd.concat(tempchunks)
 
     def clean_all_text(self, text_col='text', standardize=True,
                        contractions=True, lemmatize=False, normalize=True,

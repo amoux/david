@@ -1,3 +1,3 @@
 
-from .feature_engineering import TextMetrics
-from .preprocessing import TextPreprocess
+from ._metric import TextMetrics
+from ._prep import TextPreprocess

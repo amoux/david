@@ -1,14 +1,14 @@
 from __future__ import print_function
-import os
+
 import io
+import json
+import os
 import sys
 import time
 
-import json
-import requests as _requests
 import lxml.html
+import requests as _requests
 from lxml.cssselect import CSSSelector as _CSSSelector
-
 
 _YT_COMMENTS_URL = 'https://www.youtube.com/all_comments?v={youtube_id}'
 _YT_COMMENTS_AJAX_URL = 'https://www.youtube.com/comment_ajax'
