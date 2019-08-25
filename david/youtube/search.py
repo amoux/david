@@ -1,77 +1,75 @@
 from googleapiclient.discovery import build
 
-from .keys import ChannelKeys
+from .utils import YtApiKeys
 
 
-def records_fromterm(Qsearch, max_results=10):
-    """Calls the `search().list([_Qsearch_])` method to retrieve
-    Return list of matching records up to `max_results`.
-    """
-    CK = ChannelKeys()
-    DEV = CK.dev
-    STAT = CK.stat
-
-    youtube = build(DEV.service, DEV.version, developerKey=DEV.key)
-    search_response = youtube.search().list(
-        q=Qsearch,
+def yt_search(q: str, max_results=10):
+    '''Returns a list of matching search results.
+    '''
+    youtube = YtApiKeys()
+    resource = build(
+        youtube.api.service,
+        youtube.api.version,
+        developerKey=youtube.api.key
+    )
+    search = resource.item().list(
+        q=q,
         part='id,snippet',
         maxResults=max_results,
-        order=STAT.views
+        order=youtube.stat.views
     ).execute()
-    return search_response
+    return search
 
 
-def get_video_content(Qsearch, max_results=10):
-    """Get Video-Content Response from a Search Query.
+def yt_channel(q: str, max_results=10):
+    '''Youtube video content from a search query.
     (Youtube Data API). Returns a list of matching videos,
-    channels matching the given `Qsearch`.
+    channels matching the given a item query.
 
     PARAMETERS
     ----------
-    `Qsearch` : (str)
-        The search query (text) to search for videos on youtube,
-        which influences the response based on the keywords given
-        to the parameter.
+
+    `q` : (str)
+    The item query (text) to item for videos on youtube,
+    which influences the video_response based on the keywords given
+    to the parameter.
 
     `max_results` : (int)
-        Number of results to retrive for the given search query.
+    Number of results to retrive for the given item query.
+    '''
+    youtube = YtApiKeys()
+    resource = build(
+        youtube.api.service,
+        youtube.api.version,
+        developerKey=youtube.api.key
+    )
+    search = yt_search(q, max_results)
 
-    NOTE: Additional parameters can be used;
+    results = []
+    for item in search.get("items", []):
+        if item["id"]["kind"] == 'youtube#video':
+            temp = {}
+            temp['title'] = item['snippet']['title']
+            temp['vidId'] = item['id']['videoId']
 
-    `order="viewCount"`, `token=None`, `location=None`, `location_radius=None`
-    """
-    CK = ChannelKeys()
-    DEV = CK.dev
-
-    youtube = build(DEV.service, DEV.version, developerKey=DEV.key)
-    search_response = records_fromterm(Qsearch, max_results)
-
-    search_results = []
-    for search in search_response.get("items", []):
-        if search["id"]["kind"] == 'youtube#video':
-            # available from initial search
-            tempdict = {}
-            tempdict['title'] = search['snippet']['title']
-            tempdict['vidId'] = search['id']['videoId']
-            # secondary call to find statistics
-            # results for individual videos
-            response = youtube.videos().list(
-                part='statistics,snippet', id=search['id']['videoId']
+            videos = resource.videos().list(
+                part='statistics,snippet',
+                id=item['id']['videoId']
             ).execute()
-            response_stats = response['items'][0]['statistics']
-            response_snippet = response['items'][0]['snippet']
-            for key in CK.CHANNEL_CONTENT_KEYS:
+
+            items = videos['items'][0]['snippet']
+            for content in youtube.content._fields:
                 try:
-                    tempdict[key] = response_snippet[key]
+                    temp[content] = items[content]
                 except KeyError:
-                    # not stored if not present
-                    tempdict[key] = 'xxNoneFoundxx'
-            for key in CK.CHANNEL_STAT_KEYS:
+                    temp[content] = 'xxNoneFoundxx'
+
+            items = videos['items'][0]['statistics']
+            for stat in youtube.stat._fields:
                 try:
-                    tempdict[key] = response_stats[key]
+                    temp[stat] = items[stat]
                 except KeyError:
-                    # not stored if not present
-                    tempdict[key] = 'xxNoneFoundxx'
-            # add back to main list
-            search_results.append(tempdict)
-    return search_results
+                    temp[stat] = 'xxNoneFoundxx'
+
+            results.append(temp)
+    return results

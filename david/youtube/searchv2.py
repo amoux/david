@@ -1,9 +1,10 @@
 import os
+from os import environ
 
 import requests
 from isodate import parse_duration
 
-API_KEY = 'AIzaSyBl9PWdQsBgEVjlJtwn-3cmkP2h3-PMjC8'
+API_KEY = environ.get('YOUTUBE_API_KEY')
 SEARCH_URL = 'https://www.googleapis.com/youtube/v3/search'
 VIDEO_URL = 'https://www.googleapis.com/youtube/v3/videos'
 

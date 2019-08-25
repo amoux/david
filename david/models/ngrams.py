@@ -65,9 +65,9 @@ def top_quadgrams(corpus, n=5, ngram_range=(4, 4),
                   max_features=2000, reverse=True):
     '''N-Gram CountVectorizer most frequently used Quad-grams.
 
-    >>> quadgram_words = top_quadgrams(corpus, n=5)
-    >>> quadgram_df = pd.DataFrame(top_quadgram_words)
-    >>> quadgram_df.columns = ["quad-gram", "frequency"]
-    >>> print(top_quadgram_df)
+        >>> quadgram_words = top_quadgrams(corpus, n=5)
+        >>> quadgram_df = pd.DataFrame(top_quadgram_words)
+        >>> quadgram_df.columns = ["quad-gram", "frequency"]
+        >>> print(top_quadgram_df)
     '''
     return n_grams(corpus, n, ngram_range, max_features, reverse)
