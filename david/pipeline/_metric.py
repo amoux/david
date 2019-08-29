@@ -1,36 +1,64 @@
-import re as _re
-import emoji as _emoji
-import numpy as _np
+
+import emoji
+import numpy as np
 import pandas as pd
-from spacy.lang import en as _en
+import spacy.lang.en
 from textblob import TextBlob as _TextBlob
 
-_STOPWORDS = _en.STOP_WORDS
+STOPWORDS = spacy.lang.en.STOP_WORDS
 
 
 class TextMetrics(pd.DataFrame):
-    """Gathers Statistical Metrics from Texts.
+    SENTI_LABELS = ('positive', 'negative', 'neutral')
+    JSON_PATH = None
 
-    `file_path` (str):
-        file path passed into pd.read_json().
-    """
+    if not isinstance(SENTI_LABELS, tuple):
+        raise TypeError('you need to pass a tuple!')
 
-    def __init__(self, file_path: str):
-        super().__init__(pd.read_json(file_path, encoding='utf-8', lines=True))
+    def __init__(self, json_fpath: str):
+        '''Gathers Statistical Metrics from Texts.
 
-    def to_textfile(self, filename, text_column='text'):
-        with open(filename, 'w', encoding='utf-8') as txt:
-            lines = self[text_column].tolist()
-            for line in lines:
-                if len(line) != 0:
-                    txt.write('%s\n' % line)
-            txt.close()
+        Parameters
+        ----------
+
+        `file_path` : (str)
+            File path where the json corpus is located/downloaded.
+
+        * If downloading a new corpus you can alse do the following.
+
+            >>> from david.youtube.scraper import download
+            >>> from david.pipeline import TextMetrics
+            ...
+            >>> metric = TextMetrics(download('BmYZH7xt8sU', load_corpus=True))
+
+        '''
+        super().__init__(pd.read_json(
+            json_fpath, encoding='utf-8', lines=True))
+        self.JSON_PATH = json_fpath
+
+    def to_textfile(self, fn: str, text_col='text'):
+        with open(fn, 'w', encoding='utf-8') as f:
+            for x in self[text_col].tolist():
+                if len(x) != 0:
+                    f.write('%s\n' % x)
+            f.close()
+
+    def get_json_filepath(self):
+        '''Returns the path of the corpus for other instances.
+        NOTE: if this works better than having to make another class
+        just to swap an object from one instance to another. just
+        delete this NOTE and get a coffee. Simple IS BETTER!
+        '''
+        return self.JSON_PATH
+
+    def obj_todict(self, df_obj: object):
+        return df_obj.to_dict(orient='index')
 
     def missing_values(self):
         return self.isnull().sum()
 
     def extract_emojis(self, str):
-        emojis = ''.join(e for e in str if e in _emoji.UNICODE_EMOJI)
+        emojis = ''.join(e for e in str if e in emoji.UNICODE_EMOJI)
         return emojis
 
     def sentiment_polarity(self, text: str):
@@ -39,27 +67,19 @@ class TextMetrics(pd.DataFrame):
     def sentiment_subjectivity(self, text: str):
         return _TextBlob(text).sentiment.subjectivity
 
-    def sentiment_labeler(self):
-        labels = []
-        for score in self['sentiPolarity']:
-            if (score > 0):
-                labels.append("positive")
-            elif (score < 0):
-                labels.append("negative")
-            elif (score == 0):
-                labels.append("neutral")
-        return labels
-
-    def label(score):
-        if score > 0:
-            return ('positive')
-        elif score < 0:
-            return ('negative')
+    def sentiment_labeler(self, x):
+        '''Labels for sentiment analysis scores.
+        Add custom valus by passing to `TextMetric.SENTI_LABELS=(i,i,i)`
+        '''
+        if (x > 0):
+            return self.SENTI_LABELS[0]
+        elif (x < 0):
+            return self.SENTI_LABELS[1]
         else:
-            return ('neutral')
+            return self.SENTI_LABELS[2]
 
     def avgwords(self, words: list):
-        return [len(w) for w in words.split(' ') if w not in _STOPWORDS]
+        return [len(w) for w in words.split(' ') if w not in STOPWORDS]
 
     def normalize_whitespaces(self, text_col='text'):
         self[text_col] = self[text_col].str.strip()
@@ -73,7 +93,7 @@ class TextMetrics(pd.DataFrame):
         words and stopwords detected within a string.
         '''
         self['avgWordLength'] = self[text_col].apply(
-            lambda x: _np.mean(self.avgwords(x))
+            lambda x: np.mean(self.avgwords(x))
             if len(self.avgwords(x)) > 0 else 0)
 
         self['isStopwordCount'] = self[text_col].apply(
@@ -81,7 +101,7 @@ class TextMetrics(pd.DataFrame):
 
         self['noStopwordCount'] = self[text_col].apply(
             lambda texts: len([w for w in texts.split(' ')
-                               if w not in _STOPWORDS]))
+                               if w not in STOPWORDS]))
 
     def character_metrics(self, text_col='text'):
         self['charDigitCount'] = self[text_col].str.findall(
@@ -95,7 +115,8 @@ class TextMetrics(pd.DataFrame):
         self['sentiPolarity'] = self[text_col].apply(self.sentiment_polarity)
         self['sentiSubjectivity'] = self[text_col].apply(
             self.sentiment_subjectivity)
-        self['sentimentLabel'] = self.sentiment_labeler()
+        self['sentimentLabel'] = self['sentiPolarity'].apply(
+            lambda x: self.sentiment_labeler(x))
 
     def extract_authortags(self, text_col='text'):
         self['authorTimeTag'] = self[text_col].str.extract(
@@ -141,7 +162,8 @@ class TextMetrics(pd.DataFrame):
 
     def get_all_metrics(self, text_col='text', string=True, words=True,
                         characters=True, sentiment=False, gettags=False):
-        '''Single function call to get and extract
+        '''
+        Single function call to get and extract
         information about the text.
 
         METRICS

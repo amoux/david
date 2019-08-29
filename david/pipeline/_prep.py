@@ -1,26 +1,40 @@
-import re as _re
-import string as _string
+import re
+import string
 from itertools import groupby
 
-import contractions as _contractions
+import contractions
 import pandas as pd
-from nltk.stem.wordnet import WordNetLemmatizer as _WordNetLemmatizer
+from nltk.stem.wordnet import WordNetLemmatizer
 
 
 class TextPreprocess(pd.DataFrame):
-    def __init__(self, file_path):
-        super().__init__(pd.read_json(file_path, encoding='utf-8', lines=True))
+    JSON_PATH = None
 
-    def to_textfile(self, file_name, text_col='text'):
+    def __init__(self, json_fpath):
+        super().__init__(pd.read_json(
+            json_fpath, encoding='utf-8', lines=True))
+        self.JSON_PATH = json_fpath
+
+    def to_textfile(self, fn, text_col='text'):
         '''Save the texts from a column to a text file and
         skips any line with == 0 value.
         '''
-        with open(file_name, 'w', encoding='utf-8') as txt:
-            lines = self[text_col].tolist()
-            for line in lines:
-                if len(line) != 0:
-                    txt.write('%s\n' % line)
-            txt.close()
+        with open(fn, 'w', encoding='utf-8') as f:
+            for x in self[text_col].tolist():
+                if len(x) != 0:
+                    f.write('%s\n' % x)
+            f.close()
+
+    def get_json_filepath(self):
+        '''Returns the path of the corpus for other instances.
+        NOTE: if this works better than having to make another class
+        just to swap an object from one instance to another. just
+        delete this NOTE and get a coffee. Simple IS BETTER!
+        '''
+        return self.JSON_PATH
+
+    def obj_todict(self, df_obj: object):
+        return df_obj.to_dict(orient='index')
 
     def missing_values(self):
         return self.isnull().sum()
@@ -28,7 +42,7 @@ class TextPreprocess(pd.DataFrame):
     def remove_whitespaces(self, text: str):
         '''Remove more than one space.
         '''
-        return _re.sub(r'(\s)\1{1,}', ' ', text).strip()
+        return re.sub(r'(\s)\1{1,}', ' ', text).strip()
 
     def tokenize(self, texts: list):
         '''Return the tokens of a sentence
@@ -36,7 +50,7 @@ class TextPreprocess(pd.DataFrame):
             >>> tokenize('Bob dropped the apple. Where is the apple?')
         ['Bob','dropped','the','apple', '.','Where','is','the','apple','?']
         '''
-        return [x.strip() for x in _re.split(r'(\W+)?', texts) if x.strip()]
+        return [x.strip() for x in re.split(r'(\W+)?', texts) if x.strip()]
 
     def remove_duplicatewords(self, text: str):
         '''Recommended use after preprocessing texts. For better results
@@ -49,35 +63,37 @@ class TextPreprocess(pd.DataFrame):
             >>> "Hey you are wrong very wrong"
         '''
         # remove punctuation
-        word_map = text.maketrans(dict.fromkeys(_string.punctuation))
+        word_map = text.maketrans(dict.fromkeys(string.punctuation))
         word_clean = text.translate(word_map)
         return ' '.join([k for k, v in groupby(word_clean.split())])
 
     def reduce_repeatingchars(self, text: str):
         '''Reduces repeated `characters`
         '''
-        findings = _re.findall(r'(\w)\1{2,}', text)
+        findings = re.findall(r'(\w)\1{2,}', text)
         for char in findings:
             find = char + '{3,}'
             replace = '???' + char + '???'
-            text = _re.sub(find, repr(replace), text)
+            text = re.sub(find, repr(replace), text)
         text = text.replace('\'???', '')
         text = text.replace('???\'', '')
         text = self.remove_whitespaces(text)
         return text
 
     def replace_contractions(self, text_col='text'):
-        '''Replaces contractions (including slang words)
+        '''
+        Replaces contractions (including slang words)
         NOTE: This process requires normal spacing between characters.
         '''
-        self[text_col] = self[text_col].apply(lambda x: _contractions.fix(x))
+        self[text_col] = self[text_col].apply(lambda x: contractions.fix(x))
 
-    def _TextLemmatizer(self, texts: list):
-        WordNet = _WordNetLemmatizer()
+    def lemmatizer(self, texts: list):
+        WordNet = WordNetLemmatizer()
         return ' '.join([WordNet.lemmatize(w) for w in texts])
 
     def normalize_whitespaces(self, text_col='text'):
-        '''Prep texts by normalizing whitespaces.'''
+        '''Prep texts by normalizing whitespaces.
+        '''
         self[text_col] = self[text_col].str.strip()
 
     def lower_text(self, text_col='text'):
@@ -94,7 +110,7 @@ class TextPreprocess(pd.DataFrame):
     def lemmetize_texts(self, text_col='text'):
         self[text_col] = self[text_col].str.split()
         self[text_col] = self[text_col].apply(
-            lambda x: self._TextLemmatizer(x))
+            lambda x: self.lemmatizer(x))
 
     def normalize_texts(self, text_col='text'):
         self[text_col] = self[text_col].str.replace(
@@ -109,12 +125,13 @@ class TextPreprocess(pd.DataFrame):
             lambda x: self.reduce_repeatingchars(x))
 
     @staticmethod
-    def process_fromchunks(infile='', sep=',', chunksize=1000,
+    def process_fromchunks(self, infile='', sep=',', chunksize=1000,
                            outfile='df_output.csv', text_col='text',
                            standardize=True, contractions=True,
                            lemmatize=False, normalize=True,
                            rm_duplicates=True, lower_text=False):
-        '''NOTE: This function needs to be tested and optimized.
+        '''
+        NOTE: This function needs to be tested and optimized.
         Chunking is importantly usefull for any large corpus so its
         not another feature. Its a must have feature here!
         For more info on this features see the notes and tests i took
@@ -134,7 +151,8 @@ class TextPreprocess(pd.DataFrame):
     def clean_all_text(self, text_col='text', standardize=True,
                        contractions=True, lemmatize=False, normalize=True,
                        rm_duplicates=True, lower_text=False):
-        '''Dataframe Text Preprocessing Method. The arrangements
+        '''
+        Dataframe Text Preprocessing Method. The arrangements
         have been crafted uniquely for Youtube Comments. Though,
         It can process similar styles from social-media text;
         (e.g. tweets or Reddit-posts). Cleaning text is recommended for

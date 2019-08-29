@@ -5,6 +5,7 @@ import json
 import os
 import sys
 import time
+from os.path import exists, isfile, join
 
 import lxml.html
 import requests as _requests
@@ -43,7 +44,7 @@ def _extract_from_comment_replies(html):
 
 
 def _ajax_request(session, url, params, data, retries=10, sleep=20):
-    """Sends a POST request. Returns Response object.
+    '''Sends a POST request. Returns Response object.
     Parameters:
     `url` : URL for the new Request object.
     `data` : (optional)
@@ -51,7 +52,7 @@ def _ajax_request(session, url, params, data, retries=10, sleep=20):
         body of the Request.
     `json` : (optional) json to send in the body of the Request.
     `**kwargs` :  Optional arguments that request takes.
-    """
+    '''
     for _ in range(retries):
         response = session.post(url, params=params, data=data)
         if response.status_code == 200:
@@ -132,35 +133,60 @@ def _get_channel_comments(youtube_id, sleep=1):
         time.sleep(sleep)
 
 
-def make_dirpath(dirname, filename):
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-    elif os.path.exists(dirname):
-        fullpath = os.path.join(dirname, filename)
-    return fullpath
-
-
-def download_comments(filename: str, youtube_id: str, limit=None):
-    """Download Comments from a Youtube VideoID
-
-    ARGUMENTS
-    ---------
-    `youtube_id` : (str)
-        The youtube id from a video url. For example, '4Dk3jOSbz_0'
-
-    `filename` : (str)
-        The name of the output file
-
-    `limit` : (int, default=None)
-        Sets a limit to the number of comments to download
-    """
+def _write2json(fn: str, video_id: str, limit=None):
+    '''Jsonline file writer.
+    '''
     count = 0
-    with io.open(filename, 'w', encoding='utf-8') as fp:
-        for comment in _get_channel_comments(youtube_id):
+    with io.open(fn, 'w', encoding='utf-8') as fp:
+        for comment in _get_channel_comments(video_id):
             print(json.dumps(comment, ensure_ascii=False), file=fp)
             count += 1
+
             sys.stdout.write('mining %d comment(s)\r' % count)
             sys.stdout.flush()
+
             if limit and count >= limit:
                 break
     print(f'done extracting comments')
+
+
+def download(video_id: str, dirpath='downloads',
+             limit=None, load_corpus=False, force_download=False):
+    '''
+    Downloads comments from a youtube videos.
+
+    NOTE: The files are named after the video id e.g. 4Dk3jOSbz_0.json
+
+    Parameters
+    ----------
+
+    `video_id` : (str)
+        The youtube id from a video url. For example, '4Dk3jOSbz_0'
+
+    `dirpath` : (str, default='downloads')
+
+    NOTE: I NEED TO ADD A DEFAULT GLOBAL ENVIROMENT VARIABLE TO THE
+    LOCATION WHERE THE DOWNLOADS WILL BE SAVED. LIKE DAVID_DATA. I
+    ALREADY STARTED WORKING ON THIS WILL SOME METHODS FROM THE SKLEARN
+    LIBRARY. LOCATED IN THE MODELS DIRECTORY OF THIS PROJECT.
+
+
+        The directory where the downloads will be saved.
+
+    `limit` : (int, default=None)
+        Sets a limit to the number of comments to download
+    '''
+    # make directory if it doesnt exist.
+    if not exists(dirpath):
+        os.makedirs(dirpath)
+    fp = join(dirpath, f'{video_id}.json')
+
+    # check if the video has already beed downloaded.
+    if (isfile(fp) and not force_download):
+        raise Exception(f'The video id: {video_id} already exists!\n'
+                        'Set force_download=True to override the exception.')
+    _write2json(fp, video_id, limit)
+
+    # if true, return the full path of the scraped file.
+    if load_corpus:
+        return fp
