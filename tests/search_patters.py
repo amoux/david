@@ -14,11 +14,24 @@ docs = [
 
 def pattern_search(word: Sequence[str],
                    texts: Iterable[str]) -> Iterable[Dict]:
+    '''
+    Word pattern finder from a list of texts.
 
-    # TODO: FIX ISSUE WITH RETURNING NOT-FOUND INDEXES.
-    '''Word pattern finder from a list of texts.
     * key[`loc`] -> tuple[s]:
         If multiple matches found: group (tuple)s, per index.
+
+    * Returns the following format:
+    (NOTE: words not matched are not returned)
+
+    >>> docs = ['string looking for the first string',]
+    >>> for m in pattern_search('string', docs): print(m)
+
+    {
+        'id': 3,
+        'loc': [(0, 6), (29, 35)],
+        'endpos': 35,
+        'match': 'string'
+    }
     '''
     pattern = re.compile(word)
     temp_list = list()
@@ -32,15 +45,3 @@ def pattern_search(word: Sequence[str],
             }
         temp_list.append(matches)
     return [i[0] for i in groupby(temp_list)]
-
-
-def test_all_indexes_with_matching_word():
-    # easy test: assuming all indexes docs have the matching
-    # word it should print the locations and a consistent id.
-    matches = pattern_search('string', docs[0:4])
-    for m in matches:
-        print(m)
-
-
-if __name__ == '__main__':
-    test_all_indexes_with_matching_word()
