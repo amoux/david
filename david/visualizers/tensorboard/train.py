@@ -1,15 +1,12 @@
-import os
-import json
-import time
-import logging
 import argparse
-import regex as re
+import json
+import logging
+import os
+import re
+import time
 
-from .models import Bigram
-from .models import Word2Vec
-from .models import CsvConnector
-from .models import TxtConnector
-from .models import create_embeddings
+from .models import (Bigram, CsvConnector, TxtConnector, Word2Vec,
+                     create_embeddings)
 
 
 def get_args():
@@ -45,8 +42,8 @@ def get_args():
 
 
 def preprocessing(sentence):
-    """
-    Add a custom pre-processing on sentence before feeding them to word2vec
+    """Add a custom pre-processing on sentence
+    before feeding them to word2vec.
     """
     sentence = sentence.lower()
     sentence = re.sub(r'[^\P{P}\']+', ' ', sentence)
@@ -62,7 +59,8 @@ if __name__ == '__main__':
     print(opt)
 
     logging.basicConfig(
-        format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+        format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO
+    )
     prefix = int(time.time())
 
     os.makedirs(opt.folder, exist_ok=True)
@@ -70,17 +68,18 @@ if __name__ == '__main__':
                               'w', encoding='utf-8'), indent=2)
 
     if opt.input_type == 'csv':
-        sentence_generator = CsvConnector(filepath=opt.file,
-                                          preprocessing=preprocessing,
-                                          separator=opt.separator,
-                                          columns_to_select=opt.columns_to_select.split(
-                                              ","),
-                                          columns_joining_token=opt.columns_joining_token)
+        sentence_generator = CsvConnector(
+            filepath=opt.file,
+            preprocessing=preprocessing,
+            separator=opt.separator,
+            columns_to_select=opt.columns_to_select.split(","),
+            columns_joining_token=opt.columns_joining_token
+        )
     elif opt.input_type == 'txt':
         sentence_generator = TxtConnector(
             filepath=opt.file, preprocessing=preprocessing)
     else:
-        raise
+        raise Exception('You need to pass an input type "text", "csv"')
 
     generator = Bigram(sentence_generator)
 

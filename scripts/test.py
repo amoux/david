@@ -1,25 +1,26 @@
-import re
 import ast
 import glob
 import os
+import re
+from math import ceil
 from os import path
 from pathlib import Path
+from typing import Any, Callable, List, Union
 
 import astor
-import spacy
 import pandas as pd
-from tqdm import tqdm
+import spacy
+from more_itertools import chunked
 from nltk.tokenize import RegexpTokenizer
 from sklearn.model_selection import train_test_split
+from tqdm import tqdm
+
+from pathos.multiprocessing import Pool, cpu_count
 
 # MULTITHREATING MODULES
 # from multiprocessing import cpu_count
 # from general_utils import apply_parallel, flattenlist
 
-from math import ceil
-from more_itertools import chunked
-from typing import List, Callable, Union, Any
-from pathos.multiprocessing import Pool, cpu_count
 
 
 CORES = cpu_count()

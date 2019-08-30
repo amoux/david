@@ -1,90 +1,106 @@
 import os
 import re
+from pprint import pprint
 
 import pandas as pd
 from tqdm import tqdm
-from pprint import pprint
 
-from david.youtube.scraper import download_comments
-from david.youtube.search import get_video_content
+from david.youtube.scraper import download
+from david.youtube.search import yt_channel
+from david.youtube.utils import CHANNEL_STATS_API
 
-
-def mkdir_fromsearch(query):
-    """Creates and names the directorier per query.
-    """
-    dirname = re.sub(' ', '_', query)
-    dirpath = os.path.join('downloads', dirname)
-    return dirpath
+COMMENTS = CHANNEL_STATS_API['comments']
+VIDEO_ID = 'vidId'
 
 
-def save_tocsv(df, query):
-    """Saves the CSV file to its parent directory.
+def make_savepath(query: str, save_path: str):
+    '''Creates and names the directorier per query.
+    '''
+    dir_name = re.sub(' ', '_', query)
+    dir_path = os.path.join(save_path, dir_name)
+    return dir_path
+
+
+def save_corpus(df: object, query: str,
+                save_path: str, join_by='_', ftype='.csv'):
+    '''
+    Saves the CSV file to its parent directory.
     The file is named in relation to the a search query.
-    """
-    filename = re.sub(' ', '_', query)
-    filename = filename + '.csv'
-    dirpath = mkdir_fromsearch(query)
-    filepath = os.path.join(dirpath, filename)
-    df.to_csv(filepath)
+    '''
+    fn = re.sub(' ', join_by, query)
+    fn = fn + ftype
+    fp = make_savepath(query, save_path)
+    fp = os.path.join(fp, fn)
+    df.to_csv(fp)
 
 
-def scrapecomments(path, videoids: list, query: str, limit: int):
-    """Download youtube comments
-    Scrapes comments for each video id in the list
-    """
-    for vidid in tqdm(videoids):
-        download_comments(path, vidid, limit)
+def get_comments(videoids: list, fp: str, limit: int):
+    '''Download youtube comments.
+    Scrapes comments for each video id in the list.
+    '''
+    for vid in tqdm(videoids):
+        download(video_id=vid, dirpath=fp, limit=limit)
 
 
-def download_fromsearch(
-    query, maxresults=10, commentcount=None,
-    download=False, limit=None,
-    to_csv=False
-):
-    """Youtube Comments Downloader
-    Downloads n or all comments from a video id
+def build_corpus(query,
+                 max_results=10,
+                 min_comments=None,
+                 limit=None,
+                 download=False,
+                 save_path='downloads',
+                 to_csv=False,
+                 join_by='_'):
+    '''
+    Youtube Comments Courpus Builder. Downloads comments from
+    a youtube video id and saves the results to a csv file.
 
-    PARAMETERS
+    Parameters:
     ----------
+
     `query` : (str)
-        A string used to find video ids by matching query keywords.
+        A string used to find video ids by
+        matching query keywords.
 
-    `maxresults` : (int)
-        Number of maximum results (matching videos) to get for a given query.
+    `max_results` : (int)
+        Number of maximum results (matching videos)
+        to get for a given query.
 
-    `commentcount` : (int)
-        Limits the videos that should be downloaded by N comments. For example,
-        setting commentcount=1000, will download from videos with 1000 comments
-        and greater. If None, then any video regardles of N comments for any ID
+    `min_comments` : (int)
+        Min comments a video id requires, to be
+        worthy of downloading.
 
     `download` : (bool)
         If set to False, no comments will be downloaded.
 
     `limit` : (int)
-        Limits how many comments should be downloaded per video id.
+        Limits how many comments should be downloaded per
+        video id.
 
     `to_csv` :
-        Save search results from the Youtube Data API to a csv file.
-    """
-    response = get_video_content(query, maxresults)
-    df = pd.DataFrame.from_dict(response, orient="columns")
-    df['commentCount'] = df['commentCount'].astype(int)
-    # filter df w/videos containing 2000 comments or more
-    df = df[df['commentCount'] > commentcount]
-    videoids = df['vidId'].values.tolist()
+        Save search results from the Youtube Data API to
+        a csv file.
+
+    '''
+    res = yt_channel(query, max_results)
+    df = pd.DataFrame.from_dict(res, orient="columns")
+    df[COMMENTS] = df[COMMENTS].astype(int)
+    df = df[df[COMMENTS] > min_comments]
+    videoid = df[VIDEO_ID].values.tolist()
 
     if download:
-        scrapecomments(videoids, query, limit)
+        get_comments(videoid, save_path, limit)
+
     if to_csv:
-        save_tocsv(df, query)
+        save_corpus(df, query, save_path, join_by)
+
     elif not (download and to_csv):
-        pprint(response)
+        # prints the response if both False.
+        pprint(res)
 
 
 if __name__ == '__main__':
 
-    QSEARCH = 'cnn china trump'
-    download_fromsearch(QSEARCH, maxresults=10,
-                        commentcount=2000, download=True, limit=None,
-                        to_csv=True
-                        )
+    QSEARCH = 'python is the future'
+    build_corpus(QSEARCH, max_results=10,
+                 min_comments=2000, download=True,
+                 limit=None, to_csv=True)

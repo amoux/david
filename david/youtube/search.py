@@ -1,4 +1,7 @@
-from googleapiclient.discovery import build
+# API HAS BEEN UPDATED
+#from googleapiclient.discovery import build
+
+from googleapiclient import discovery
 
 from .utils import YtApiKeys
 
@@ -7,12 +10,13 @@ def yt_search(q: str, max_results=10):
     '''Returns a list of matching search results.
     '''
     youtube = YtApiKeys()
-    resource = build(
-        youtube.api.service,
-        youtube.api.version,
+    disco_build = discovery.build(
+        serviceName=youtube.api.service,
+        version=youtube.api.version,
         developerKey=youtube.api.key
     )
-    search = resource.item().list(
+    SearchResource = disco_build.search()
+    search = SearchResource.list(
         q=q,
         part='id, snippet',
         maxResults=max_results,
@@ -38,11 +42,12 @@ def yt_channel(q: str, max_results=10):
     Number of results to retrive for the given item query.
     '''
     youtube = YtApiKeys()
-    resource = build(
-        youtube.api.service,
-        youtube.api.version,
+    disco_build = discovery.build(
+        serviceName=youtube.api.service,
+        version=youtube.api.version,
         developerKey=youtube.api.key
     )
+    VideoResource = disco_build.videos()
     search = yt_search(q, max_results)
 
     results = []
@@ -53,7 +58,7 @@ def yt_channel(q: str, max_results=10):
             temp['title'] = item['snippet']['title']
             temp['vidId'] = item['id']['videoId']
 
-            videos = resource.videos().list(
+            videos = VideoResource.videos().list(
                 part='statistics, snippet',
                 id=item['id']['videoId']).execute()
 

@@ -1,65 +1,73 @@
-import os
 import csv
+import os
 import parser
 
 import gensim
 import tensorflow as tf
 from tensorflow.contrib.tensorboard.plugins import projector
 
+from .train import preprocessing
+
 
 class CsvConnector(object):
+    CSV_READER = None
+    FILE_PATH = None
+
     def __init__(
         self,
         filepath=None,
         separator=',',
-        columns_to_select=(),
-        columns_joining_token='. ',
-        preprocessing=None
+        quotechar='"',
+        df_cols: tuple = ('text',),
+        col_join_token='. '
     ):
-        if not columns_to_select:
-            print("You have to select at least one column on your input data")
-            raise
 
-        with open(filepath, 'r', encoding='utf-8') as f:
-            self.reader = csv.DictReader(f, delimiter=separator, quotechar='"')
-            columns = self.reader.fieldnames
-            for col in columns_to_select:
-                if col not in columns:
-                    print(f"{col} is not a valid column. Found {columns}")
-                    raise
-
-        if not preprocessing:
-            def preprocessing(x): return x
-
-        self.filepath = filepath
+        self.file_path = filepath
+        self.df_cols = df_cols
         self.separator = separator
-        self.columns_to_select = columns_to_select
-        self.columns_joining_token = columns_joining_token
-        self.preprocessing = preprocessing
+        self.quotechar = quotechar
+        self.col_join_token = col_join_token
+
+    def load_csv(self, fp, mode='r'):
+        with open(fp, mode, encoding='uft-8') as f:
+            self.CSV_READER = csv.DictReader(f, self.separator, self.quotechar)
+
+            self.FILE_PATH = fp
+            loded_cols = self.CSV_READER.fieldnames
+
+            for col in self.df_cols:
+                if col in loded_cols:
+                    print(f'Yay selecting column < {col} >.')
+                else:
+                    raise ValueError('Ouch you need to select: (text or csv)')
 
     def __iter__(self):
-        with open(self.filepath, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f, delimiter=self.separator, quotechar='"')
-            for line in reader:
-                sentence = self.columns_joining_token.join(
-                    [line[col] for col in self.columns_to_select if line[col]])
-                yield self.preprocessing(sentence).split()
+        '''CSV iterator loads the `file_path` from the
+        path passed to the parameter. At the time of
+        loading the path is alson passed to the `FILE_PATH`
+        class parameter.
+        '''
+        self.load_csv(fp=self.file_path)
+
+        for line in self.CSV_READER:
+            sentence = self.col_join_token.join(
+                [line[col] for col in self.df_cols if line[col]]
+            )
+            yield preprocessing(sentence).split()
 
 
 class TxtConnector(object):
-    def __init__(self, filepath=None, preprocessing=None):
-        if not preprocessing:
-            def preprocessing(x): return x
-
-        self.filepath = filepath
-        self.preprocessing = preprocessing
+    def __init__(self, file_path=None):
+        self.file_path = file_path
 
     def __iter__(self):
-        for line in open(self.filepath, 'r', encoding='utf-8'):
-            yield self.preprocessing(line).split()
+        for line in open(self.file_path, 'r', encoding='utf-8'):
+            yield preprocessing(line).split()
 
 
 class Bigram(object):
+    '''Gensim Biagram Class.
+    '''
 
     def __init__(self, iterator):
         self.iterator = iterator
@@ -72,14 +80,15 @@ class Bigram(object):
 
 class Word2Vec(object):
     def __init__(self, model=None, save_folder=None, phrases=False):
-        """Word2Vec Class Model:
-        PARAMETERS
-        ----------
-        model : (object, default=None)
+        '''Word2Vec Class Model.
 
-        save_folder : (str)
+        Parameters:
+        ----------
+        `model` : (object, default=None)
+
+        `save_folder` : (str)
             The directory name where the model's output will be saved.
-        """
+        '''
         if not os.path.exists(save_folder):
             print(f"{save_folder}: Folder does not exist, create it first")
 

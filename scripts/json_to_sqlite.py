@@ -1,6 +1,7 @@
 import os
-import dataset
 import sqlite3
+
+import dataset
 import pandas as pd
 from tqdm import tqdm
 
@@ -14,31 +15,34 @@ def arrange_index(df: object, col_name: str, rm_index: int, to_index: int):
 
 
 def preprocess_dataframe(filepath: str, filename: str):
-    """Creates a `video_id` column while adding the videoids
+    '''Creates a `video_id` column while adding the videoids
     to the row from the filename parameter. Splits the `cid column`,
     creates a new column `cid_reply`, and arranges the index column
     in relation to `cid`.
-    """
+    '''
     df = pd.read_json(filepath, encoding='utf-8', lines=True)
     df['video_id'] = filename.strip('.json')
+
     df[['cid', 'cid_reply']] = pd.DataFrame(
         [x.split('.') for x in df['cid'].tolist()])
+
     df = arrange_index(df, 'cid_reply', rm_index=5, to_index=2)
     return df
 
 
-def from_dataframebatch(filepaths: list, videoids: list):
-    """Iterates over the files to dataframes.
-    """
-    for file, vid in zip(filepaths, videoids):
+def from_dataframebatch(fpath: list, videoids: list):
+    '''Iterates over the files to dataframes.
+    '''
+    for file, vid in zip(fpath, videoids):
         yield preprocess_dataframe(file, vid)
 
 
 def json2sql(df: object, col_name: str, db_name: str):
-    """Inserts Data to SQLite from a Dataframe.
+    '''Inserts Data to SQLite from a Dataframe.
 
-    PARAMETERS
+    Parameters:
     ----------
+
     `df` : (object)
         A pandas.Dataframe containing the rows
         specified in the table dictionary.
@@ -49,8 +53,9 @@ def json2sql(df: object, col_name: str, db_name: str):
         and assigns Datatypes according to the df.
 
     `db_name` : (str)
-        The connection name of the datbase
-    """
+        The connection name of the datbase.
+
+    '''
     sql = f"sqlite:///{db_name}.db"
     db = dataset.connect(sql)
     db.begin()
@@ -73,19 +78,17 @@ def json2sql(df: object, col_name: str, db_name: str):
 
 
 def getdirpaths(dirname: str):
-    """
-    * Gets all the paths to all files found in the root
-    directory.
-    * Returns two lists containing the paths & file names
-    """
-    filepaths = []
-    filenames = []
-    for (dirpath, _, filenames) in os.walk(dirname):
-        for filename in filenames:
-            if filename.endswith('.json'):
-                filepaths.append(dirpath + '/' + filename)
-                filenames.append(filename)
-    return filepaths, filenames
+    '''Gets all the paths to all files found in the root
+    directory. Returns two lists containing the paths & file names.
+    '''
+    fpath = []
+    fnames = []
+    for (dirpath, _, fnames) in os.walk(dirname):
+        for fn in fnames:
+            if fn.endswith('.json'):
+                fpath.append(dirpath + '/' + fn)
+                fnames.append(fn)
+    return fpath, fnames
 
 
 # testing purposes only: creates a new database file
