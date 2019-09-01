@@ -46,7 +46,8 @@ def remove_data_home(data_home=None):
 def load_datasets(container_path, description=None, categories=None,
                   load_content=True, shuffle=True, encoding=None,
                   decode_error='strict', random_state=0):
-    '''Load dataset files with categories as subfolder names.
+    '''
+    Load dataset files with categories as subfolder names.
 
     Return all categories and its files:
     ------------------------------------
@@ -66,19 +67,9 @@ def load_datasets(container_path, description=None, categories=None,
     >>> file_names = load_files(ycd_json, categories='worst_car_trends',
     >>                            load_content=False)
 
-    Author Credit
-    -------------
-    This function loads datasets by using the `load_data`
-    method from the `sklearn.datasets` module.
-
-    If you set load_content=True, you should also specify the encoding of the
-    text using the 'encoding' parameter. For many modern text files, 'utf-8'
-    will be the correct encoding. If you leave encoding equal to None, then the
-    content will be made of bytes instead of Unicode, and you will not be able
-    to use most functions in `sklearn.feature_extraction.text`.
-
     Parameters
     ----------
+
     container_path : string or unicode
         Path to the main folder holding one subfolder per category
 

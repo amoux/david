@@ -1,15 +1,49 @@
 import re
+from collections import Counter
 from itertools import groupby
 from typing import Dict, Iterable, List, Sequence
 
-docs = [
+PATTERN_SEARCH_DATA = [
     'Scan through string looking for',
     'through string looking for the',
     'string looking string string string',
     'string looking for the first string',
-    # DEBUG: this string doesnt have the word it duplicates the id.
     'Scan looking for the'
 ]
+
+DUPLICATE_DATA = [
+    'Python Python Python Python is great and Java is not so great',
+    'Python Python Python Python is awesome',
+    'Python is a language close to human language.',
+    'PythonPythonPython. Python:, yep said it three times',
+    'Python Python Python Python Python Python Python Python',
+    'Python Python programming! and yeah Python Python.'
+]
+
+
+def remove_duplicates(text):
+    '''Removes duplicate words found in a sequence of words.
+
+    Recipe:
+    ------
+
+        * Split text string separated by space.
+        * Joins two adjacent elements in iterable way.
+        * Uses the Counter method have strings as key and
+        their frequencies as value.
+        * Returns a joined adjacent of elements.
+
+        >>> one_text = 'Python Python Python is awesome! Python'
+        >>> remove_duplicates(one_text)
+        ...
+        'Python is awesome!'
+
+    '''
+    text = text.split(' ')
+    for idx in range(0, len(text)):
+        text[idx] = ''.join(text[idx])
+    unique = Counter(text)
+    return ' '.join(unique.keys())
 
 
 def pattern_search(word: Sequence[str],
