@@ -1,6 +1,4 @@
 
-from typing import Type, Any
-
 import emoji
 import numpy as np
 from spacy.lang.en import STOP_WORDS
@@ -48,7 +46,7 @@ class TextMetrics(JsonDataFrame):
     def sentiment_subjectivity(self, text: str):
         return TextBlob(text).sentiment.subjectivity
 
-    def sentiment_labeler(self, score: Type[int][float]) -> Type[Any]:
+    def sentiment_labeler(self, score):
         '''Labels for sentiment analysis scores.
         Add custom valus by passing to `TextMetric.SENTI_LABELS=(i,i,i)`
         '''
