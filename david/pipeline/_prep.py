@@ -92,8 +92,7 @@ class TextPreprocess(JsonDataFrame):
 
     def lemmetize_texts(self, text_col='text') -> None:
         self[text_col] = self[text_col].str.split()
-        self[text_col] = self[text_col].apply(
-            lambda x: self.lemmatizer(x))
+        self[text_col] = self[text_col].apply(lambda x: self.lemmatizer(x))
 
     def tokenize_texts(self, text_col='text') -> None:
         self[text_col] = self[text_col].apply(lambda x: self.tokenizer(x))
