@@ -57,7 +57,7 @@ def get_sentiment_subjectivity(text: str):
     return TextBlob(text).sentiment.subjectivity
 
 
-def get_vocab_size(self, text: str):
+def get_vocab_size(text: str):
     '''Returns the number of unique tokens found on the corpus.
 
     `text` : (str)
@@ -72,6 +72,17 @@ def get_vocab_size(self, text: str):
 def replace_numbers(words: list):
     '''Replace all interger occurrences in list of
     tokenized words with textual representation.
+
+    Usage:
+    -----
+
+        >>> tokens = text.tokenizer('i would love it 4 sure!')
+        >>> tokens
+        '['i', 'would', 'love', 'it', '4', 'sure', '!']'
+
+        >>> text.replace_numbers(tokens)
+        '['i', 'would', 'love', 'it', 'four', 'sure', '!']'
+
     '''
     if not isinstance(words, list):
         words = list([words])
