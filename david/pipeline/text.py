@@ -44,6 +44,12 @@ def strip_html_fromtext(text: str):
 def get_emojis(str):
     '''Finds emoji characters from a sequence of words. Returns the emoji
     character if found.
+
+    Usage:
+    -----
+
+        >>> text.get_emojis('this text has an emoji 👾.')
+        '👾'
     '''
     emojis = ''.join(e for e in str if e in emoji.UNICODE_EMOJI)
     return emojis
@@ -69,9 +75,44 @@ def get_vocab_size(text: str):
     return vocab_size
 
 
-def replace_numbers(words: list):
-    '''Replace all interger occurrences in list of
-    tokenized words with textual representation.
+def replace_numbers(words: list, wantlist=False, group=0, comma=",",
+                    andword="and", zero="zero", one="one", decimal="point",
+                    threshold=None
+                    ):
+    '''Replace all interger occurrences in list of tokenized words with
+    textual representation.
+
+    * Returns a formatted number as it's word representation.
+
+    Parameters:
+    ----------
+
+    `words` : (list)
+        NOTE: The list must have tokenized words for the numbers
+        to be replaced to words.
+
+    `group` : (int)
+        1, 2 or 3 to group numbers before turning into words.
+
+    `comma` : (str)
+        Define comma.
+
+    `andword` : (str)
+        Word for 'and' can be set to ''. e.g. "one hundred and
+        one" vs "one hundred one".
+
+    `zero` : (str)
+        Word for '0'.
+
+    `one` : (str)
+        Word for '1'.
+
+    `decimal` : (str)
+        Word for decimal point.
+
+    `threshold` :
+        Numbers above threshold not turned into words.
+        parameters not remembered from last call.
 
     Usage:
     -----
@@ -91,7 +132,10 @@ def replace_numbers(words: list):
     new_words = []
     for word in words:
         if word.isdigit():
-            new_word = p.number_to_words(word)
+            new_word = p.number_to_words(word, wantlist,
+                                         group, comma,
+                                         andword, zero,
+                                         one, decimal, threshold)
             new_words.append(new_word)
         else:
             new_words.append(word)
@@ -116,6 +160,9 @@ def remove_spaces(text: str):
 
 def remove_non_ascii(words: list):
     '''Remove non-ASCII characters from list of tokenized words.
+
+    `words` : (list)
+        List of tokenized words.
     '''
     if not isinstance(words, list):
         words = list([words])
@@ -130,6 +177,9 @@ def remove_non_ascii(words: list):
 
 def remove_punctuation(words: list):
     '''Remove punctuation from list of tokenized words.
+
+    `words` : (list)
+        The list can a list of tokens or a list of string(s).
     '''
     if not isinstance(words, list):
         words = list([words])
