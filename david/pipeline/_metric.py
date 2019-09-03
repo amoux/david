@@ -1,10 +1,10 @@
 
-import emoji
 import numpy as np
 from spacy.lang.en import STOP_WORDS
-from textblob import TextBlob
 
 from .base import JsonDataFrame
+from .text import (get_emojis, get_sentiment_polarity,
+                   get_sentiment_subjectivity)
 
 
 class TextMetrics(JsonDataFrame):
@@ -24,27 +24,17 @@ class TextMetrics(JsonDataFrame):
         >>> metric = TextMetrics(download('BmYZH7xt8sU', load_corpus=True))
 
     '''
-    # global sets used in multiple instance methods.
     STOPWORDS = STOP_WORDS
     SENTI_LABELS = ('positive', 'negative', 'neutral')
 
     if not isinstance(SENTI_LABELS, tuple):
         raise ValueError(f'SENTI_LABELS has to be a: {type(tuple)}.')
+
     if not isinstance(STOPWORDS, set):
         raise ValueError(f'STOPWORDS has to be a: {type(set)}.')
 
     def __init__(self, corpus_path: str):
         super().__init__(corpus_path)
-
-    def extract_emojis(self, str):
-        emojis = ''.join(e for e in str if e in emoji.UNICODE_EMOJI)
-        return emojis
-
-    def sentiment_polarity(self, text: str):
-        return TextBlob(text).sentiment.polarity
-
-    def sentiment_subjectivity(self, text: str):
-        return TextBlob(text).sentiment.subjectivity
 
     def sentiment_labeler(self, score):
         '''Labels for sentiment analysis scores.
@@ -88,9 +78,9 @@ class TextMetrics(JsonDataFrame):
             r'[a-z]').str.len()
 
     def sentiment_metrics(self, text_col='text'):
-        self['sentiPolarity'] = self[text_col].apply(self.sentiment_polarity)
+        self['sentiPolarity'] = self[text_col].apply(get_sentiment_polarity)
         self['sentiSubjectivity'] = self[text_col].apply(
-            self.sentiment_subjectivity)
+            get_sentiment_subjectivity)
         self['sentimentLabel'] = self['sentiPolarity'].apply(
             lambda x: self.sentiment_labeler(x))
 
@@ -99,7 +89,7 @@ class TextMetrics(JsonDataFrame):
             r'(\d{1,2}\:\d{1,2})')
         self['authorUrlLink'] = self[text_col].str.extract(r'(http\S+)')
         self['authorHashTag'] = self[text_col].str.extract(r'(\#\w+)')
-        self['authorEmoji'] = self[text_col].apply(self.extract_emojis)
+        self['authorEmoji'] = self[text_col].apply(get_emojis)
 
     def get_all_metrics(self,
                         text_col='text',
@@ -113,7 +103,6 @@ class TextMetrics(JsonDataFrame):
                         ) -> None:
         '''
         Single function call to get and extract information from text.
-
 
         `stopword_set` : (set)
         default, `STOPWORDS=spacy.lang.en.STOP_WORDS`

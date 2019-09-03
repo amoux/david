@@ -1,12 +1,8 @@
 import re
-import string
-from itertools import groupby
-from typing import List
-
-import contractions
-from nltk.stem.wordnet import WordNetLemmatizer
 
 from .base import JsonDataFrame
+from .text import (lemmatizer, reduce_repeating_chars, remove_duplicate_words,
+                   replace_contractions, tokenizer)
 
 
 class TextPreprocess(JsonDataFrame):
@@ -14,61 +10,13 @@ class TextPreprocess(JsonDataFrame):
     def __init__(self, corpus_path: str):
         super().__init__(corpus_path)
 
-    def remove_spaces(self, text: str):
-        '''Remove more than one space.
-        '''
-        return re.sub(r'(\s)\1{1,}', ' ', text).strip()
-
-    def remove_duplicate_words(self, text: str):
-        '''Returns strings with no repeated words in sequence.
-        NOTE: This also removes punctuation.
-
-        Example:
-        -------
-            >>> text = 'Hey! you are wrong very wrong! wrong!'
-            >>> text = remove_duplicate_words(text)
-            ...
-            'Hey you are wrong very wrong'
-        '''
-        # removes punctuation
-        word_map = text.maketrans(dict.fromkeys(string.punctuation))
-        word_clean = text.translate(word_map)
-        return ' '.join([k for k, v in groupby(word_clean.split())])
-
-    def reduce_repeating_chars(self, text: str):
-        '''Reduces repeated `characters`.
-        '''
-        findings = re.findall(r'(\w)\1{2,}', text)
-        for char in findings:
-            find = char + '{3,}'
-            replace = '???' + char + '???'
-            text = re.sub(find, repr(replace), text)
-        text = text.replace('\'???', '')
-        text = text.replace('???\'', '')
-        text = self.remove_spaces(text)
-        return text
-
-    def tokenizer(self, text: str) -> List[str]:
-        '''Return the tokens of a sentence including punctuation:
-
-            >>> tokenize('The apple. Where is the apple?')
-        '['The', 'apple', '.', 'Where', 'is', 'the', 'apple', '?']'
-        '''
-        return [x.strip() for x in re.split(r'(\W+)?', text) if x.strip()]
-
-    def lemmatizer(self, texts: list):
-        WordNet = WordNetLemmatizer()
-        return ' '.join([WordNet.lemmatize(w) for w in texts])
-
     def lower_texts(self, text_col='text') -> None:
         self[text_col] = self[text_col].str.lower()
 
-    def replace_contractions(self, text_col='text'):
-        '''Replaces contractions (including slang words)
-
-        NOTE: This process requires normal spacing between characters.
-        '''
-        self[text_col] = self[text_col].apply(lambda x: contractions.fix(x))
+    def replace_contractions(self, text_col='text',
+                             leftovers=True, slang=True):
+        self[text_col] = self[text_col].apply(
+            lambda x: replace_contractions(x, leftovers, slang))
 
     def normalize_texts(self, text_col='text') -> None:
         self[text_col] = self[text_col].apply(
@@ -101,6 +49,7 @@ class TextPreprocess(JsonDataFrame):
                        text_col='text',
                        standardize=True,
                        contractions=True,
+                       slang=True,
                        lemmatize=False,
                        normalize=True,
                        lower_texts=False,
@@ -127,6 +76,11 @@ class TextPreprocess(JsonDataFrame):
         `contractions` : (bool, default=True)
             Replaces common contractions (`including slang words`)
 
+                - `slang` : (bool, default=True)
+                If False, slang words will be ignored and not replaced.
+
+                - `
+
         `lemmatize` : (bool, default=True)
             Lemmatizes words: Useful for models like `LDA` and `word2vec`.
 
@@ -145,7 +99,7 @@ class TextPreprocess(JsonDataFrame):
         '''
         self.normalize_whitespaces(text_col)
         if contractions:
-            self.replace_contractions(text_col)
+            self.replace_contractions(text_col, slang=slang)
 
         if standardize:
 

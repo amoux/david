@@ -1,15 +1,16 @@
 # API HAS BEEN UPDATED
-#from googleapiclient.discovery import build
+# from googleapiclient.discovery import build
 
 from googleapiclient import discovery
 
-from .utils import YtApiKeys
+from david.config import YoutubeConfig
+
+youtube = YoutubeConfig()
 
 
 def yt_search(q: str, max_results=10):
     '''Returns a list of matching search results.
     '''
-    youtube = YtApiKeys()
     disco_build = discovery.build(
         serviceName=youtube.api.service,
         version=youtube.api.version,
@@ -25,7 +26,7 @@ def yt_search(q: str, max_results=10):
     return search
 
 
-def yt_channel(q: str, max_results=10):
+def yt_video(q: str, max_results=10):
     '''Youtube video content from a search query.
     (Youtube Data API). Returns a list of matching videos,
     channels matching the given a item query.
@@ -41,7 +42,6 @@ def yt_channel(q: str, max_results=10):
     `max_results` : (int)
     Number of results to retrive for the given item query.
     '''
-    youtube = YtApiKeys()
     disco_build = discovery.build(
         serviceName=youtube.api.service,
         version=youtube.api.version,
