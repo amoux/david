@@ -1,5 +1,3 @@
-import re
-
 from .base import JsonDataFrame
 from .text import (lemmatizer, reduce_repeating_chars, remove_duplicate_words,
                    replace_contractions, tokenizer)
@@ -20,9 +18,9 @@ class TextPreprocess(JsonDataFrame):
 
     def normalize_texts(self, text_col='text') -> None:
         self[text_col] = self[text_col].apply(
-            lambda x: self.remove_duplicate_words(x))
+            lambda x: remove_duplicate_words(x))
         self[text_col] = self[text_col].apply(
-            lambda x: self.reduce_repeating_chars(x))
+            lambda x: reduce_repeating_chars(x))
 
     def _standardize_text_A(self, text_col='text') -> None:
         self[text_col] = self[text_col].str.replace(r" '", r"'")
@@ -40,10 +38,10 @@ class TextPreprocess(JsonDataFrame):
 
     def lemmetize_texts(self, text_col='text') -> None:
         self[text_col] = self[text_col].str.split()
-        self[text_col] = self[text_col].apply(lambda x: self.lemmatizer(x))
+        self[text_col] = self[text_col].apply(lambda x: lemmatizer(x))
 
     def tokenize_texts(self, text_col='text') -> None:
-        self[text_col] = self[text_col].apply(lambda x: self.tokenizer(x))
+        self[text_col] = self[text_col].apply(lambda x: tokenizer(x))
 
     def clean_all_text(self,
                        text_col='text',
@@ -99,7 +97,7 @@ class TextPreprocess(JsonDataFrame):
         '''
         self.normalize_whitespaces(text_col)
         if contractions:
-            self.replace_contractions(text_col, slang=slang)
+            replace_contractions(text_col, slang=slang)
 
         if standardize:
 

@@ -120,10 +120,12 @@ def n_grams(corpus: list,
         * quadgram-range: (4, 4)
     '''
 
-    if isinstance(ngram_range, tuple):
-        vec = CountVectorizer(ngram_range=ngram_range,
-                              max_features=max_features
-                              ).fit(corpus)
+    if not isinstance(ngram_range, tuple):
+        raise ValueError(f'{ngram_range} is not a tuple type = tuple(n, n)')
+
+    vec = CountVectorizer(ngram_range=ngram_range,
+                          max_features=max_features
+                          ).fit(corpus)
     bag_of_words = vec.transform(corpus)
     wordsums = bag_of_words.sum(axis=0)
     wordfreq = [(word, wordsums[0, idx])
@@ -132,7 +134,8 @@ def n_grams(corpus: list,
     return wordfreq[:n]
 
 
-def top_unigrams(corpus, n=5, max_features=None, reverse=True):
+def top_unigrams(corpus, n=5, ngram_range=(1, 1),
+                 max_features=None, reverse=True):
     '''N-Gram CountVectorizer most frequently used Unigrams.
 
     Usage:
@@ -142,7 +145,7 @@ def top_unigrams(corpus, n=5, max_features=None, reverse=True):
         >>> top_df = pd.DataFrame(top_words)
         >>> top_df.columns = ["unigram", "frequency"]
     '''
-    return n_grams(corpus, n, max_features, reverse)
+    return n_grams(corpus, n, ngram_range, max_features, reverse)
 
 
 def top_bigrams(corpus, n=5, ngram_range=(2, 2),

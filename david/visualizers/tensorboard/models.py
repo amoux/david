@@ -69,13 +69,13 @@ class Bigram(object):
     '''Gensim Biagram Class.
     '''
 
-    def __init__(self, iterator):
-        self.iterator = iterator
-        self.bigram = gensim.models.Phrases(self.iterator)
+    def __init__(self, sentences):
+        self.sentences = sentences
+        self.bigram = gensim.models.Phrases(self.sentences)
 
     def __iter__(self):
-        for sentence in self.iterator:
-            yield self.bigram[sentence]
+        for sent in self.sentences:
+            yield self.bigram[sent]
 
 
 class Word2Vec(object):
@@ -122,13 +122,13 @@ class Word2Vec(object):
         self.model.save(os.path.join(self.save_folder, "gensim-model.cpkt"))
 
 
-def create_embeddings(gensim_model=None, model_folder=None):
+def create_embeddings(gensim_model=None, MODEL_FOLDER=None):
     weights = gensim_model.wv.vectors
     idx2words = gensim_model.wv.index2word
     vocab_size = weights.shape[0]
     embedding_dim = weights.shape[1]
 
-    with open(os.path.join(model_folder, "metadata.tsv"), 'w') as f:
+    with open(os.path.join(MODEL_FOLDER, "metadata.tsv"), 'w') as f:
         f.writelines("\n".join(idx2words))
     tf.reset_default_graph()
 
@@ -138,7 +138,7 @@ def create_embeddings(gensim_model=None, model_folder=None):
         tf.float32, [vocab_size, embedding_dim])
 
     embedding_init = W.assign(embedding_placeholder)
-    writer = tf.summary.FileWriter(model_folder, graph=tf.get_default_graph())
+    writer = tf.summary.FileWriter(MODEL_FOLDER, graph=tf.get_default_graph())
     saver = tf.train.Saver()
 
     # Format for projector.ProjectorConfig():
@@ -150,7 +150,7 @@ def create_embeddings(gensim_model=None, model_folder=None):
 
     embedding = config.embeddings.add()
     embedding.tensor_name = W.name
-    embedding.metadata_path = os.path.join(model_folder, "metadata.tsv")
+    embedding.metadata_path = os.path.join(MODEL_FOLDER, "metadata.tsv")
 
     # Saves a configuration file that TensorBoard will read during startup.
 
@@ -159,7 +159,7 @@ def create_embeddings(gensim_model=None, model_folder=None):
     with tf.Session() as sess:
         sess.run(embedding_init, feed_dict={embedding_placeholder: weights})
         save_path = saver.save(sess, os.path.join(
-            model_folder, "tf-model.cpkt"))
+            MODEL_FOLDER, "tf-model.cpkt"))
     return save_path
 
     parser.add_argument("--folder", default="models/movie_reviews")
@@ -192,6 +192,8 @@ if __name__ == "__main__":
                              negative=10, cbow_mean=1, iter=5, null_word=0)
 
     unigram_generator = TxtConnector(filepath="data/SMSSpamCollection.txt")
+
+
     sentence_generator = Bigram(unigram_generator)
 
     os.makedirs(params.folder)
@@ -221,5 +223,5 @@ if __name__ == "__main__":
             iter=params.iter,
             null_word=params.null_word)
 
-    create_embeddings(gensim_model=w2v.model, model_folder=params.folder)
+    create_embeddings(gensim_model=w2v.model, MODEL_FOLDER=params.folder)
     shutil.rmtree(params.folder)
