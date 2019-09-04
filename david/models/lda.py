@@ -5,7 +5,8 @@ TOPIC_COLUMN_NAMES = ['dominant_topic', 'contribution(%)', 'keywords']
 
 
 def get_lda_topics(LDA_model, Gensim_dict,
-                   text_col, num_topics, topic_col_names: list
+                   text_col: str, num_topics: int,
+                   topic_col_names: list = TOPIC_COLUMN_NAMES
                    ):
     '''(LDA) Gets the dominant topic, percentage contribution and
     the keywords for each given text document. This function identifies
@@ -45,6 +46,9 @@ def get_lda_topics(LDA_model, Gensim_dict,
     '''
     if topic_col_names and len(topic_col_names) == 3:
         TOPIC_COLUMN_NAMES = topic_col_names
+
+    if not num_topics:
+        raise ValueError('You need to pass a value for the number of topics!')
 
     # dataframe instance for the topics.
     df = pd.DataFrame()
