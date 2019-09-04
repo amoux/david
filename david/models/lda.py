@@ -4,7 +4,7 @@ import pandas as pd
 LDA_TOPIC_COLNAMES = ['dominant_topic', 'contribution(%)', 'keywords']
 
 NEW_TOPIC_COLNAMES = ['topicId', 'dominantTopic',
-                      'topicContribution', 'topicKeywords', 'topicTokens']
+                      'topicContribution', 'topicKeywords', 'topictTokens']
 
 
 def build_topics(LDA_model, Gensim_doc2bow,

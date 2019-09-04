@@ -3,6 +3,7 @@ import os
 
 import gensim
 import tensorflow as tf
+from tensorboard.plugins import projector
 from tensorflow.contrib import tensorboard
 
 
@@ -106,14 +107,21 @@ class Word2Vec(object):
         self.model.save(os.path.join(self.save_folder, self.model_name))
 
 
-def write2file(iterable, fname, fpath, join_by='\n'):
-    with open(os.path.join(fpath, fname), 'w') as f:
-        f.writelines(join_by.join(iterable))
+def check_dir(save_path):
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
 
 
-def save_embedding_config(tf_variable, tf_writer,
-                          model_name, meta_path):
-    '''TensorBoard embeddings visualizer configuration session.
+def write2file(index2word, meta_name: str, save_path: str, join_by='\n'):
+    check_dir(save_path)
+    with open(os.path.join(save_path, meta_name), 'w') as f:
+        f.writelines(join_by.join(index2word))
+
+
+def save_embedding_config(tensor_name, tf_writer,
+                          meta_name: str, save_path: str):
+    '''
+    TensorBoard embeddings visualizer configuration session.
     Adds format for the projector embeddings and saves the
     configuration file that TensorBoard will read during startup.
 
@@ -122,14 +130,15 @@ def save_embedding_config(tf_variable, tf_writer,
     '''
     config = tensorboard.plugins.projector.ProjectorConfig()
     embedding = config.embeddings.add()
-    embedding.tensor_name = tf_variable
-    embedding.metadata_path = os.path.join(meta_path, model_name)
+    embedding.tensor_name = tensor_name
+    embedding.metadata_path = os.path.join(save_path, meta_name)
     tensorboard.plugins.projector.visualize_embeddings(tf_writer, config)
 
 
 def evaluate_tensor_fetches(tensor, placeholder, vectors,
-                            tf_saver, model_name, meta_path):
-    '''Runs operations and evaluates tensors in fetches.
+                            tf_saver, model_name, save_path):
+    '''
+    Runs operations and evaluates tensors in fetches.
     This method runs one "step" of TensorFlow computation, by running the
     necessary graph fragment to execute every Operation and evaluate every
     Tensor in fetches, substituting the values in feed_dict for the
@@ -139,32 +148,38 @@ def evaluate_tensor_fetches(tensor, placeholder, vectors,
     '''
     with tf.Session() as sess:
         sess.run(tensor, feed_dict={placeholder: vectors})
-        return tf_saver.save(sess, os.path.join(meta_path, model_name))
+        # saves a configuration file that TensorBoard will read during startup.
+        return tf_saver.save(sess, os.path.join(save_path, model_name))
 
 
-def create_embeddings(gensim_model: object,
+def create_embeddings(gensim_model,
                       tf_value=0.0,
                       tf_trainable=False,
                       tf_varname='W',
                       model_name='tf-model.cpkt',
-                      meta_path='metadata.tsv',
+                      meta_name='metadata.tsv',
+                      save_path='models/',
                       join_by='\n'):
     '''
     TensorBoard embedding visualizer for a gensim models.
 
-    PARAMETERS
+    Parameters:
     ----------
+
     `tf_value` : (int|list, default=0.0)
-    A constant value (or list) of output type `dtype`.
+        A constant value (or list) of output type `dtype`.
 
     `tf_varname` : (str, default='W')
-    Optional name for the tensor.
+        Optional name for the tensor.
+
     '''
     vectors = gensim_model.wv.vectors
     index2word = gensim_model.wv.index2word
     vocab_size = vectors.shape[0]
     embedding = vectors.shape[1]
-    write2file(index2word, meta_path, model_name, join_by)
+
+    write2file(index2word, meta_name=meta_name,
+               save_path=save_path, join_by=join_by)
 
     tf.reset_default_graph()
     W = tf.Variable(
@@ -172,10 +187,13 @@ def create_embeddings(gensim_model: object,
         trainable=tf_trainable,
         name=tf_varname
     )
-    writer = tf.summary.FileWriter(meta_path, graph=tf.get_default_graph())
-    save_embedding_config(W.name, writer, model_name, meta_path)
+    writer = tf.summary.FileWriter(save_path, graph=tf.get_default_graph())
+    save_embedding_config(W.name, writer, meta_name, save_path)
     placeholder = tf.placeholder(tf.float32, [vocab_size, embedding])
-    save_path = evaluate_tensor_fetches(W.assign(placeholder), placeholder,
-                                        vectors, tf.train.Saver(),
-                                        model_name, meta_path)
+    save_path = evaluate_tensor_fetches(tensor=W.assign(placeholder),
+                                        placeholder=placeholder,
+                                        vectors=vectors,
+                                        tf_saver=tf.train.Saver(),
+                                        model_name=model_name,
+                                        save_path=save_path)
     return save_path
