@@ -63,14 +63,14 @@ def yt_video(q: str, max_results=10):
             ).execute()
 
             items = videos['items'][0]['snippet']
-            for content in youtube.content._fields:
+            for content in youtube.content:
                 try:
                     temp[content] = items[content]
                 except KeyError:
                     temp[content] = 'xxNoneFoundxx'
 
             items = videos['items'][0]['statistics']
-            for stat in youtube.stat._fields:
+            for stat in youtube.stat:
                 try:
                     temp[stat] = items[stat]
                 except KeyError:
