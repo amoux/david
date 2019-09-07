@@ -1,5 +1,3 @@
-# API HAS BEEN UPDATED
-# from googleapiclient.discovery import build
 
 from googleapiclient import discovery
 
@@ -16,8 +14,8 @@ def yt_search(q: str, max_results=10):
         version=youtube.api.version,
         developerKey=youtube.api.key
     )
-    SearchResource = Discovery.search()
-    search = SearchResource.list(
+    searchResource = Discovery.search()
+    search = searchResource.list(
         q=q,
         part='id, snippet',
         maxResults=max_results,
@@ -31,16 +29,17 @@ def yt_video(q: str, max_results=10):
     (Youtube Data API). Returns a list of matching videos,
     channels matching the given a item query.
 
-    PARAMETERS
+    Parameters:
     ----------
 
-    `q` : (str)
-    The item query (text) to item for videos on youtube,
-    which influences the video_response based on the keywords given
-    to the parameter.
+    `q` : (type=str)
+        The item query (text) to item for videos on youtube,
+        which influences the video_response based on the keywords given
+        to the parameter.
 
-    `max_results` : (int)
-    Number of results to retrive for the given item query.
+    `max_results` : (type=int)
+        Number of results to retrive for the given item query.
+
     '''
     Discovery = discovery.build(
         serviceName=youtube.api.service,
@@ -52,15 +51,16 @@ def yt_video(q: str, max_results=10):
 
     results = []
     for item in search.get('items', []):
+        if (item['id']['kind'] == 'youtube#video'):
 
-        if item['id']['kind'] == 'youtube#video':
             temp = {}
             temp['title'] = item['snippet']['title']
             temp['vidId'] = item['id']['videoId']
 
             videos = videoResource.list(
                 part='statistics, snippet',
-                id=item['id']['videoId']).execute()
+                id=item['id']['videoId']
+            ).execute()
 
             items = videos['items'][0]['snippet']
             for content in youtube.content._fields:

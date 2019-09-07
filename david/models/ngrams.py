@@ -52,19 +52,20 @@ def text2ngrams(sentences: Iterable[str],
     `spacy_model` : (spacy language model, default='en_core_web_lg')
         Other spacy models are compatible with this function.
 
-    `min_count` (Type[int|float], default=5)
+    `min_count` : (Type[int|float], default=5)
         Ignore all words and bigrams with total collected count lower than
-        this value. Method from class `gensim.models.phrases.Phrases`
+        this value. Method from class `gensim.models.phrases.Phrases`.
 
-    `threshold` (float, default=10.0)
+    `threshold` : (float, default=10.0)
          Represent a score threshold for forming the phrases (higher means
          fewer phrases). A phrase of words a followed by b is accepted if
          the score of the phrase is greater than threshold. Heavily depends
          on concrete scoring-function, see the scoring parameter. Method from
-         class `gensim.models.phrases.Phrases`
+         class `gensim.models.phrases.Phrases`.
 
     Returns:
     -------
+
         Returns preprocessed texts.
 
     '''
