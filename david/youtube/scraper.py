@@ -63,7 +63,7 @@ def _ajax_request(session, url, params, data, retries=10, sleep=20):
             time.sleep(sleep)
 
 
-def _get_channel_comments(youtube_id, sleep=1):
+def _scrape_comments(youtube_id, sleep=1):
     session = _requests.Session()
     session.headers['User-Agent'] = _USER_AGENT
     response = session.get(_YT_COMMENTS_URL.format(youtube_id=youtube_id))
@@ -138,7 +138,7 @@ def _write2json(fn: str, video_id: str, limit=None):
     '''
     count = 0
     with io.open(fn, 'w', encoding='utf-8') as fp:
-        for comment in _get_channel_comments(video_id):
+        for comment in _scrape_comments(video_id):
             print(json.dumps(comment, ensure_ascii=False), file=fp)
             count += 1
 
