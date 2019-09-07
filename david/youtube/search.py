@@ -1,3 +1,4 @@
+from typing import Dict, Iterable, List
 
 from googleapiclient import discovery
 
@@ -6,7 +7,7 @@ from david.config import YoutubeConfig
 youtube = YoutubeConfig()
 
 
-def yt_search(q: str, max_results=10):
+def yt_search(q: str, max_results: int = 10) -> Dict:
     '''Returns a list of matching search results.
     '''
     Discovery = discovery.build(
@@ -24,7 +25,7 @@ def yt_search(q: str, max_results=10):
     return search
 
 
-def yt_video(q: str, max_results=10):
+def yt_video(q: str, max_results: int = 10) -> Iterable[List[Dict]]:
     '''Youtube video content from a search query.
     (Youtube Data API). Returns a list of matching videos,
     channels matching the given a item query.
