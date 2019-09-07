@@ -4,12 +4,12 @@ import gensim
 import spacy
 from gensim.utils import simple_preprocess
 from sklearn.feature_extraction.text import CountVectorizer
-from spacy import lang
+from spacy.lang.en import stop_words
 
 SPACY_MODEL = 'en_core_web_lg'
 SPACY_DISABLE = ['parser', 'ner']
 SPACY_POSTAGS = ['NOUN', 'ADJ', 'VERB', 'ADV']
-STOP_WORDS = lang.en.stop_words.STOP_WORDS
+STOP_WORDS = stop_words.STOP_WORDS
 
 
 def _prep(stopwords: set, sentences: list):

@@ -11,12 +11,12 @@ youtube = YoutubeConfig()
 def yt_search(q: str, max_results=10):
     '''Returns a list of matching search results.
     '''
-    disco_build = discovery.build(
+    Discovery = discovery.build(
         serviceName=youtube.api.service,
         version=youtube.api.version,
         developerKey=youtube.api.key
     )
-    SearchResource = disco_build.search()
+    SearchResource = Discovery.search()
     search = SearchResource.list(
         q=q,
         part='id, snippet',
@@ -42,12 +42,12 @@ def yt_video(q: str, max_results=10):
     `max_results` : (int)
     Number of results to retrive for the given item query.
     '''
-    disco_build = discovery.build(
+    Discovery = discovery.build(
         serviceName=youtube.api.service,
         version=youtube.api.version,
         developerKey=youtube.api.key
     )
-    VideoResource = disco_build.videos()
+    videoResource = Discovery.videos()
     search = yt_search(q, max_results)
 
     results = []
@@ -58,7 +58,7 @@ def yt_video(q: str, max_results=10):
             temp['title'] = item['snippet']['title']
             temp['vidId'] = item['id']['videoId']
 
-            videos = VideoResource.videos().list(
+            videos = videoResource.list(
                 part='statistics, snippet',
                 id=item['id']['videoId']).execute()
 
