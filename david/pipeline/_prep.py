@@ -74,10 +74,8 @@ class TextPreprocess(JsonDataFrame):
         `contractions` : (bool, default=True)
             Replaces common contractions (`including slang words`)
 
-                - `slang` : (bool, default=True)
-                If False, slang words will be ignored and not replaced.
-
-                - `
+        `slang` : (bool, default=True)
+            If False, slang words will be ignored and not replaced.
 
         `lemmatize` : (bool, default=True)
             Lemmatizes words: Useful for models like `LDA` and `word2vec`.
@@ -85,9 +83,9 @@ class TextPreprocess(JsonDataFrame):
         `normalize` : (bool, default=True)
             Removes duplicate words (`words next-to-eachother ONLY`).
             It also reduces words with chars repeated more than 3 times
-            to a single char. Useful to replace words such as `looooooong`
-            by `long`. `NOTE`: It can change abbreviations such as `AAA`
-            to single `A`.
+            to a single char. Useful to replace words such as 'looooooong'
+            by 'long'. NOTE: It can change abbreviations such as 'AAA' to
+            single 'A'.
 
         `lower_texts` : (bool, default=True)
             Converts all texts to lowercase.

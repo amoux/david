@@ -4,12 +4,12 @@ import gensim
 import spacy
 from gensim.utils import simple_preprocess
 from sklearn.feature_extraction.text import CountVectorizer
-from spacy import lang
+from spacy.lang.en import stop_words
 
 SPACY_MODEL = 'en_core_web_lg'
 SPACY_DISABLE = ['parser', 'ner']
 SPACY_POSTAGS = ['NOUN', 'ADJ', 'VERB', 'ADV']
-STOP_WORDS = lang.en.stop_words.STOP_WORDS
+STOP_WORDS = stop_words.STOP_WORDS
 
 
 def _prep(stopwords: set, sentences: list):
@@ -52,19 +52,20 @@ def text2ngrams(sentences: Iterable[str],
     `spacy_model` : (spacy language model, default='en_core_web_lg')
         Other spacy models are compatible with this function.
 
-    `min_count` (Type[int|float], default=5)
+    `min_count` : (Type[int|float], default=5)
         Ignore all words and bigrams with total collected count lower than
-        this value. Method from class `gensim.models.phrases.Phrases`
+        this value. Method from class `gensim.models.phrases.Phrases`.
 
-    `threshold` (float, default=10.0)
+    `threshold` : (float, default=10.0)
          Represent a score threshold for forming the phrases (higher means
          fewer phrases). A phrase of words a followed by b is accepted if
          the score of the phrase is greater than threshold. Heavily depends
          on concrete scoring-function, see the scoring parameter. Method from
-         class `gensim.models.phrases.Phrases`
+         class `gensim.models.phrases.Phrases`.
 
     Returns:
     -------
+
         Returns preprocessed texts.
 
     '''
