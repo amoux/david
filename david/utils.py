@@ -1,5 +1,7 @@
 from functools import namedtuple
 
+import torch
+
 REGEX_DICT = {
     'match_titles': "(-?([A-Z].\\s)?([A-Z][a-z]+)\\s?)+([A-Z]'([A-Z][a-z]+))?",
     'match_quotes': '"(?:\\.|(\\")|[^""\n])*"',
@@ -15,3 +17,21 @@ def pointer(name: str, params: dict):
     '''
     name = namedtuple(name, params.keys())
     return name(*params.values())
+
+
+def is_cuda_enabled(torch=torch, emptycache=False):
+    '''Prints GPU device and memory usage information if Cuda is enabled.
+
+    `emptycache`: Releases all unoccupied cached memory currently held by
+    the caching allocator so that those can be used in other GPU application
+    and visible in nvidia-smi.
+    '''
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f'device: {device}')
+    if device.type == 'cuda':
+        print(torch.cuda.get_device_name(device))
+        print('\nmemory usage:')
+        print(f"allocated: {torch.cuda.memory_allocated(device)} GB")
+        print(f"cached: {torch.cuda.memory_cached(device)} GB")
+    if emptycache:
+        torch.cuda.empty_cache()
