@@ -101,6 +101,9 @@ def get_similartexts(words: Sequence[str],
         or None. For example, passing the doc_size=[1,10]
         returns a formatted str: 'BETWEEN 1 AND 100'.
 
+    `as_list` : (type=bool, default=False)
+        Returns a list instead of a Collection object type. 
+
     `db_name`: (str)
         The name of the dataset to load from DAVID_COMMENTS_DB.
         Available dataset names: `comments.db,  comments_v1.db`
