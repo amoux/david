@@ -94,7 +94,7 @@ def get_similartexts(words: Sequence[str],
     Parameters:
     ----------
 
-    `text`: (type=str)
+    `words`: (type=str)
         A sring sequence or key-words to use for extracting
         similar sequences from any maching row.
 
