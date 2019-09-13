@@ -33,7 +33,9 @@ def prep_search(text: str, joinby=' ', outer='%'):
     return (f'{outer}{text}{outer}')
 
 
-def format_condition(template: str, doc_size: list = None, condition=condition):
+def format_condition(template: str,
+                     doc_size: list = None,
+                     condition=condition):
     '''Sql statement template formatter.
 
     Parameters:
@@ -97,12 +99,14 @@ def get_similartexts(words: Sequence[str],
         similar sequences from any maching row.
 
     `doc_size` : (types=List[str|int] or [NoneType])
-        A clause can be a sigle or pair-combinations
-        or None. For example, passing the doc_size=[1,10]
-        returns a formatted str: 'BETWEEN 1 AND 100'.
+        A single or two index values(s) to use as a filter
+        or target. For example, passing the doc_size=[1,10]
+        selects index range 1 to 10. This is helpful if the
+        database is over one million rows.
 
     `as_list` : (type=bool, default=False)
-        Returns a list instead of a Collection object type. 
+        Returns a list instead of a Collection object type.
+        All empty lines are removed.
 
     `db_name`: (str)
         The name of the dataset to load from DAVID_COMMENTS_DB.
@@ -117,7 +121,7 @@ def get_similartexts(words: Sequence[str],
         >>> for doc in docs: print(doc.text)
         ...
         'thanks for a great video of introduction to Tensorflow 👍.'
-        'Hello TechLead, Can you make a video about Scala in software engineer?'
+        'Hi TechLead, Can you make a video about Scala in software engineer?'
 
     '''
     sqlpath = 'sqlite:///{}'.format(
