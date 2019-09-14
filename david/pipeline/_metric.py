@@ -1,13 +1,14 @@
 
+from collections import MutableSequence
+
 import numpy as np
 from spacy.lang.en import STOP_WORDS
 
-from .base import JsonDataFrame
 from .text import (get_emojis, get_sentiment_polarity,
                    get_sentiment_subjectivity)
 
 
-class TextMetrics(JsonDataFrame):
+class TextMetrics(MutableSequence, object):
     '''Gathers Statistical Metrics from Texts.
 
     Parameters:
@@ -33,8 +34,8 @@ class TextMetrics(JsonDataFrame):
     if not isinstance(STOPWORDS, set):
         raise ValueError(f'STOPWORDS has to be a: {type(set)}.')
 
-    def __init__(self, corpus_path: str):
-        super().__init__(corpus_path)
+    def strip_spaces(self, text_col='text'):
+        self[text_col] = self[text_col].str.strip()
 
     def sentiment_labeler(self, score):
         '''Labels for sentiment analysis scores.
@@ -42,7 +43,7 @@ class TextMetrics(JsonDataFrame):
         '''
         if (score > 0):
             return self.SENTI_LABELS[0]
-        elif (score < 0):
+        if (score < 0):
             return self.SENTI_LABELS[1]
         else:
             return self.SENTI_LABELS[2]
@@ -158,7 +159,7 @@ class TextMetrics(JsonDataFrame):
         if senti_labels:
             self.SENTI_LABELS = senti_labels
 
-        self.normalize_whitespaces(text_col)
+        self.strip_spaces(text_col)
         if string:
             self.string_metric(text_col)
         if words:

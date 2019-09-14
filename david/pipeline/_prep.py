@@ -1,12 +1,13 @@
-from .base import JsonDataFrame
+
+from collections import MutableSequence
 from .text import (lemmatizer, reduce_repeating_chars, remove_duplicate_words,
                    replace_contractions, tokenizer)
 
 
-class TextPreprocess(JsonDataFrame):
+class TextPreprocess(MutableSequence, object):
 
-    def __init__(self, corpus_path: str):
-        super().__init__(corpus_path)
+    def strip_spaces(self, text_col='text'):
+        self[text_col] = self[text_col].str.strip()
 
     def lower_texts(self, text_col='text') -> None:
         self[text_col] = self[text_col].str.lower()
@@ -93,19 +94,16 @@ class TextPreprocess(JsonDataFrame):
         `tokenize` : (bool) default=False
             Converts a string into a list or array like.
         '''
-        self.normalize_whitespaces(text_col)
+        self.strip_spaces(text_col)
+
         if contractions:
             replace_contractions(text_col, slang=slang)
-
         if standardize:
-
             # NOTE: improve these methods names
             # and the order and instention to what
             # they use each regex pattern.
-
             self._standardize_text_A(text_col)
             self._standardize_text_B(text_col)
-
         if lemmatize:
             self.lemmetize_texts(text_col)
         if normalize:
