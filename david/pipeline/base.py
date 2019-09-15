@@ -14,25 +14,14 @@ class DavidDataFrame(DataFrame):
     def missing_values(self):
         return self.isnull().sum()
 
-    @staticmethod
-    def to_textfile(fname: str,
-                    df_col='text',
-                    from_df: object = None,
-                    from_list: list = None
-                    ) -> None:
+    def to_textfile(self, fn: str, text_col='text') -> None:
         '''Writes string sequences to a text file.
-        You can choose to save from a dataframe obj
-        or if its on list format pass a list. Writer
-        skips any blank lines/indexes.
         '''
-        if from_df:
-            iterable = from_df[df_col].tolist()
-        elif from_list:
-            iterable = from_list
-        with open(fname, 'w', encoding='utf-8') as f:
-            for line in iterable:
-                if len(line) > 0:
-                    f.write('%s\n' % line)
+        with open(fn, 'w', encoding='utf-8') as f:
+            texts = self[text_col].values.tolist()
+            for text in texts:
+                if len(text) > 0:
+                    f.write('%s\n' % text)
             f.close()
 
     def slice_shape(self, min_val=0, ref_col='stringLength'):

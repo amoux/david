@@ -1,7 +1,8 @@
 
 from collections import MutableSequence
+
 from .text import (lemmatizer, reduce_repeating_chars, remove_duplicate_words,
-                   replace_contractions, tokenizer)
+                   remove_spaces, replace_contractions, tokenizer)
 
 
 class TextPreprocess(MutableSequence, object):
@@ -12,10 +13,11 @@ class TextPreprocess(MutableSequence, object):
     def lower_texts(self, text_col='text') -> None:
         self[text_col] = self[text_col].str.lower()
 
-    def replace_contractions(self, text_col='text',
-                             leftovers=True, slang=True):
+    def fix_contractions(self, text_col='text', leftovers=True, slang=True):
         self[text_col] = self[text_col].apply(
-            lambda x: replace_contractions(x, leftovers, slang))
+            lambda s: remove_spaces(s))
+        self[text_col] = self[text_col].apply(
+            lambda s: replace_contractions(s, leftovers, slang))
 
     def normalize_texts(self, text_col='text') -> None:
         self[text_col] = self[text_col].apply(
@@ -48,6 +50,7 @@ class TextPreprocess(MutableSequence, object):
                        text_col='text',
                        standardize=True,
                        contractions=True,
+                       leftovers=True,
                        slang=True,
                        lemmatize=False,
                        normalize=True,
@@ -97,7 +100,7 @@ class TextPreprocess(MutableSequence, object):
         self.strip_spaces(text_col)
 
         if contractions:
-            replace_contractions(text_col, slang=slang)
+            self.fix_contractions(text_col, leftovers, slang)
         if standardize:
             # NOTE: improve these methods names
             # and the order and instention to what
