@@ -19,14 +19,17 @@ sql = SqliteCommentsDB()
 docs = sql.get_similartexts('i subscribed')
 [doc.text for doc in docs][:5]
 ```
-`['Video was hilarious, subscribed!',
+
+```
+['Video was hilarious, subscribed!',
  'Hamazingly educational; Subscribed for more :)',
  'Great vid....SUBSCRIBED with the Bell👍',
  'Clicked for the learning, stayed for the hair,
  subscribed for the humor. Keep it up fam.',
  'I keep thinking the slinky on his head is going
  to fall off. But this stuff is too damn
- interesting so I subscribed anyways.']`
+ interesting so I subscribed anyways.']
+ ```
 
 * export a document to a dataframe with the `export` attribute.
 
@@ -41,7 +44,8 @@ pipe = Pipeline(docs.export('df'))
 pipe.get_all_metrics(string=True, words=True, characters=True, tags=True)
 pipe.describe()
 ```
-`
+
+```
        stringLength  avgWordLength  ...  charUpperCount  charLowerCount
 count     88.000000      88.000000  ...       88.000000       88.000000
 mean     156.818182       5.916454  ...        6.375000      116.704545
@@ -53,4 +57,4 @@ min       12.000000       4.166667  ...        0.000000       10.000000
 max      836.000000       9.000000  ...       46.000000      647.000000
 
 [8 rows x 7 columns]
-`
+```
