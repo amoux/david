@@ -11,13 +11,13 @@
 * build a dataset from a search query.
 
 ```python
->>> from david_server.sql import SqliteCommentsDB
+from david_server.sql import SqliteCommentsDB
 
 # configure the database. default parameters: (db_name='comments_v2.db', table='comments')
 
->>> sql = SqliteCommentsDB()
->>> docs = sql.get_similartexts('i subscribed')
->>> [doc.text for doc in docs][:5]
+sql = SqliteCommentsDB()
+docs = sql.get_similartexts('i subscribed')
+[doc.text for doc in docs][:5]
 ...
 '['Video was hilarious, subscribed!',
  'Hamazingly educational; Subscribed for more :)',
@@ -33,15 +33,15 @@
 * export a document to a dataframe with the `export` attribute.
 
 ```python
->>> from david.pipeline import Pipeline
->>> pipe = Pipeline(docs.export('df'))
+from david.pipeline import Pipeline
+pipe = Pipeline(docs.export('df'))
 ```
 
 * call the `get_all_metrics` instance method to quickly get basic stats on the texts. for more information on the additional parameters available [click here]().
 
 ```python
->>> pipe.get_all_metrics(string=True, words=True, characters=True, tags=True)
->>> pipe.describe()
+pipe.get_all_metrics(string=True, words=True, characters=True, tags=True)
+pipe.describe()
 ...
        stringLength  avgWordLength  ...  charUpperCount  charLowerCount
 count     88.000000      88.000000  ...       88.000000       88.000000
