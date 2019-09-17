@@ -59,35 +59,17 @@ max      836.000000       9.000000  ...       46.000000      647.000000
 * with tags=True the following attributes are available. (the amout of tags varies on the size of the dataset)
 
 ```python
-pipe.authorEmoji.unique()
-```
-
-```
+>>> pipe.authorEmoji.unique()
 array(['👍', '😍😍', '😂💙👄', '😊', '💕💕💕', '✌🏾', '😙', '🤔🤷♂'],
       dtype=object)
-```
-
-```python
-pipe.authorUrlLink.unique()
-```
-
-```
+      
+>>> pipe.authorUrlLink.unique()
 array([nan, 'https://www.youtube.com/channel/UCywXyzx6GZpDyxRvMOqLMiw'],
       dtype=object)
-```
 
-```python
-pipe.authorHashTags.unique()
-```
-
-```
+>>> pipe.authorHashTags.unique()
 array([nan, '#SUBSCRIBED'], dtype=object)
-```
 
-```python
-pipe.authorTimeTag.unique()
-```
-
-```
+>>> pipe.authorTimeTag.unique()
 array([nan, '10:06'], dtype=object)
 ```
