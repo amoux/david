@@ -56,7 +56,7 @@ max      836.000000       9.000000  ...       46.000000      647.000000
 [8 rows x 7 columns]
 ```
 
-* with tags=True the following attributes are available. (the amout of tags varies on the size of the dataset)
+* with `tags=True` the following attributes are available. (the amout of tags varies on the size of the dataset)
 
 ```python
 >>> pipe.authorEmoji.unique()
