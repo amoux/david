@@ -8,13 +8,10 @@
 
 > Currently the project is still in beta stages. Once the library is stable enough, an enhanced realease will be available for the public to use.
 
-* build a dataset from a search query.
+* configure the database and build a dataset from a search query. default parameters `db_name='comments_v2.db', table='comments'`.
 
 ```python
 from david_server.sql import SqliteCommentsDB
-
-# configure the database. default parameters: (db_name='comments_v2.db', table='comments')
-
 sql = SqliteCommentsDB()
 docs = sql.get_similartexts('i subscribed')
 [doc.text for doc in docs][:5]
