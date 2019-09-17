@@ -152,6 +152,12 @@ def replace_contractions(text: str, leftovers=True, slang=True):
     return contractions.fix(text, leftovers=leftovers, slang=slang)
 
 
+def normalize_spaces(text: str):
+    '''Returns a string sequence with only one space.
+    '''
+    return ' '.join(t for t in text.split())
+
+
 def remove_spaces(text: str):
     '''Remove more than one space.
     '''

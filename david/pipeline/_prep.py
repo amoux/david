@@ -1,50 +1,48 @@
 
 from collections import MutableSequence
 
-from .text import (lemmatizer, reduce_repeating_chars, remove_duplicate_words,
-                   remove_spaces, replace_contractions, tokenizer)
+from .text import (lemmatizer, normalize_spaces, reduce_repeating_chars,
+                   remove_duplicate_words, replace_contractions, tokenizer)
 
 
 class TextPreprocess(MutableSequence, object):
 
     def strip_spaces(self, text_col='text'):
-        self[text_col] = self[text_col].str.strip()
+        self[text_col] = self[text_col].apply(
+            lambda s: normalize_spaces(s))
 
     def lower_texts(self, text_col='text') -> None:
         self[text_col] = self[text_col].str.lower()
 
     def fix_contractions(self, text_col='text', leftovers=True, slang=True):
-        self[text_col] = self[text_col].apply(
-            lambda s: remove_spaces(s))
+        self.strip_spaces(text_col)
         self[text_col] = self[text_col].apply(
             lambda s: replace_contractions(s, leftovers, slang))
 
     def normalize_texts(self, text_col='text') -> None:
         self[text_col] = self[text_col].apply(
-            lambda x: remove_duplicate_words(x))
+            lambda s: remove_duplicate_words(s))
         self[text_col] = self[text_col].apply(
-            lambda x: reduce_repeating_chars(x))
+            lambda s: reduce_repeating_chars(s))
 
-    def _standardize_text_A(self, text_col='text') -> None:
-        self[text_col] = self[text_col].str.replace(r" '", r"'")
-        self[text_col] = self[text_col].str.replace(r"http\S+", "")
-        self[text_col] = self[text_col].str.replace(r"http", "")
-        self[text_col] = self[text_col].str.replace(r"@\S+", "")
-        self[text_col] = self[text_col].str.replace(
-            r"[^A-Za-z0-9(),!?@\'\`\"\_\n]", " ")
-
-    def _standardize_text_B(self, text_col='text') -> None:
+    def standardizerA(self, text_col='text') -> None:
         self[text_col] = self[text_col].str.replace(
             r"&lt;/?.*?&gt;", " &lt;&gt; ")
         self[text_col] = self[text_col].str.replace(r"(\\d|\\W)+", " ")
         self[text_col] = self[text_col].str.replace(r"[^a-zA-Z]", " ")
 
+    def standardizerB(self, text_col='text') -> None:
+        self[text_col] = self[text_col].str.replace(r"http\S+", "URL_TAG")
+        self[text_col] = self[text_col].str.replace(r"@\S+", "AUTHOR_TAG")
+        self[text_col] = self[text_col].str.replace(
+            r"[^A-Za-z0-9(),!?@\'\`\"\_\n]", " AUTHOR_TAG ")
+
     def lemmetize_texts(self, text_col='text') -> None:
         self[text_col] = self[text_col].str.split()
-        self[text_col] = self[text_col].apply(lambda x: lemmatizer(x))
+        self[text_col] = self[text_col].apply(lambda s: lemmatizer(s))
 
     def tokenize_texts(self, text_col='text') -> None:
-        self[text_col] = self[text_col].apply(lambda x: tokenizer(x))
+        self[text_col] = self[text_col].apply(lambda s: tokenizer(s))
 
     def clean_all_text(self,
                        text_col='text',
@@ -55,8 +53,7 @@ class TextPreprocess(MutableSequence, object):
                        lemmatize=False,
                        normalize=True,
                        lower_texts=False,
-                       tokenize=False
-                       ) -> None:
+                       tokenize=False) -> None:
         '''
         Dataframe Text Preprocessing Method. The arrangements
         have been crafted uniquely for Youtube Comments. Though,
@@ -98,19 +95,18 @@ class TextPreprocess(MutableSequence, object):
             Converts a string into a list or array like.
         '''
         self.strip_spaces(text_col)
-
         if contractions:
             self.fix_contractions(text_col, leftovers, slang)
         if standardize:
             # NOTE: improve these methods names
             # and the order and instention to what
             # they use each regex pattern.
-            self._standardize_text_A(text_col)
-            self._standardize_text_B(text_col)
-        if lemmatize:
-            self.lemmetize_texts(text_col)
+            self.standardizerA(text_col)
+            self.standardizerB(text_col)
         if normalize:
             self.normalize_texts(text_col)
+        if lemmatize:
+            self.lemmetize_texts(text_col)
         if lower_texts:
             self.lower_texts(text_col)
         if tokenize:

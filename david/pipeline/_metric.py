@@ -5,7 +5,7 @@ import numpy as np
 from spacy.lang.en import STOP_WORDS
 
 from .text import (get_emojis, get_sentiment_polarity,
-                   get_sentiment_subjectivity)
+                   get_sentiment_subjectivity, normalize_spaces)
 
 
 class TextMetrics(MutableSequence, object):
@@ -28,15 +28,6 @@ class TextMetrics(MutableSequence, object):
     STOPWORDS = STOP_WORDS
     SENTI_LABELS = ('positive', 'negative', 'neutral')
 
-    if not isinstance(SENTI_LABELS, tuple):
-        raise ValueError(f'SENTI_LABELS has to be a: {type(tuple)}.')
-
-    if not isinstance(STOPWORDS, set):
-        raise ValueError(f'STOPWORDS has to be a: {type(set)}.')
-
-    def strip_spaces(self, text_col='text'):
-        self[text_col] = self[text_col].str.strip()
-
     def sentiment_labeler(self, score):
         '''Labels for sentiment analysis scores.
         Add custom valus by passing to `TextMetric.SENTI_LABELS=(i,i,i)`
@@ -52,6 +43,7 @@ class TextMetrics(MutableSequence, object):
         return [len(w) for w in words.split(' ') if w not in self.STOPWORDS]
 
     def string_metric(self, text_col='text'):
+        self[text_col] = self[text_col].apply(lambda s: normalize_spaces(s))
         self['stringLength'] = self[text_col].str.len()
 
     def word_metrics(self, text_col='text'):
@@ -79,7 +71,8 @@ class TextMetrics(MutableSequence, object):
             r'[a-z]').str.len()
 
     def sentiment_metrics(self, text_col='text'):
-        self['sentiPolarity'] = self[text_col].apply(get_sentiment_polarity)
+        self['sentiPolarity'] = self[text_col].apply(
+            get_sentiment_polarity)
         self['sentiSubjectivity'] = self[text_col].apply(
             get_sentiment_subjectivity)
         self['sentimentLabel'] = self['sentiPolarity'].apply(
@@ -158,8 +151,6 @@ class TextMetrics(MutableSequence, object):
             self.STOPWORDS = stopword_set
         if senti_labels:
             self.SENTI_LABELS = senti_labels
-
-        self.strip_spaces(text_col)
         if string:
             self.string_metric(text_col)
         if words:
