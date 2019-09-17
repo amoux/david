@@ -158,12 +158,6 @@ def normalize_spaces(text: str):
     return ' '.join(t for t in text.split())
 
 
-def remove_spaces(text: str):
-    '''Remove more than one space.
-    '''
-    return re.sub(r'(\s)\1{1,}', ' ', text).strip()
-
-
 def remove_non_ascii(words: list):
     '''Remove non-ASCII characters from list of tokenized words.
 
@@ -226,7 +220,7 @@ def reduce_repeating_chars(text: str):
         text = re.sub(find, repr(replace), text)
     text = text.replace('\'???', '')
     text = text.replace('???\'', '')
-    text = remove_spaces(text)
+    text = normalize_spaces(text)
     return text
 
 
