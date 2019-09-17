@@ -11,8 +11,11 @@
 * build a dataset from a search query.
 
 ```python
->>> from vuepoint.david_server.sql import SqliteCommentsDB
->>> sql = SqliteCommentsDB('comments_v2.db', table='comments')
+>>> from david_server.sql import SqliteCommentsDB
+
+# configure the database. default parameters: (db_name='comments_v2.db', table='comments')
+
+>>> sql = SqliteCommentsDB()
 >>> docs = sql.get_similartexts('i subscribed')
 >>> [doc.text for doc in docs][:5]
 ...
@@ -30,7 +33,7 @@
 * export a document to a dataframe with the `export` attribute.
 
 ```python
->>> from vuepoint.david.pipeline import Pipeline
+>>> from david.pipeline import Pipeline
 >>> pipe = Pipeline(docs.export('df'))
 ```
 
