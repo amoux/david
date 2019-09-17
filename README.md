@@ -56,24 +56,7 @@ max      836.000000       9.000000  ...       46.000000      647.000000
 [8 rows x 7 columns]
 ```
 
-```python
-pipe.text[13:23]
-```
-
-```
-13                   Only i subscribed for his lips 😂💙👄
-14    So proud of how far you’ve come Troye! This wa...
-15                     I subscribed to you and Dr Phil!
-16    +AngelCupcakeMsp CupcakeTv hey I subscribed to...
-17    Hello.  My name is chanelle and I am 13 years ...
-18    https://www.youtube.com/channel/UCywXyzx6GZpDy...
-19    At least she doesn't swear like Ariana Grande!...
-20    I just started a YouTube account and it would ...
-21                                    I just subscribed
-22    MY BABY! Anyways, so I know it’s lame and anno...
-```
-
-* with tags=True the following columns are available.
+* with tags=True the following attributes are available. (the amout of tags varies on the size of the dataset)
 
 ```python
 pipe.authorEmoji.unique()
@@ -82,4 +65,29 @@ pipe.authorEmoji.unique()
 ```
 array(['👍', '😍😍', '😂💙👄', '😊', '💕💕💕', '✌🏾', '😙', '🤔🤷♂'],
       dtype=object)
+```
+
+```python
+pipe.authorUrlLink.unique()
+```
+
+```
+array([nan, 'https://www.youtube.com/channel/UCywXyzx6GZpDyxRvMOqLMiw'],
+      dtype=object)
+```
+
+```python
+pipe.authorHashTags.unique()
+```
+
+```
+array([nan, '#SUBSCRIBED'], dtype=object)
+```
+
+```python
+pipe.authorTimeTag.unique()
+```
+
+```
+array([nan, '10:06'], dtype=object)
 ```
