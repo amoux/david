@@ -12,12 +12,10 @@
 
 ```python
 >>> from vuepoint.david_server.sql import SqliteCommentsDB
->>> from vuepoint.david.pipeline import Pipeline
-...
 >>> sql = SqliteCommentsDB('comments_v2.db', table='comments')
 >>> docs = sql.get_similartexts('i subscribed')
 >>> [doc.text for doc in docs][:5]
-
+...
 '['Video was hilarious, subscribed!',
  'Hamazingly educational; Subscribed for more :)',
  'Great vid....SUBSCRIBED with the Bell👍',
@@ -29,9 +27,29 @@
 
 ```
 
-* tabular load a sql document to a dataframe.
+* export a document to a dataframe with the `export` attribute.
 
 ```python
->>> pipe = Pipeline().append(docs.export('df'))
+>>> from vuepoint.david.pipeline import Pipeline
+>>> pipe = Pipeline(docs.export('df'))
+```
+
+* call the `get_all_metrics` instance method to quickly get basic stats on the texts. for more information on the additional parameters available [click here]().
+
+```python
+>>> pipe.get_all_metrics(string=True, words=True, characters=True, tags=True)
+>>> pipe.describe()
+...
+       stringLength  avgWordLength  ...  charUpperCount  charLowerCount
+count     88.000000      88.000000  ...       88.000000       88.000000
+mean     156.818182       5.916454  ...        6.375000      116.704545
+std      162.526924       1.176320  ...        7.886133      124.026986
+min       12.000000       4.166667  ...        0.000000       10.000000
+25%       49.000000       5.164435  ...        2.000000       37.000000
+50%      103.000000       5.557041  ...        3.000000       70.500000
+75%      199.500000       6.375000  ...        8.000000      147.250000
+max      836.000000       9.000000  ...       46.000000      647.000000
+
+[8 rows x 7 columns]
 
 ```
