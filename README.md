@@ -14,6 +14,7 @@
 >>> from vuepoint.david_server.sql import SqliteCommentsDB
 >>> from vuepoint.david.pipeline import Pipeline
 ...
+>>> sql = SqliteCommentsDB('comments_v2.db', table='comments')
 >>> docs = sql.get_similartexts('i subscribed')
 >>> [doc.text for doc in docs][:5]
 
