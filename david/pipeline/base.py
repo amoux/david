@@ -24,12 +24,12 @@ class DavidDataFrame(DataFrame):
                     f.write('%s\n' % text)
             f.close()
 
-    def slice_shape(self, min_val=0, ref_col='stringLength'):
+    def slice_shape(self,
+                    ref_col: str = 'stringLength',
+                    min_val: int = None,
+                    max_val: int = None,
+                    as_copy: bool = True):
         '''Use a reference metric table to reduce the size of the dataframe.
-
-        NOTE: This method uses a table reference obtained from either the
-        `TextMetric.get_all_metrics` method or, any associated methods used
-        to extract numerical information from the text sequences.
 
         Parameters:
         ----------
@@ -61,6 +61,9 @@ class DavidDataFrame(DataFrame):
           'unique 151'
 
         '''
-        if (min_val == 0):
-            raise Exception('You must pass a value greater than zero!')
-        return self.loc[self[ref_col] > int(min_val)]
+        temp_df = self.copy(deep=as_copy)
+        if min_val > 0:
+            temp_df = temp_df.loc[temp_df[ref_col] > int(min_val)]
+        if max_val > 0:
+            temp_df = temp_df.loc[temp_df[ref_col] < int(max_val)]
+        return temp_df

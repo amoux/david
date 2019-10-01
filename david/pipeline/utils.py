@@ -1,36 +1,7 @@
 import time
 from collections import namedtuple
-
-# collection of regex patterns,
-# all match patterns are intended for youtube content.
-REGX_POINTERS = {
-    'match_titles': "(-?([A-Z].\\s)?([A-Z][a-z]+)\\s?)+([A-Z]'([A-Z][a-z]+))?",
-    'match_quotes': '"(?:\\.|(\\")|[^""\n])*"',
-    'match_times': '([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?',
-    'match_youtubeurl': '(?:https?:\\/\\/)?(?:(?:(?:www\\.?)?youtube\\.com(?:\\/(?:(?:watch\\?.*?(v=[^&\\s]+).*)|(?:v(\\/.*))|(channel\\/.+)|(?:user\\/(.+))|(?:results\\?(search_query=.+))))?)|(?:youtu\\.be(\\/.*)?))',
-    'trim_whitespaces': '(?:\\s)\\s")'
-}
-
-DATASET_PATHS = {
-    'creators_info': "david/datasets/ycd_csv/ycc_creators_video_info.csv",
-    'web_tensorboard': "david/datasets/ycd_csv/ycd_web_tensorboard.csv",
-    'web_md': "david/datasets/ycd_csv/ycc_web_md.csv",
-    'web_lg': "david/datasets/ycd_csv/ycc_web_lg.csv"
-}
-
-
-def pointer(getfrom: str):
-    '''Pointer Collection Utils.
-    `getfrom` : Choose one of them = ('datasets' or 'regex')
-    '''
-
-    if ('datasets') in getfrom.lower():
-        named = namedtuple('YCD', DATASET_PATHS.keys())
-        return named(*DATASET_PATHS.values())
-
-    elif ('regex') in getfrom.lower():
-        named = namedtuple('Regex', REGX_POINTERS.keys())
-        return named(*REGX_POINTERS.values())
+from os import makedirs
+from os.path import exists, join
 
 
 def timeit(method):
@@ -55,3 +26,36 @@ def timeit(method):
                 method.__name__, (t2 - t1) * 1000))
         return result
     return timed
+
+
+def text2file(fn: str, docs: list, dirpath='output') -> None:
+    if not exists(dirpath):
+        makedirs(dirpath)
+    with open(join(dirpath, fn), 'w', encoding='utf-8') as f:
+        for doc in docs:
+            if len(doc) > 1:
+                f.write('%s\n' % doc)
+        f.close()
+
+
+def pointer(name: str, params: dict):
+    name = namedtuple(name, params.keys())
+    return name(*params.values())
+
+
+_YOUTUBE_TAGS_REGEX_MATCHER = {
+    'titles': r"(-?([A-Z].\\s)?([A-Z][a-z]+)\\s?)+([A-Z]'([A-Z][a-z]+))?",
+    'quotes': r'"(?:\\.|(\\")|[^""\n])*"',
+    'times': r'([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?',
+    'username_v1': r'\B(\@[a-zA-Z_0-9]+\b)(?!;)',
+    'username_v2': r'(\@[a-zA-Z0-9_%]*)'}
+
+_YOUTUBE_URLS_REGEX_MATCHER = {
+    'videoId': r'v=([a-zA-Z0-9\_\-]+)&?',
+    'vid_url1': r'youtube.[a-z]+/[a-z\?\&]*v[/|=](\w+)',
+    'any_vidUrl': r'(?:https?:\/\/)?(?:www\.)?youtu(.be\/|be\.com\/watch\?v=)(.{8,})',
+    'vid_url2': r'(((\?v=)|(\/embed\/)|(youtu.be\/)|(\/v\/)|(\/a\/u\/1\/))(.+?){11})'}
+
+
+RegexMatchUrls = pointer('RegexMatchUrls', _YOUTUBE_URLS_REGEX_MATCHER)
+RegexMatchTags = pointer('RegexMatchTags', _YOUTUBE_TAGS_REGEX_MATCHER)

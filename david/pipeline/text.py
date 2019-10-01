@@ -5,7 +5,7 @@ import string
 import unicodedata
 from collections import Counter
 from itertools import groupby
-from typing import List
+from typing import List, AnyStr
 
 import contractions
 import emoji
@@ -19,20 +19,6 @@ from textblob import TextBlob
 # nouns, ordinals, indefinite articles
 
 
-def to_lowercase(words: list):
-    '''Convert all characters to lowercase from
-    list of tokenized words.
-    '''
-    if not isinstance(words, list):
-        words = list([words])
-
-    new_words = []
-    for word in words:
-        new_word = word.lower()
-        new_words.append(new_word)
-    return new_words
-
-
 def strip_html_fromtext(text: str):
     soup = BeautifulSoup(text, "html.parser")
     soup = soup.get_text()
@@ -41,7 +27,7 @@ def strip_html_fromtext(text: str):
     return text
 
 
-def get_emojis(str):
+def get_emojis(str: str):
     '''Finds emoji characters from a sequence of words. Returns the emoji
     character if found.
 
@@ -75,12 +61,18 @@ def get_vocab_size(text: str):
     return vocab_size
 
 
-def replace_numbers(words: list, wantlist=False, group=0, comma=",",
-                    andword="and", zero="zero", one="one", decimal="point",
-                    threshold=None
-                    ):
-    '''Replace all interger occurrences in list of tokenized words with
-    textual representation.
+def replace_numbers(words: List[str],
+                    wantlist=False,
+                    group=0,
+                    comma=",",
+                    andword="and",
+                    zero="zero",
+                    one="one",
+                    decimal="point",
+                    threshold=None) -> List[str]:
+    '''
+    Replace all interger occurrences in list of tokenized
+    words with textual representation.
 
     * Returns a formatted number as it's word representation.
 
@@ -125,7 +117,7 @@ def replace_numbers(words: list, wantlist=False, group=0, comma=",",
         '['i', 'would', 'love', 'it', 'four', 'sure', '!']'
 
     '''
-    if not isinstance(words, list):
+    if not isinstance(words, List[str]):
         words = list([words])
 
     p = inflect.engine()
@@ -158,7 +150,7 @@ def normalize_spaces(text: str):
     return ' '.join(t for t in text.split())
 
 
-def remove_non_ascii(words: list):
+def remove_non_ascii(words: List[str]) -> List[str]:
     '''Remove non-ASCII characters from list of tokenized words.
 
     `words` : (list)
@@ -175,7 +167,7 @@ def remove_non_ascii(words: list):
     return new_words
 
 
-def remove_punctuation(words: list):
+def remove_punctuation(words: List[str]) -> List[str]:
     '''Remove punctuation from list of tokenized words.
 
     `words` : (list)
@@ -218,13 +210,13 @@ def reduce_repeating_chars(text: str):
         find = char + '{3,}'
         replace = '???' + char + '???'
         text = re.sub(find, repr(replace), text)
-    text = text.replace('\'???', '')
-    text = text.replace('???\'', '')
+    text = text.replace('\'???', ' ')
+    text = text.replace('???\'', ' ')
     text = normalize_spaces(text)
     return text
 
 
-def remove_stopwords(words: list):
+def remove_stopwords(words: List[str]) -> List[str]:
     '''Remove stop words from list of tokenized words
     '''
     if not isinstance(words, list):
@@ -237,14 +229,14 @@ def remove_stopwords(words: list):
     return new_words
 
 
-def stemmer(texts: list):
+def stemmer(texts: List[str]) -> List[str]:
     Lancaster = LancasterStemmer()
-    return ' '.join([Lancaster.stem(w) for w in texts])
+    return ' '.join([Lancaster.stem(t) for t in texts])
 
 
-def lemmatizer(texts: list):
+def lemmatizer(texts: List[str]) -> List[str]:
     WordNet = WordNetLemmatizer()
-    return ' '.join([WordNet.lemmatize(w) for w in texts])
+    return ' '.join([WordNet.lemmatize(t) for t in texts])
 
 
 def tokenizer(text: str) -> List[str]:
@@ -254,4 +246,76 @@ def tokenizer(text: str) -> List[str]:
         >>> tokenize('The apple. Where is the apple?')
     '['The', 'apple', '.', 'Where', 'is', 'the', 'apple', '?']'
     '''
-    return [x.strip() for x in re.split(r'(\W+)?', text) if x.strip()]
+    return [t.strip() for t in re.split(r'(\W+)?', text) if t.strip()]
+
+# NEW FUNCTIONS
+
+
+# def replace_with_label(regex, label: str, text: str) -> AnyStr:
+#     label = (f' {label} ')
+#     regex = re.compile(regex)
+#     text = re.sub(regex, label, text)
+#     return text
+
+
+# def replace_username_labels(text: str, label: str = None) -> AnyStr:
+#     '''Replaces @usernames/handles from text by a given label.
+
+#     >>> replace_handles('@GamerH Subscribed to your channel')
+#         'USERNAME Subscribed to your channel'
+#     '''
+#     if not label:
+#         label = (' USERNAME ')
+#     text = re.sub(r'\B(\@[a-zA-Z_0-9]+\b)(?!;)', label, text)
+#     text = re.sub(r'(\@[a-zA-Z0-9_%]*)', label, text)
+#     text = normalize_spaces(text)
+#     return text
+
+
+# def remove_username_labels(text: str) -> AnyStr:
+#     '''Removes @usernames/handles from text.'''
+#     text = replace_username_labels(text=text, label='')
+#     text = normalize_spaces(text=text)
+#     return text
+
+
+# def replace_quotes(text: str, label: str = None) -> AnyStr:
+#     '''Replaces quotation marks with a label QUOTED.
+#     '''
+#     if not label:
+#         label = (' QUOTED ')
+#     text = re.sub(r'"', label, text)
+#     text = re.sub(r"'", label, text)
+#     return text
+
+
+# def replace_contractions(text: str) -> AnyStr:
+#     '''If two tokens are the same, this will merge them.
+
+#     >>> text = "y'all thik he's python coding but ur o'l"
+#     >>> re_contractions(text)
+#     'you all thik he is python coding but you are old'
+#     '''
+#     text = (f' {text} ')
+#     for k, v in EnglishContractions.items():
+#         text = re.sub(re.escape(k), v, text, flags=re.I)
+#     return text.strip()
+
+
+# def spacy2textfile(fn, docs: list) -> None:
+#     with open(fn, 'w', encoding='utf-8') as f:
+#         for text in docs:
+#             docs = nlp(text)
+#             for sent in docs.sents:
+#                 if len(sent) > 1:
+#                     f.write('%s\n' % sent)
+#         f.close()
+
+
+# def iter_text2sents(text: str):
+#     sentences = []
+#     doc = nlp(text)
+#     for sent in doc.sents:
+#         if len(sent) > 1:
+#             sentences.append(sent)
+#     return sentences

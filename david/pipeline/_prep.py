@@ -26,16 +26,16 @@ class TextPreprocess(MutableSequence, object):
             lambda s: reduce_repeating_chars(s))
 
     def standardizerA(self, text_col='text') -> None:
+        self[text_col] = self[text_col].str.replace(r"http\S+", "")
+        self[text_col] = self[text_col].str.replace(r"@\S+", "")
+        self[text_col] = self[text_col].str.replace(
+            r"([^A-Za-z0-9(),!?@\'\`\"\_\n])", " ")
+
+    def standardizerB(self, text_col='text') -> None:
         self[text_col] = self[text_col].str.replace(
             r"&lt;/?.*?&gt;", " &lt;&gt; ")
         self[text_col] = self[text_col].str.replace(r"(\\d|\\W)+", " ")
         self[text_col] = self[text_col].str.replace(r"[^a-zA-Z]", " ")
-
-    def standardizerB(self, text_col='text') -> None:
-        self[text_col] = self[text_col].str.replace(r"http\S+", "URL_TAG")
-        self[text_col] = self[text_col].str.replace(r"@\S+", "AUTHOR_TAG")
-        self[text_col] = self[text_col].str.replace(
-            r"[^A-Za-z0-9(),!?@\'\`\"\_\n]", " AUTHOR_TAG ")
 
     def lemmetize_texts(self, text_col='text') -> None:
         self[text_col] = self[text_col].str.split()
