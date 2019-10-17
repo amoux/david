@@ -3,5 +3,7 @@
     "python.linting.enabled": true,
     "python.pythonPath": "/home/ego/anaconda3/envs/david/bin/python",
     "restructuredtext.confPath": "",
-    "python.linting.pylintEnabled": false
+    "python.linting.pylintEnabled": false,
+    "eslint.enable": false,
+    "jshint.enable": false
 }

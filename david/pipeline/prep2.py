@@ -8,7 +8,7 @@ from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from pattern.text.en import tag
 
-nltk_stop_words = nltk.corpus.stopwords.words('english')
+NLTK_STOPWORDS = nltk.corpus.stopwords.words('english')
 
 
 def encode_ascii(text: str):
@@ -70,7 +70,9 @@ def remove_special_characters(text: str):
     return filtered_text
 
 
-def remove_stopwords(text: str, stop_words: list = nltk_stop_words):
+def remove_stopwords(text: str, stop_words: list = None):
+    if not stop_words:
+        stop_words = NLTK_STOPWORDS
     tokens = nltk_tokenizer(text)
     filtered_tokens = [token for token in tokens if token not in stop_words]
     filtered_text = ' '.join(filtered_tokens)
