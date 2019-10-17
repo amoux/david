@@ -22,7 +22,6 @@ from pathos.multiprocessing import Pool, cpu_count
 # from general_utils import apply_parallel, flattenlist
 
 
-
 CORES = cpu_count()
 nlp = spacy.load('en_core_web_sm')
 

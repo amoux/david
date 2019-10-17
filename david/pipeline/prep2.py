@@ -77,6 +77,25 @@ def remove_stopwords(text: str, stop_words: list = nltk_stop_words):
     return filtered_text
 
 
+def remove_repeated_characters(tokens: list):
+    '''Corrects repeating characters from tokens.
+
+        >>> remove_repeated_characters(['finallllyyyy'])[0]
+    'finally'
+    '''
+    repeat_pattern = re.compile(r'(\w*)(\w)\2(\w*)')
+    match_substitution = r'\1\2\3'
+
+    def replace(old_word):
+        if wordnet.synsets(old_word):
+            return old_word
+        new_word = repeat_pattern.sub(match_substitution, old_word)
+        return replace(new_word) if new_word != old_word else new_word
+
+    correct_tokens = [replace(word) for word in tokens]
+    return correct_tokens
+
+
 def normalize_corpus(corpus: list, tokenize=False):
     normalized = []
     for text in corpus:
