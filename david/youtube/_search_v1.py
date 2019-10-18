@@ -1,13 +1,12 @@
 from typing import Dict, Iterable, List
 
-from googleapiclient import discovery
-
 from david.config import YoutubeConfig
+from googleapiclient import discovery
 
 youtube = YoutubeConfig()
 
 
-def yt_search(q: str, max_results: int = 10) -> Dict:
+def _search(q: str, max_results: int = 10) -> Dict:
     '''Returns a list of matching search results.
     '''
     Discovery = discovery.build(
@@ -25,7 +24,7 @@ def yt_search(q: str, max_results: int = 10) -> Dict:
     return search
 
 
-def yt_video(q: str, max_results: int = 10) -> Iterable[List[Dict]]:
+def _video(q: str, max_results: int = 10) -> Iterable[List[Dict]]:
     '''Youtube video content from a search query.
     (Youtube Data API). Returns a list of matching videos,
     channels matching the given a item query.
@@ -48,7 +47,7 @@ def yt_video(q: str, max_results: int = 10) -> Iterable[List[Dict]]:
         developerKey=youtube.api.key
     )
     videoResource = Discovery.videos()
-    search = yt_search(q, max_results)
+    search = _search(q, max_results)
 
     results = []
     for item in search.get('items', []):

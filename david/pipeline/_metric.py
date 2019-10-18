@@ -2,36 +2,24 @@
 from collections import MutableSequence
 
 import numpy as np
-from spacy.lang.en import STOP_WORDS
+from spacy.lang.en import STOP_WORDS as SPACY_STOPWORDS
 
-from .text import (get_emojis, get_sentiment_polarity,
-                   get_sentiment_subjectivity, normalize_spaces)
+from ..text import (get_emojis, get_sentiment_polarity,
+                    get_sentiment_subjectivity, normalize_spaces)
+
+# Regex patterns used. (replacing these soon)
+TIME = r'(\d{1,2}\:\d{1,2})'
+URL = r'(http\S+)'
+TAG = r'(\#\w+)'
 
 
 class TextMetrics(MutableSequence, object):
-    '''Gathers Statistical Metrics from Texts.
+    """Gathers Statistical Metrics from Texts."""
 
-    Parameters:
-    ----------
-
-    `file_path` : (str)
-        File path where the json corpus is located.
-
-    * If downloading a new corpus you can alse do the following.
-
-        >>> from david.youtube.scraper import download
-        >>> from david.pipeline import TextMetrics
-        ...
-        >>> metric = TextMetrics(download('BmYZH7xt8sU', load_corpus=True))
-
-    '''
-    STOPWORDS = STOP_WORDS
+    STOPWORDS = SPACY_STOPWORDS
     SENTI_LABELS = ('positive', 'negative', 'neutral')
 
     def sentiment_labeler(self, score):
-        '''Labels for sentiment analysis scores.
-        Add custom valus by passing to `TextMetric.SENTI_LABELS=(i,i,i)`
-        '''
         if (score > 0):
             return self.SENTI_LABELS[0]
         if (score < 0):
@@ -47,10 +35,7 @@ class TextMetrics(MutableSequence, object):
         self['stringLength'] = self[text_col].str.len()
 
     def word_metrics(self, text_col='text'):
-        '''Applies the `spacy.lang.en.STOP_WORDS` set to all
-        computations; captures metrics of actual words
-        and stopwords detected within a string sequence.
-        '''
+
         self['avgWordLength'] = self[text_col].apply(
             lambda x: np.mean(self.avg_words(x))
             if len(self.avg_words(x)) > 0 else 0)
@@ -79,34 +64,31 @@ class TextMetrics(MutableSequence, object):
             lambda x: self.sentiment_labeler(x))
 
     def extract_authortags(self, text_col='text'):
-        self['authorTimeTag'] = self[text_col].str.extract(
-            r'(\d{1,2}\:\d{1,2})')
-        self['authorUrlLink'] = self[text_col].str.extract(r'(http\S+)')
-        self['authorHashTag'] = self[text_col].str.extract(r'(\#\w+)')
+        self['authorTimeTag'] = self[text_col].str.extract(TIME)
+        self['authorUrlLink'] = self[text_col].str.extract(URL)
+        self['authorHashTag'] = self[text_col].str.extract(TAG)
         self['authorEmoji'] = self[text_col].apply(get_emojis)
 
-    def get_all_metrics(self,
-                        text_col='text',
-                        string=True,
-                        words=True,
-                        characters=True,
-                        sentiment=False,
-                        tags=False,
-                        stopword_set=None,
-                        senti_labels=None
-                        ) -> None:
-        '''
-        Single function call to get and extract information from text.
+    def get_all_metrics(
+            self,
+            text_col='text',
+            string=True,
+            words=True,
+            characters=True,
+            sentiment=False,
+            tags=False,
+            stopword_set=None,
+            senti_labels=None) -> None:
+        """Single function call to extract information from text.
 
-        `stopword_set` : (set)
-        default, `STOPWORDS=spacy.lang.en.STOP_WORDS`
-
+        Parameters:
+        -----------
+        stopword_set : (set)
+            default, STOPWORDS=spacy.lang.en.STOP_WORDS
             Used to capture metrics of actual words and stopwords
             detected within a string sequence.
-
-        `senti_labels` : (tuple)
-        default, `SENTI_LABELS=('positive', 'negative', 'neutral')`
-
+        senti_labels : (tuple)
+            default, SENTI_LABELS=('positive', 'negative', 'neutral')
             Used to label a text for every index in a column from a
             table containing sentiment values. Pass a tuple to change
             the default labels to use. e.g. (1, 0, 'N')
@@ -114,39 +96,38 @@ class TextMetrics(MutableSequence, object):
         String-level metric -> if string=True:
         --------------------------------------
 
-        * `stringLength`  : sum of all words in a string.
+        * stringLength  : sum of all words in a string.
 
         Word-level metrics -> if words=True:
         ------------------------------------
 
-        * `avgWordLength`     : average number of words.
-        * `isStopwordCount`   : count of stopwords only.
-        * `noStopwordCount`   : count of none stopwords.
+        * avgWordLength     : average number of words.
+        * isStopwordCount   : count of stopwords only.
+        * noStopwordCount   : count of none stopwords.
 
         Character-level metrics -> if character=True:
-        -----------------------------------------------
+        ---------------------------------------------
 
-        * `charDigitCount`    : count of digits chars.
-        * `charUpperCount`    : count of uppercase chars.
-        * `charLowerCount`    : count of lowercase chars.
+        * charDigitCount    : count of digits chars.
+        * charUpperCount    : count of uppercase chars.
+        * charLowerCount    : count of lowercase chars.
 
         Sentiment-level metrics -> if sentiment=True:
         --------------------------------------------
 
-        * `sentiPolarity`     : polarity score with Textblob, (float).
-        * `sentiSubjectivity` : subjectivity score with Textblob (float).
-        * `sentimentLabel`    : labels row with one (pos, neg, neutral) tag.
+        * sentiPolarity     : polarity score with Textblob, (float).
+        * sentiSubjectivity : subjectivity score with Textblob (float).
+        * sentimentLabel    : labels row with one (pos, neg, neutral) tag.
 
         Tag-extraction metrics -> if tags=True:
-        ------------------------------------------
+        --------------------------------------
 
-        * `authorTimeTag` : extracts video time tags, e.g. 1:20.
-        * `authorUrlLink` : extracts urls links if found.
-        * `authorHashTag` : extracts hash tags, e.g. #numberOne.
-        * `authorEmoji`   : extracts emojis if found 👾.
+        * authorTimeTag : extracts video time tags, e.g. 1:20.
+        * authorUrlLink : extracts urls links if found.
+        * authorHashTag : extracts hash tags, e.g. #numberOne.
+        * authorEmoji   : extracts emojis if found 👾.
 
-        '''
-        # overrides the default sets to used in multiple methods.
+        """
         if stopword_set:
             self.STOPWORDS = stopword_set
         if senti_labels:

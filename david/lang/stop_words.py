@@ -1,6 +1,6 @@
 " coding: utf-8 - *-
 
-STOP_WORDS_LARGE = [
+stop_words_sm = [
     "a",
     "about",
     "above",

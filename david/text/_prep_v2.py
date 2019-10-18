@@ -6,9 +6,13 @@ import contractions
 import nltk
 from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
-from pattern.text.en import tag
+from pattern.text.en import tag as pattern_pos_tagger
 
 NLTK_STOPWORDS = nltk.corpus.stopwords.words('english')
+
+
+def expand_contractions(text: str, leftovers=True, slang=True):
+    return contractions.fix(text, leftovers=leftovers, slang=slang)
 
 
 def encode_ascii(text: str):
@@ -23,11 +27,7 @@ def nltk_tokenizer(text: str):
     return tokens
 
 
-def expand_contractions(text: str, slang=True):
-    return contractions.fix(text, slang=slang)
-
-
-def _penn_to_wn_tags(pos_tag: str):
+def treebank_to_wordnet_postag(pos_tag: str):
     # convert penn treebank tag wordnet tag.
     if pos_tag.startswith('J'):
         return wordnet.ADJ
@@ -41,20 +41,22 @@ def _penn_to_wn_tags(pos_tag: str):
         return None
 
 
-def annotate_pos_tag(text: str):
+def wordnet_postag_annotator(text: str):
     '''Annotates text tokens with pos tags, uses the wordnet
     part-of-speech class from nltk.
     '''
-    tagged_text = tag(text)
-    tagged_lower_text = [(word.lower(), _penn_to_wn_tags(pos_tag))
-                         for word, pos_tag in tagged_text]
+    tagged_text = pattern_pos_tagger(text)
+    tagged_lower_text = [
+        (word.lower(), treebank_to_wordnet_postag(pos_tag))
+        for word, pos_tag in tagged_text
+    ]
     return tagged_lower_text
 
 
-def lemmatize_text(text: str):
+def wordnet_lemmatizer(text: str):
     # lemmataze text based on pos tags.
     wnl = WordNetLemmatizer()
-    pos_tagged_text = annotate_pos_tag(text)
+    pos_tagged_text = wordnet_postag_annotator(text)
     lemmatized_tokens = [wnl.lemmatize(word, pos_tag) if pos_tag else word
                          for word, pos_tag in pos_tagged_text]
     lemmatized_text = ' '.join(lemmatized_tokens)
@@ -80,7 +82,7 @@ def remove_stopwords(text: str, stop_words: list = None):
 
 
 def remove_repeated_characters(tokens: list):
-    '''Corrects repeating characters from tokens.
+    '''Corrects repeating characters from tokens (WordNet).
 
         >>> remove_repeated_characters(['finallllyyyy'])[0]
     'finally'
@@ -98,12 +100,12 @@ def remove_repeated_characters(tokens: list):
     return correct_tokens
 
 
-def normalize_corpus(corpus: list, tokenize=False):
+def nltk_normalizer(corpus: list, tokenize=False):
     normalized = []
     for text in corpus:
         text = encode_ascii(text)
         text = expand_contractions(text)
-        text = lemmatize_text(text)
+        text = wordnet_lemmatizer(text)
         text = remove_special_characters(text)
         text = remove_stopwords(text)
         normalized.append(text)

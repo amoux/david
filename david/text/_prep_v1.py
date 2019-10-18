@@ -19,163 +19,90 @@ from textblob import TextBlob
 # nouns, ordinals, indefinite articles
 
 
-def strip_html_fromtext(text: str):
-    soup = BeautifulSoup(text, "html.parser")
-    soup = soup.get_text()
-    # regex: removes html between brackets.
-    text = re.sub(r'\[[^]]*\]', '', soup)
-    return text
+# def strip_html_fromtext(text: str):
+#     soup = BeautifulSoup(text, "html.parser")
+#     soup = soup.get_text()
+#     text = re.sub(r'\[[^]]*\]', '', soup)
+#     return text
 
 
 def get_emojis(str: str):
-    '''Finds emoji characters from a sequence of words. Returns the emoji
-    character if found.
-
-    Usage:
-    -----
-
-        >>> text.get_emojis('this text has an emoji 👾.')
-        '👾'
-    '''
     emojis = ''.join(e for e in str if e in emoji.UNICODE_EMOJI)
     return emojis
 
 
 def get_sentiment_polarity(text: str):
+    # NOTE: THESE ARE USELESS I WILL REMOVE THEM
+    # BUT FIRST I NEED TO FIX THE METHODS USING IT.
     return TextBlob(text).sentiment.polarity
 
 
 def get_sentiment_subjectivity(text: str):
+    # NOTE: THESE ARE USELESS I WILL REMOVE THEM
+    # BUT FIRST I NEED TO FIX THE METHODS USING IT.
     return TextBlob(text).sentiment.subjectivity
 
 
 def get_vocab_size(text: str):
-    '''Returns the number of unique tokens found on the corpus.
-
-    `text` : (str)
-        The string that holds the entire corpus.
-    '''
     word_map = Counter(text.split())
     unique_words = len(word_map.keys())
     vocab_size = int(unique_words)
     return vocab_size
 
 
-def replace_numbers(words: List[str],
-                    wantlist=False,
-                    group=0,
-                    comma=",",
-                    andword="and",
-                    zero="zero",
-                    one="one",
-                    decimal="point",
-                    threshold=None) -> List[str]:
-    '''
-    Replace all interger occurrences in list of tokenized
-    words with textual representation.
-
-    * Returns a formatted number as it's word representation.
-
-    Parameters:
-    ----------
-
-    `words` : (list)
-        NOTE: The list must have tokenized words for the numbers
-        to be replaced to words.
-
-    `group` : (int)
-        1, 2 or 3 to group numbers before turning into words.
-
-    `comma` : (str)
-        Define comma.
-
-    `andword` : (str)
-        Word for 'and' can be set to ''. e.g. "one hundred and
-        one" vs "one hundred one".
-
-    `zero` : (str)
-        Word for '0'.
-
-    `one` : (str)
-        Word for '1'.
-
-    `decimal` : (str)
-        Word for decimal point.
-
-    `threshold` :
-        Numbers above threshold not turned into words.
-        parameters not remembered from last call.
-
-    Usage:
-    -----
-
-        >>> tokens = text.tokenizer('i would love it 4 sure!')
-        >>> tokens
-        '['i', 'would', 'love', 'it', '4', 'sure', '!']'
-
-        >>> text.replace_numbers(tokens)
-        '['i', 'would', 'love', 'it', 'four', 'sure', '!']'
-
-    '''
+def replace_numbers(
+        words: List[str],
+        wantlist=False,
+        group=0,
+        comma=",",
+        andword="and",
+        zero="zero",
+        one="one",
+        decimal="point",
+        threshold=None) -> List[str]:
     if not isinstance(words, List[str]):
         words = list([words])
-
     p = inflect.engine()
     new_words = []
     for word in words:
         if word.isdigit():
-            new_word = p.number_to_words(word, wantlist,
-                                         group, comma,
-                                         andword, zero,
-                                         one, decimal, threshold)
+            new_word = p.number_to_words(
+                word, wantlist,
+                group, comma,
+                andword, zero,
+                one, decimal, threshold)
             new_words.append(new_word)
         else:
             new_words.append(word)
     return new_words
 
 
-def replace_contractions(text: str, leftovers=True, slang=True):
-    '''Replaces contractions (including slang words).
-
-    NOTE: This process requires normal spacing between characters
-    in order to properly replace words from a word sequence.
-
-    '''
-    return contractions.fix(text, leftovers=leftovers, slang=slang)
+# def replace_contractions(text: str, leftovers=True, slang=True):
+#     return contractions.fix(text, leftovers=leftovers, slang=slang)
 
 
 def normalize_spaces(text: str):
-    '''Returns a string sequence with only one space.
-    '''
     return ' '.join(t for t in text.split())
 
 
-def remove_non_ascii(words: List[str]) -> List[str]:
-    '''Remove non-ASCII characters from list of tokenized words.
+# def remove_non_ascii(words: List[str]) -> List[str]:
+# NOTE: REPLACED BY encode_ascii from _clean.py
+#     if not isinstance(words, list):
+#         words = list([words])
 
-    `words` : (list)
-        List of tokenized words.
-    '''
-    if not isinstance(words, list):
-        words = list([words])
-
-    new_words = []
-    for word in words:
-        new_word = unicodedata.normalize('NFKD', word).encode(
-            'ascii', 'ignore').decode('utf-8', 'ignore')
-        new_words.append(new_word)
-    return new_words
+#     new_words = []
+#     for word in words:
+#         new_word = unicodedata.normalize('NFKD', word).encode(
+#             'ascii', 'ignore').decode('utf-8', 'ignore')
+#         new_words.append(new_word)
+#     return new_words
 
 
 def remove_punctuation(words: List[str]) -> List[str]:
-    '''Remove punctuation from list of tokenized words.
-
-    `words` : (list)
-        The list can a list of tokens or a list of string(s).
-    '''
+    # NOTE: THESE ARE USELESS I WILL REMOVE THEM
+    # BUT FIRST I NEED TO FIX THE METHODS USING IT.
     if not isinstance(words, list):
         words = list([words])
-
     new_words = []
     for word in words:
         new_word = re.sub(r'[^\w\s]', '', word)
@@ -185,26 +112,18 @@ def remove_punctuation(words: List[str]) -> List[str]:
 
 
 def remove_duplicate_words(text: str):
-    '''Returns strings with no repeated words in sequence.
-
-    NOTE: This also removes punctuation.
-
-    Example:
-    -------
-        >>> text = 'Hey! you are wrong very wrong! wrong!'
-        >>> text = remove_duplicate_words(text)
-        ...
-        'Hey you are wrong very wrong'
-
-    '''
+    """NOTE: REMOVING THIS FUNCTION NO LONGER NEEDED DUE TO
+    NEW VERSION OF `_.prep_v2.reduce_repeating_chars`
+    """
     word_map = text.maketrans(dict.fromkeys(string.punctuation))
     word_clean = text.translate(word_map)
     return ' '.join([k for k, v in groupby(word_clean.split())])
 
 
-def reduce_repeating_chars(text: str):
-    '''Reduces repeated `characters`.
-    '''
+def reduce_repeating_chars_v1(text: str):
+    """NOTE: REMOVING THIS FUNCTION AND REPLACING IT WITH
+    THIS AN OPTIMIZED VERSION `_.prep_v2.reduce_repeating_chars`
+    """
     findings = re.findall(r'(\w)\1{2,}', text)
     for char in findings:
         find = char + '{3,}'
@@ -216,17 +135,15 @@ def reduce_repeating_chars(text: str):
     return text
 
 
-def remove_stopwords(words: List[str]) -> List[str]:
-    '''Remove stop words from list of tokenized words
-    '''
-    if not isinstance(words, list):
-        words = list([words])
+# def remove_stopwords(words: List[str]) -> List[str]:
+#     if not isinstance(words, list):
+#         words = list([words])
 
-    new_words = []
-    for word in words:
-        if word not in stopwords.words('english'):
-            new_words.append(word)
-    return new_words
+#     new_words = []
+#     for word in words:
+#         if word not in stopwords.words('english'):
+#             new_words.append(word)
+#     return new_words
 
 
 def stemmer(texts: List[str]) -> List[str]:
@@ -239,13 +156,7 @@ def lemmatizer(texts: List[str]) -> List[str]:
     return ' '.join([WordNet.lemmatize(t) for t in texts])
 
 
-def tokenizer(text: str) -> List[str]:
-    '''
-    Return the tokens of a sentence including punctuation:
-
-        >>> tokenize('The apple. Where is the apple?')
-    '['The', 'apple', '.', 'Where', 'is', 'the', 'apple', '?']'
-    '''
+def regex_tokenizer(text: str) -> List[str]:
     return [t.strip() for t in re.split(r'(\W+)?', text) if t.strip()]
 
 # NEW FUNCTIONS

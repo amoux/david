@@ -73,3 +73,37 @@ array([nan, '#SUBSCRIBED'], dtype=object)
 >>> pipe.authorTimeTag.unique()
 array([nan, '10:06'], dtype=object)
 ```
+---
+
+## david.pipeline.Pipeline.get_all_metrics()
+
+```markdown
+* String-level    -> if `string=True`:
+
+  - stringLength        : sum of all words in a string.
+
+* Word-level      -> if `words=True`:
+  
+  - avgWordLength       : average number of words.
+  - isStopwordCount     : count of stopwords only.
+  - noStopwordCount     : count of none stopwords.
+
+* Character-level -> if `character=True`:
+
+  - charDigitCount      : count of digits chars.
+  - charUpperCount      : count of uppercase chars.
+  - charLowerCount      : count of lowercase chars.
+
+* Sentiment-level -> if `sentiment=True`:
+
+  - sentiPolarity       : polarity score with Textblob, (float).
+  - sentiSubjectivity   : subjectivity score with Textblob (float).
+  - sentimentLabel      : labels row with one (pos, neg, neutral) tag.
+
+* Tag-extraction  -> if `tags=True`:
+
+  - authorTimeTag       : extracts video time tags, e.g. 1:20.
+  - authorUrlLink       : extracts urls links if found.
+  - authorHashTag       : extracts hash tags, e.g. #numberOne.
+  - authorEmoji         : extracts emojis  👾.
+```
