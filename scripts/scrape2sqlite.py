@@ -3,7 +3,6 @@ import sys
 from sys import stdout
 
 import dataset
-
 from david.youtube import scraper
 
 sys.path.append('../')

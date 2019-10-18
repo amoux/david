@@ -26,15 +26,16 @@ CORES = cpu_count()
 nlp = spacy.load('en_core_web_sm')
 
 
-def apply_parallel(func: Callable,
-                   data: List[Any],
-                   cpu_cores: int = None) -> List[Any]:
-    '''Apply function to list of elements.
+def apply_parallel(
+        func: Callable,
+        data: List[Any],
+        cpu_cores: int = None) -> List[Any]:
+    """Apply function to list of elements.
+
     Automatically determines the chunk size.
-    '''
+    """
     if not cpu_cores:
         cpu_cores = cpu_count()
-
     try:
         chunk_size = ceil(len(data)/cpu_cores)
         pool = Pool(cpu_cores)
@@ -51,8 +52,7 @@ def flattenlist(list_of_lists: List[List[Any]]):
 
 
 def tokenize_docstring(texts):
-    '''Apply tokenization using spacy to docstrings.
-    '''
+    """Apply tokenization using spacy to docstrings."""
     tokens = []
     for token in nlp.tokenizer(texts):
         if not token.is_space:
@@ -61,15 +61,14 @@ def tokenize_docstring(texts):
 
 
 def tokenize_code(texts):
-    '''A very basic procedure for tokenizing code strings.
-    '''
+    """A very basic procedure for tokenizing code strings."""
     for text in texts:
         yield RegexpTokenizer(r'\w+').tokenize(text)
 
 
 def extract_docstring_pairs(blob):
-    '''Extract (function/method, docstring) pairs from a given code blob.
-    '''
+    """Extract (function/method, docstring) pairs from a given code blob.
+    """
     pairs = []
     try:
         module = ast.parse(blob)
@@ -81,28 +80,27 @@ def extract_docstring_pairs(blob):
             functions.extend(
                 [node for node in _class.body
                     if isinstance(node, ast.FunctionDef)])
-
         for f in functions:
             source = astor.to_source(f)
             docstring = ast.get_docstring(f) if ast.get_docstring(f) else ''
             function = source.replace(ast.get_docstring(
                 f, clean=False), '') if docstring else source
-
             pairs.append((f.name,
                           f.lineno,
                           source,
                           ' '.join(tokenize_code(function)),
                           ' '.join(tokenize_docstring(
-                              docstring.split('\n\n')[0]))
-                          ))
+                              docstring.split('\n\n')[0]))))
+
     except (AssertionError, MemoryError, SyntaxError, UnicodeEncodeError):
         pass
+
     yield pairs
 
 
 def apply_to_bloblist(blob_list):
-    '''Apply the function `extract_docstring_pairs` on a list of blobs.
-    '''
+    """Apply the function `extract_docstring_pairs` on a list of blobs.
+    """
     return [extract_docstring_pairs(blob) for blob in blob_list]
 
 
@@ -123,8 +121,7 @@ def flatten_pairs(df):
 
 
 def extract_dataframe_metadata(df, col_name='pair'):
-    '''Extract meta-data from dataframe
-    '''
+    """Extract meta-data from dataframe."""
     df['function_name'] = df[col_name].apply(lambda p: p[0])
     df['lineno'] = df[col_name].apply(lambda p: p[1])
     df['original_function'] = df[col_name].apply(lambda p: p[2])
@@ -144,8 +141,8 @@ def format_dataframe(df):
 
 
 def remove_duplicates(df):
-    '''Remove observations where the same function appears more than once.
-    '''
+    """Remove observations where the same function appears more than once.
+    """
     before = len(df)
     df = df.drop_duplicates(['original_function', 'function_tokens'])
     after = len(df)
@@ -159,29 +156,27 @@ def list_len(x):
 
 
 def seperate_docstring_tokens(df, col_name='docstring_tokens'):
-    '''Separate functions w/o docstrings.
+    """Separate functions w/o docstrings.
     Docstrings should be at least 3 words in the docstring
     to be considered a valid docstring.
     Returns: (with_docs, without_docs)
-    '''
+    """
     with_docs = df[df[col_name].str.split().apply(list_len) >= 3]
     without_docs = df[df[col_name].str.split().apply(list_len) < 3]
     return (with_docs, without_docs)
 
 
 def write_to(df, filename, path='data/processed_data/'):
-    '''Helper function to write processed files to disk.
-    '''
+    """Helper function to write processed files to disk."""
     if not path.exists(path):
         os.makedirs(path)
+
     out = Path(path)
     out.mkdir(exist_ok=True)
-
     no_docs = path.join(out, f'{filename}.docstring')
     tokens = path.join(out, f'{filename}.function')
     original = path.join(out, f'{filename}_original_function.json.gz')
     urls = path.join(out, f'{filename}.lineage')
-
     df.function_tokens.to_csv(tokens, index=False)
     df.original_function.to_json(original, orient='values', compression='gzip')
 
@@ -212,26 +207,20 @@ def chunk_preprocess_csv(filename, sep=','):
 
 
 if __name__ == "__main__":
-
     df = chunk_preprocess_csv(filename='code_search_data.csv')
     with_docstrings, without_docstrings = seperate_docstring_tokens(df)
-
     grouped = with_docstrings.groupby('nwo')
     train, test = train_test_split(list(grouped), train_size=0.87,
                                    shuffle=True, random_state=8081)
-
     train, valid = train_test_split(train, train_size=0.82,
                                     random_state=8081)
-
     train = pd.concat([d for _, d in train]).reset_index(drop=True)
     valid = pd.concat([d for _, d in valid]).reset_index(drop=True)
     test = pd.concat([d for _, d in test]).reset_index(drop=True)
-
     print(f'train set num rows {train.shape[0]:,}')
     print(f'valid set num rows {valid.shape[0]:,}')
     print(f'test set num rows {test.shape[0]:,}')
     print(f'without docstring rows {without_docstrings.shape[0]:,}')
-
     # write to output files
     write_to(df=train, filename='train')
     write_to(df=valid, filename='valid')
