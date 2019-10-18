@@ -1,76 +1,69 @@
 from typing import Dict, Iterable, List
 
-from david.config import YoutubeConfig
 from googleapiclient import discovery
 
-youtube = YoutubeConfig()
+from ..config import YoutubeConfig
+
+_youtube = YoutubeConfig()
 
 
 def _search(q: str, max_results: int = 10) -> Dict:
-    '''Returns a list of matching search results.
-    '''
+    """Returns a list of matching search results."""
     Discovery = discovery.build(
-        serviceName=youtube.api.service,
-        version=youtube.api.version,
-        developerKey=youtube.api.key
-    )
+        serviceName=_youtube.api.service,
+        version=_youtube.api.version,
+        developerKey=_youtube.api.key)
     searchResource = Discovery.search()
     search = searchResource.list(
         q=q,
         part='id, snippet',
         maxResults=max_results,
-        order=youtube.stat.views
-    ).execute()
+        order=_youtube.stat.views).execute()
     return search
 
 
 def _video(q: str, max_results: int = 10) -> Iterable[List[Dict]]:
-    '''Youtube video content from a search query.
-    (Youtube Data API). Returns a list of matching videos,
-    channels matching the given a item query.
+    """Youtube video content from a search query.
+
+    Returns a list of matching videos, channels matching
+    the given a item query.
 
     Parameters:
     ----------
-
-    `q` : (type=str)
+    q : (type=str)
         The item query (text) to item for videos on youtube,
         which influences the video_response based on the keywords given
         to the parameter.
-
-    `max_results` : (type=int)
+    max_results : (type=int)
         Number of results to retrive for the given item query.
-
-    '''
+    """
     Discovery = discovery.build(
-        serviceName=youtube.api.service,
-        version=youtube.api.version,
-        developerKey=youtube.api.key
-    )
+        serviceName=_youtube.api.service,
+        version=_youtube.api.version,
+        developerKey=_youtube.api.key)
     videoResource = Discovery.videos()
     search = _search(q, max_results)
 
     results = []
     for item in search.get('items', []):
         if (item['id']['kind'] == 'youtube#video'):
-
             temp = {}
             temp['title'] = item['snippet']['title']
             temp['vidId'] = item['id']['videoId']
 
             videos = videoResource.list(
                 part='statistics, snippet',
-                id=item['id']['videoId']
-            ).execute()
-
+                id=item['id']['videoId']).execute()
             items = videos['items'][0]['snippet']
-            for content in youtube.content:
+
+            for content in _youtube.content:
                 try:
                     temp[content] = items[content]
                 except KeyError:
                     temp[content] = 'xxNoneFoundxx'
 
             items = videos['items'][0]['statistics']
-            for stat in youtube.stat:
+            for stat in _youtube.stat:
                 try:
                     temp[stat] = items[stat]
                 except KeyError:

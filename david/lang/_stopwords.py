@@ -1,6 +1,5 @@
-" coding: utf-8 - *-
 
-stop_words_sm = [
+EN_STOPWORDS_SM = [
     "a",
     "about",
     "above",

@@ -1,6 +1,7 @@
 from functools import namedtuple
 
 import torch
+from sklearn.datasets import clear_data_home as _clear_data_home
 
 REGEX_DICT = {
     'match_titles': "(-?([A-Z].\\s)?([A-Z][a-z]+)\\s?)+([A-Z]'([A-Z][a-z]+))?",
@@ -11,10 +12,34 @@ REGEX_DICT = {
 }
 
 
-def pointer(n: str, params: dict):
-    """Returns a dictionary-like object from its key, value pairs."""
-    p = namedtuple(n, params.keys())
-    return p(*params.values())
+def get_data_home(data_home: str = None):
+    """Return the path of the david_data directory.
+
+    This folder is used by some large dataset loaders to avoid downloading
+    the data several times. By default the data dir is set to a folder named
+    'david_data' in the user home folder. Alternatively, it can be set by
+    the 'DAVID_DATA' environment variable or programmatically by giving an
+    explicit folder path. The '~' symbol is expanded to the user home folder.
+    If the folder does not already exist, it is automatically created.
+
+    Parameters:
+    ----------
+    data_home : (str, default=None)
+        The path to david_data data dir.
+    """
+    if data_home is None:
+        data_home = environ.get('DAVID_DATA', join('~', 'david_data'))
+    data_home = expanduser(data_home)
+    if not exists(data_home):
+        makedirs(data_home)
+    return data_home
+
+
+def remove_data_home(data_home=None):
+    """Calling this method deletes the root directory david_data
+    including all the datasets.
+    """
+    _clear_data_home(data_home=data_home)
 
 
 def is_cuda_enabled(torch=torch, emptycache=False):

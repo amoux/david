@@ -82,17 +82,14 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0,
     """Filter a distribution of logits using top-k
     and/or nucleus (top-p) filtering.
 
-    Args:
-    -----
-
-    `logits` :
+    Parameters:
+    ----------
+    logits :
         logits distribution shape (vocabulary size)
-
-    `top_k` > 0 :
+    top_k > 0 :
         keep only top k tokens with highest
         probability (top-k filtering).
-
-    `top_p` > 0.0 :
+    top_p > 0.0 :
         keep the top tokens with cumulative
         probability >= top_p (nucleus filtering).
 
@@ -194,32 +191,27 @@ def run_generation(
         stop_token: str = None,
         stop_flag: str = 'quit',
         join_input2prompt: bool = False):
-    """
-    `model_type` : (str, default=None)
+    """Transformers Multi-Model Text Generator.
+
+    Parameters:
+    -----------
+    model_type : (str, default=None)
         Model type selected in the list.
-
-    `model_name_or_path` : (str, default=None)
+    model_name_or_path : (str, default=None)
         Path to pre-trained model or shortcut name selected in the list:
-
-    `xlm_lang` : (str, default="")
+    xlm_lang : (str, default="")
         Optional language when used with the XLM model.
-
-    `temperature` : (float, default=1.0)
+    temperature : (float, default=1.0)
         Temperature of 0 implies greedy sampling.
-
-    `repetition_penalty` : (float, default=1.0)
+    repetition_penalty : (float, default=1.0)
         Primarily useful for CTRL model; in that case, use 1.2
-
-    `no_cuda` : (action='store_true')
+    no_cuda : (action='store_true')
         Avoid using CUDA when available.
-
-    `seed` : (int, default=42)
+    seed : (int, default=42)
         Random seed for initialization.
-
-    `stop_token` : (str, default=None)
+    stop_token : (str, default=None)
         Token at which text generation is stopped.
-
-    `stop_flag` : (str, default="quit")
+    stop_flag : (str, default="quit")
         The word (flag) to use to quit the session cleanly.
     """
     device = torch.device('cuda' if torch.cuda.is_available()
@@ -251,10 +243,7 @@ def run_generation(
 
     while True:
         xlm_lang = None
-        if model_type in ["xlm"]
-        and hasattr(tokenizer, 'lang2id')
-        and hasattr(model.config, 'use_lang_emb')
-        and model.config.use_lang_emb:
+        if model_type in ["xlm"] and hasattr(tokenizer, 'lang2id') and hasattr(model.config, 'use_lang_emb') and model.config.use_lang_emb:
             if xlm_lang:
                 language = xlm_lang
             else:
@@ -263,6 +252,7 @@ def run_generation(
                     language = input(
                         "Using XLM. Select language in " + str(
                             list(tokenizer.lang2id.keys())) + " >>> ")
+
             xlm_lang = tokenizer.lang2id[language]
 
         is_xlm_mlm = model_type in ["xlm"] and 'mlm' in model_name_or_path

@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 
-CONTRACTION_MAP = {
+EN_CONTRACTIONS = {
     "ain't": "is not",
     "aren't": "are not",
     "can't": "cannot",
