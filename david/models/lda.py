@@ -3,87 +3,80 @@ import pandas as pd
 
 LDA_TOPIC_COLNAMES = ['dominant_topic', 'contribution(%)', 'keywords']
 
-NEW_TOPIC_COLNAMES = ['topicId', 'dominantTopic',
-                      'topicContribution', 'topicKeywords', 'topictTokens']
+TOPIC_COLNAMES = [
+    'topicId', 'dominantTopic', 'topicContribution',
+    'topicKeywords', 'topictTokens']
 
 
-def build_topics(LDA_model, Gensim_doc2bow,
-                 corpus: str, num_topics: int,
-                 reset_col_names: bool = False,
-                 topic_col_names: list = NEW_TOPIC_COLNAMES
-                 ):
-    '''(LDA) Gets the dominant topic, percentage contribution and
-    the keywords for each given text document. This function identifies
-    a topic related to the given text documents and flags all text items
-    with high probability for a keyword topic.
+def build_topics(
+        lda_model: object,
+        gensim_doc2bow: dict,
+        corpus: list,
+        n_topics: int,
+        reset_col_names: bool = False,
+        topic_col_names: list = TOPIC_COLNAMES
+):
+    '''Latent Dirichlet Allocation (LDA) Topic Modeling.
 
-    NOTE: Pass a list containing five names for the topic column names to
-    override the defaults in order and set `reset_col_names=True`:
-
-    `NEW_TOPIC_COLNAMES` = [
-        'topicId', 'dominantTopic', 'topicContribution',
-        'topicKeywords', 'topicTokens'
-        ]
+    Gets the dominant topic, percentage contribution and the
+    keywords for each given text document. It flags all text
+    items with high probability for a keyword topic.
 
     Parameters:
     ----------
 
-    `LDA_model` : (object)
-        A trained LDA (Latent Dirichlet Allocation) model.
+    `lda_model` : (object)
+        A trained LDA model.
 
-    `Gensim_doc2bow` : (object)
-        A gensim dictionary object from the corpora.Dictionary
+    `gensim_doc2bow` : (dict)
+        A gensim dictionary object from corpora.Dictionary
         module. NOTE: The dict must be passed to gensim before
-        passing it to this function.
+        passing it to this method.
 
-    `corpus` : (list[str])
-        The text column in a pandas.Dataframe containing texts.
-        The text must be preprocessed and vectorized before using
-        this function.
+    `corpus` : (list)
+        The column in a DataFrame containing the texts.
 
-    `num_topics` : (int)
-        Number of topics keywords to assing to each
-        text sentence in the corpus
+    `n_topics` : (int)
+        Number of topics keywords to assing to each text
+        sentence in the corpus.
+
+    `topic_col_names` : (list, default=TOPIC_COLNAMES)
+        default column names: topicId, dominantTopic,
+        topicContribution, topicKeywords, topicTokens
 
     Returns:
     -------
-    Returns a pandas.Dataframe containing tokenized topic text sentences
-    and the document's dominant (top) keywords.
-
+    Returns a pandas.Dataframe containing tokenized
+    topic text sentences and the document's dominant
+    (top) keywords.
     '''
-    if not num_topics:
+    if not n_topics:
         raise ValueError('You need to pass a value for the number of topics!')
 
     df = pd.DataFrame()
-    # get main topic in each document.
-    for _, doc in enumerate(LDA_model[Gensim_doc2bow]):
-        doc_row = doc[0] if LDA_model.per_word_topics else doc
-        doc_row = sorted(doc_row, key=lambda x: (x[1]), reverse=True)
-        # get the top dominant topics.
-        for idx, (topic, topic_probability) in enumerate(doc_row):
-            if idx == 0:
-                # get a representation for selected topics.
-                topic_terms = LDA_model.show_topic(topic)
-                topic_keywords = ", ".join([w for w, prop in topic_terms])
-                df = df.append(pd.Series(
-                    [
-                        int(topic),
-                        round(topic_probability, num_topics),
-                        topic_keywords
-                    ]
-                ), ignore_index=True)
+    for _, doc in enumerate(lda_model[gensim_doc2bow]):
+        doc = doc[0] if lda_model.per_word_topics else doc
+        doc = sorted(doc, key=lambda x: (x[1]), reverse=True)
+        for i, (topic, probability) in enumerate(doc):
+
+            if i == 0:
+                topics = lda_model.show_topic(topic)
+                keywords = ', '.join([w for w, p in topics])
+                df = df.append(
+                    pd.Series(
+                        [int(topic), round(probability, n_topics),
+                         keywords]), ignore_index=True)
             else:
                 break
 
     df.columns = LDA_TOPIC_COLNAMES
-    # add original text to the end of the output.
-    df_contents = pd.Series(corpus)
-    df = pd.concat([df, df_contents], axis=1)
+    corpus = pd.Series(corpus)
+    df = pd.concat([df, corpus], axis=1)
 
     if reset_col_names and len(topic_col_names) == 5:
-        NEW_TOPIC_COLNAMES = topic_col_names
+        TOPIC_COLNAMES = topic_col_names
         df = df.reset_index()
-        df.columns = NEW_TOPIC_COLNAMES
+        df.columns = TOPIC_COLNAMES
         return df
     else:
         return df

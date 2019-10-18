@@ -296,7 +296,6 @@ def run_generation(
             text = tokenizer.decode(out, clean_up_tokenization_spaces=True,
                                     skip_special_tokens=True)
             text = text[: text.find(stop_token) if stop_token else None]
-
             if join_input2prompt:
                 print(
                     f'predicted-text:\n\n{raw_text.strip()} {text.strip()}\n')
@@ -305,8 +304,6 @@ def run_generation(
 
             if prompt:
                 break
-
         elif raw_text.strip().lower() == stop_flag:
             break
-
     return text
