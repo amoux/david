@@ -5,7 +5,8 @@ from os.path import exists, join
 
 
 def timeit(method):
-    '''@timeit Decorator.
+    """Timer Decorator Utility.
+
     Which allows you to measure the execution time of
     the method/function by just adding the `@timeit`
     decorator on the method.
@@ -13,7 +14,7 @@ def timeit(method):
     * For more utily decorators install:
     https://pypi.org/project/profilehooks/
     >>> pip install profilehooks
-    '''
+    """
     def timed(*args, **kw):
         t1 = time.time()
         result = method(*args, **kw)
@@ -36,11 +37,6 @@ def text2file(fn: str, docs: list, dirpath='output') -> None:
             if len(doc) > 1:
                 f.write('%s\n' % doc)
         f.close()
-
-
-def pointer(name: str, params: dict):
-    name = namedtuple(name, params.keys())
-    return name(*params.values())
 
 
 _YOUTUBE_TAGS_REGEX_MATCHER = {

@@ -22,23 +22,18 @@ DUPLICATE_DATA = [
 
 
 def remove_duplicates(text):
-    '''Removes duplicate words found in a sequence of words.
+    """Removes duplicate words found in a sequence of words.
+    * Split text string separated by space.
+    * Joins two adjacent elements in iterable way.
+    * Uses the Counter method have strings as key and
+    their frequencies as value.
+    * Returns a joined adjacent of elements.
 
-    Recipe:
-    ------
-
-        * Split text string separated by space.
-        * Joins two adjacent elements in iterable way.
-        * Uses the Counter method have strings as key and
-        their frequencies as value.
-        * Returns a joined adjacent of elements.
-
-        >>> one_text = 'Python Python Python is awesome! Python'
-        >>> remove_duplicates(one_text)
-        ...
-        'Python is awesome!'
-
-    '''
+    >>> one_text = 'Python Python Python is awesome! Python'
+    >>> remove_duplicates(one_text)
+    ...
+    'Python is awesome!'
+    """
     text = text.split(' ')
     for idx in range(0, len(text)):
         text[idx] = ''.join(text[idx])
@@ -46,27 +41,24 @@ def remove_duplicates(text):
     return ' '.join(unique.keys())
 
 
-def pattern_search(word: Sequence[str],
-                   texts: Iterable[str]) -> Iterable[Dict]:
-    '''
-    Word pattern finder from a list of texts.
+def pattern_search(
+        word: Sequence[str],
+        texts: Iterable[str],
+) -> Iterable[Dict]:
+    """Word pattern finder from a list of texts.
 
-    * key[`loc`] -> tuple[s]:
+    Returns the following format, words not matched are not returned.
+
+    key['loc'] : tuple[s]:
         If multiple matches found: group (tuple)s, per index.
-
-    * Returns the following format:
-    (NOTE: words not matched are not returned)
 
     >>> docs = ['string looking for the first string',]
     >>> for m in pattern_search('string', docs): print(m)
-
-    {
-        'id': 3,
+        {'id': 3,
         'loc': [(0, 6), (29, 35)],
         'endpos': 35,
-        'match': 'string'
-    }
-    '''
+        'match': 'string'}
+    """
     pattern = re.compile(word)
     temp_list = list()
     for idx, text in enumerate(texts):
@@ -75,7 +67,6 @@ def pattern_search(word: Sequence[str],
                 'id': idx,
                 'loc': [(loc.span()) for loc in pattern.finditer(text)],
                 'endpos': token.endpos,
-                'match': token.string[token.start():token.end()]
-            }
+                'match': token.string[token.start():token.end()]}
         temp_list.append(matches)
     return [i[0] for i in groupby(temp_list)]

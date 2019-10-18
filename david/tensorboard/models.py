@@ -42,11 +42,11 @@ class CsvConnector(object):
                     raise ValueError('Ouch you need to select: (text or csv)')
 
     def __iter__(self):
-        '''CSV iterator loads the `file_path` from the
+        """CSV iterator loads the file_path from the
         path passed to the parameter. At the time of
-        loading the path is alson passed to the `FILE_PATH`
+        loading the path is alson passed to the FILE_PATH
         class parameter.
-        '''
+        """
         self.load_csv(fp=self.file_path)
 
         for line in self.CSV_READER:
@@ -66,8 +66,7 @@ class TxtConnector(object):
 
 
 class Bigram(object):
-    '''Gensim Biagram Class.
-    '''
+    """Gensim Biagram Class."""
 
     def __init__(self, sentences):
         self.sentences = sentences
@@ -80,15 +79,14 @@ class Bigram(object):
 
 class Word2Vec(object):
     def __init__(self, model=None, save_folder=None, phrases=False):
-        '''Word2Vec Class Model.
+        """Word2Vec Class Model.
 
         Parameters:
         ----------
-        `model` : (object, default=None)
-
-        `save_folder` : (str)
+        model : (object, default=None)
+        save_folder : (str)
             The directory name where the model's output will be saved.
-        '''
+        """
         if not os.path.exists(save_folder):
             print(f"{save_folder}: Folder does not exist, create it first")
 
@@ -99,26 +97,24 @@ class Word2Vec(object):
     def fit(self, sentences, size=100, alpha=0.025,
             window=5, min_count=5, max_vocab_size=None,
             sample=1e-3, seed=1, workers=4, min_alpha=0.0001,
-            sg=0, hs=0, negative=10, cbow_mean=1, iter=5, null_word=0
-            ):
-
-        self.model = gensim.models.Word2Vec(sentences,
-                                            size=size,
-                                            alpha=alpha,
-                                            window=window,
-                                            min_count=min_count,
-                                            max_vocab_size=max_vocab_size,
-                                            sample=sample,
-                                            seed=seed,
-                                            workers=workers,
-                                            min_alpha=min_alpha,
-                                            sg=sg,
-                                            hs=hs,
-                                            negative=negative,
-                                            cbow_mean=cbow_mean,
-                                            iter=iter,
-                                            null_word=null_word)
-
+            sg=0, hs=0, negative=10, cbow_mean=1, iter=5, null_word=0):
+        self.model = gensim.models.Word2Vec(
+            sentences,
+            size=size,
+            alpha=alpha,
+            window=window,
+            min_count=min_count,
+            max_vocab_size=max_vocab_size,
+            sample=sample,
+            seed=seed,
+            workers=workers,
+            min_alpha=min_alpha,
+            sg=sg,
+            hs=hs,
+            negative=negative,
+            cbow_mean=cbow_mean,
+            iter=iter,
+            null_word=null_word)
         self.model.save(os.path.join(self.save_folder, "gensim-model.cpkt"))
 
 
@@ -184,44 +180,37 @@ if __name__ == "__main__":
     import json
     import shutil
     from types import SimpleNamespace
-
     params = SimpleNamespace(folder="testw2v", size=20, alpha=0.025,
                              window=5, min_count=5, max_vocab_size=None,
                              sample=1e-3, seed=1, workers=3,
                              min_alpha=0.0001, sg=0, hs=0,
                              negative=10, cbow_mean=1, iter=5, null_word=0)
-
     unigram_generator = TxtConnector(filepath="data/SMSSpamCollection.txt")
-
-
     sentence_generator = Bigram(unigram_generator)
-
     os.makedirs(params.folder)
     json.dump(vars(params), open(
         os.path.join(
             params.folder, "params.json"
         ), 'w', encoding='utf-8'), indent=2)
-
     # create a Word2Vec instance.
     w2v = Word2Vec(save_folder=params.folder)
-
     # pass the parameters to the Word2Vec method
-    w2v.fit(sentence_generator,
-            size=params.size,
-            alpha=params.alpha,
-            window=params.window,
-            min_count=params.min_count,
-            max_vocab_size=params.max_vocab_size,
-            sample=params.sample,
-            seed=params.seed,
-            workers=params.workers,
-            min_alpha=params.min_alpha,
-            sg=params.sg,
-            hs=params.hs,
-            negative=params.negative,
-            cbow_mean=params.cbow_mean,
-            iter=params.iter,
-            null_word=params.null_word)
-
+    w2v.fit(
+        sentence_generator,
+        size=params.size,
+        alpha=params.alpha,
+        window=params.window,
+        min_count=params.min_count,
+        max_vocab_size=params.max_vocab_size,
+        sample=params.sample,
+        seed=params.seed,
+        workers=params.workers,
+        min_alpha=params.min_alpha,
+        sg=params.sg,
+        hs=params.hs,
+        negative=params.negative,
+        cbow_mean=params.cbow_mean,
+        iter=params.iter,
+        null_word=params.null_word)
     create_embeddings(gensim_model=w2v.model, MODEL_FOLDER=params.folder)
     shutil.rmtree(params.folder)

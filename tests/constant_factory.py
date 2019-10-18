@@ -3,12 +3,12 @@ from typing import DefaultDict, List, Set, Tuple, Type
 
 
 def constant_factory_str(value):
-    '''
+    """
     >>> d = defaultdict(constant_factory('<missing>'))
     >>> d.update(name='John', action='ran')
     >>> '%(name)s %(action)s to %(object)s' % d
     [Out] 'John ran to <missing>'
-    '''
+    """
     return lambda: value
 
 
@@ -39,20 +39,16 @@ def _ints(collection):
 def constant_factory(
         collection: List[Tuple],
         func: Type[Set[List[int]]],
-        sort_items=False) -> DefaultDict[Tuple]:
-    '''
-    Dictionary Factory Builder.
+        sort_items=False,
+) -> DefaultDict[Tuple]:
+    """Dictionary Factory Builder.
 
     Parameters:
     ----------
+    collection : object -> list[tuples]
+    by_func : type -> [set|list|int]
+    sort_items : (bool)
 
-    `collection` : object -> list[tuples]
-
-    `by_func` : type -> [set|list|int]
-
-    `sort_items` : (bool)
-        If True, the collection is then returned as a sorted list object.
-        If False (default), the collection is returned as a dict object.
 
     func : object[Types]:
     --------------------
@@ -67,17 +63,13 @@ def constant_factory(
         >>> S = ['python is A', 'python is A', 'java is D', 'java is C']
         >>> constant_factory(S, int, sort_items=True)
         ... [('java is C', 1), ('java is D', 1), ('python is A', 2)]
-
-    '''
+    """
     if func is set:
         collection = _sets(collection)
-
     elif func is int:
         collection = _ints(collection)
-
     elif func is list:
         collection = _lists(collection)
-
     if sort_items:
         return sorted(collection.items())
     else:

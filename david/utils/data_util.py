@@ -4,8 +4,8 @@ from os.path import dirpath, exists, expanduser, join
 
 import pandas as pd
 import requests
-from sklearn.datasets import load_files as _load_files
 from sklearn.datasets import _clear_data_home as _clear_data_home
+from sklearn.datasets import load_files as _load_files
 from sklearn.utils import Bunch as _Bunch
 
 
@@ -29,10 +29,8 @@ def get_data_home(data_home: str = None):
 
     Parameters:
     ----------
-
-    `data_home` : (str, default=None)
+    data_home : (str, default=None)
         The path to david_data data dir.
-
     """
     if data_home is None:
         data_home = environ.get('DAVID_DATA', join('~', 'david_data'))
@@ -43,7 +41,7 @@ def get_data_home(data_home: str = None):
 
 
 def remove_data_home(data_home=None):
-    """Calling this method deletes the root directory `david_data`
+    """Calling this method deletes the root directory david_data
     including all the datasets.
     """
     _clear_data_home(data_home=data_home)
@@ -73,19 +71,15 @@ def load_datasets(container_path, description=None, categories=None,
                                 load_content=False)
     Parameters:
     ----------
-
-    `container_path` : string or unicode
+    container_path : string or unicode
         Path to the main folder holding one subfolder per category.
-
-    `description` : string or unicode, optional (default=None)
+    description : string or unicode, optional (default=None)
         A paragraph describing the characteristic of the dataset: its source,
         reference, etc.
-
-    `categories` : A collection of strings or None, optional (default=None)
+    categories : A collection of strings or None, optional (default=None)
         If None (default), load all the categories. If not None, list of
         category names to load (other categories ignored).
-
-    `load_content` : boolean, optional (default=True)
+    load_content : boolean, optional (default=True)
         Whether to load or not the content of the different files. If true a
         'data' attribute containing the text information is present in the data
         structure returned. If not, a filenames attribute gives the path to the
@@ -93,7 +87,6 @@ def load_datasets(container_path, description=None, categories=None,
 
     Returns
     -------
-
     data : Bunch Dictionary-like object.
     """
     return _load_file(container_path, description, categories,

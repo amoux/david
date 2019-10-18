@@ -22,9 +22,9 @@ nlp = spacy.load('en_core_web_lg')
 
 
 def get_sentences(df: object, position: int = 494):
-    '''Preps texts by normalizing spacing and then with spacy
+    """Preps texts by normalizing spacing and then with spacy
     from a pandas dataframe. The columm name most be named `text`.
-    '''
+    """
     text = df.iloc[position].text
     text = text.lower().replace('\n', ' ').replace('\t', ' ')
     text = text.replace('\xa0', ' ')
@@ -37,31 +37,30 @@ def get_sentences(df: object, position: int = 494):
     return sentences
 
 
-def semantic_search_engine(search_string: str,
-                           sentences: list,
-                           num_results: int = 3,
-                           embeddings_1: object = None,
-                           module_url: str = 'https://tfhub.dev/google/elmo/2'
-                           ) -> None:
-    '''Sementic Search Engine.
+def semantic_search_engine(
+        search_string: str,
+        sentences: list,
+        num_results: int = 3,
+        embeddings_1: object = None,
+        module_url: str = 'https://tfhub.dev/google/elmo/2') -> None:
+    """Sementic Search Engine.
+
     Enter a set of words to find matching sentences. 'results_returned' can
     be used to modify the number of matching sentences retured. To view the
     code behind this cell, use the menu in the top right to unhide.
-    '''
+    """
     embed = hub.Module(module_url)
     embeddings_2 = embed(
         [search_string],
         signature='default',
         as_dict=True
     )['default']
-
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         sess.run(tf.tables_initializer())
         search_vect = sess.run(embeddings_2)
     CosineSimilarities = pd.Series(
         cosine_similarity(search_vect, embeddings_1).flatten())
-
     output = ''
     for (i, _) in CosineSimilarities.nlargest(num_results).iteritems():
         output += ('<p style="font-family:verdana; font-size:110%;"> ')

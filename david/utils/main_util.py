@@ -11,21 +11,19 @@ REGEX_DICT = {
 }
 
 
-def pointer(name: str, params: dict):
-    '''Returns a dictionary-like object from its
-    key, value pairs.
-    '''
-    name = namedtuple(name, params.keys())
-    return name(*params.values())
+def pointer(n: str, params: dict):
+    """Returns a dictionary-like object from its key, value pairs."""
+    p = namedtuple(n, params.keys())
+    return p(*params.values())
 
 
 def is_cuda_enabled(torch=torch, emptycache=False):
-    '''Prints GPU device and memory usage information if Cuda is enabled.
+    """Prints GPU device and memory usage information if Cuda is enabled.
 
-    `emptycache`: Releases all unoccupied cached memory currently held by
+    emptycache: Releases all unoccupied cached memory currently held by
     the caching allocator so that those can be used in other GPU application
     and visible in nvidia-smi.
-    '''
+    """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'device: {device}')
     if device.type == 'cuda':

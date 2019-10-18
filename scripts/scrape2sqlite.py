@@ -34,8 +34,8 @@ def download_comments(videoid: str, table: str, sqlite_url: str):
             sqlite[table].insert(dict(
                 cid=comment['cid'], text=comment['text'],
                 time=comment['time'], author=comment['author'],
-                video_id=videoid)
-            )
+                video_id=videoid))
+
             count += 1
             stdout.write('mining %d comment(s)\r' % count)
             stdout.flush()

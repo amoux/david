@@ -26,9 +26,7 @@ def pointer(name: str, params: dict):
 
 
 def prep_search(text: str, joinby=' ', outer='%'):
-    '''Cleans a given sequence and returns
-    a formatted pattern.
-    '''
+    """Cleans a given sequence and returns a formatted pattern."""
     text = ' '.join(text.split()).replace(' ', joinby)
     return (f'{outer}{text}{outer}')
 
@@ -36,20 +34,18 @@ def prep_search(text: str, joinby=' ', outer='%'):
 def format_condition(template: str,
                      doc_size: list = None,
                      condition=condition):
-    '''Sql statement template formatter.
+    """Sql statement template formatter.
 
     Parameters:
     ----------
-
-    `template`: (type=str)
+    template: (type=str)
         A sql statement-like pattern to for a clause
         condition to use.
-
-    `doc_size` : (types=List[str|int] or [NoneType])
+    doc_size : (types=List[str|int] or [NoneType])
         A clause can be a sigle or pair-combinations
         or None. For example, passing the doc_size=[1,10]
         returns a formatted str: 'BETWEEN 1 AND 100'.
-    '''
+    """
     Condition = pointer('ConditionClause', condition)
     if not doc_size:
         return template.replace(Condition.rm_condition, '')
@@ -62,15 +58,14 @@ def format_condition(template: str,
         return template.replace(Condition.rm_condition, con)
 
 
-def sequence_mapping(table: str,
-                     id_col: str,
-                     text: Sequence[str],
-                     joinby: str = '_',
-                     outer: str = '%',
-                     doc_size: List[str] = None,
-                     ) -> Sequence[Mapping]:
-    '''Returns a searchable sequence mapping.
-    '''
+def sequence_mapping(
+        table: str,
+        id_col: str,
+        text: Sequence[str],
+        joinby: str = '_',
+        outer: str = '%',
+        doc_size: List[str] = None) -> Sequence[Mapping]:
+    """Returns a searchable sequence mapping."""
     if doc_size and not isinstance(doc_size, list):
         doc_size = [doc_size]
     similar = format_condition(SimilarTextsInColumn, doc_size=doc_size)
@@ -78,55 +73,46 @@ def sequence_mapping(table: str,
                           text=prep_search(text, joinby, outer))
 
 
-def get_similartexts(words: Sequence[str],
-                     table: str = 'comments',
-                     id_col: AnyStr = 'id',
-                     joinby: str = '%_%',
-                     outer: str = '%',
-                     doc_size: List[int] = None,
-                     as_list: bool = False,
-                     db_name: str = 'comments.db'
-                     ) -> Iterable[Collection]:
-    '''
-    Get a document containing texts matching
-    a given sequence.
+def get_similartexts(
+        words: Sequence[str],
+        table: str = 'comments',
+        id_col: AnyStr = 'id',
+        joinby: str = '%_%',
+        outer: str = '%',
+        doc_size: List[int] = None,
+        as_list: bool = False,
+        db_name: str = 'comments.db') -> Iterable[Collection]:
+    """Get a document containing texts matching a given sequence.
 
     Parameters:
     ----------
-
-    `words`: (type=str)
+    words: (type=str)
         A sring sequence or key-words to use for extracting
         similar sequences from any maching row.
-
-    `doc_size` : (types=List[str|int] or [NoneType])
+    doc_size : (types=List[str|int] or [NoneType])
         A single or two index values(s) to use as a filter
         or target. For example, passing the doc_size=[1,10]
         selects index range 1 to 10. This is helpful if the
         database is over one million rows.
-
-    `as_list` : (type=bool, default=False)
+    as_list : (type=bool, default=False)
         Returns a list instead of a Collection object type.
         All empty lines are removed.
-
-    `db_name`: (str)
+    db_name: (str)
         The name of the dataset to load from DAVID_COMMENTS_DB.
-        Available dataset names: `comments.db,  comments_v1.db`
+        Available dataset names: comments.db,  comments_v1.db
 
     Usage:
     -----
-
-        >>> max_rows = 252_848 # this is an optional limiter.
-        >>> text = 'make a video'
-        >>> docs = get_similartexts(text, doc_size=[1, max_rows])
-        >>> for doc in docs: print(doc.text)
-        ...
-        'thanks for a great video of introduction to Tensorflow 👍.'
-        'Hi TechLead, Can you make a video about Scala in software engineer?'
-
-    '''
+    >>> max_rows = 252_848 # this is an optional limiter.
+    >>> text = 'make a video'
+    >>> docs = get_similartexts(text, doc_size=[1, max_rows])
+    >>> for doc in docs: print(doc.text)
+    ...
+    'thanks for a great video of introduction to Tensorflow 👍.'
+    'Hi TechLead, Can you make a video about Scala in software engineer?'
+    """
     sqlpath = 'sqlite:///{}'.format(
-        join(environ.get('DAVID_COMMENTS_DB'), db_name)
-    )
+        join(environ.get('DAVID_COMMENTS_DB'), db_name))
     records = Database(sqlpath)
     similar_docs = records.query(
         sequence_mapping(
@@ -135,9 +121,7 @@ def get_similartexts(words: Sequence[str],
             text=words,
             doc_size=doc_size,
             joinby=joinby,
-            outer=outer
-        )
-    )
+            outer=outer))
     if as_list:
         return [' '.join(doc.text.split()) for doc in similar_docs]
     else:

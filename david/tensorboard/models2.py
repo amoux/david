@@ -73,8 +73,7 @@ class Word2Vec(object):
                  save_folder=None,
                  model_name='gensim-model.cpkt'
                  ):
-        '''Word2Vec Class Model.
-        '''
+        """Word2Vec Class Model."""
         if not os.path.exists(save_folder):
             os.makedirs(save_folder)
 
@@ -120,14 +119,14 @@ def write2file(index2word, meta_name: str, save_path: str, join_by='\n'):
 
 def save_embedding_config(tensor_name, tf_writer,
                           meta_name: str, save_path: str):
-    '''
-    TensorBoard embeddings visualizer configuration session.
+    """TensorBoard embeddings visualizer configuration session.
+
     Adds format for the projector embeddings and saves the
     configuration file that TensorBoard will read during startup.
 
     Path:
-    `tensorflow/contrib/tensorboard/plugins/projector/projector_config.proto`
-    '''
+    tensorflow/contrib/tensorboard/plugins/projector/projector_config.proto
+    """
     config = tensorboard.plugins.projector.ProjectorConfig()
     embedding = config.embeddings.add()
     embedding.tensor_name = tensor_name
@@ -137,42 +136,39 @@ def save_embedding_config(tensor_name, tf_writer,
 
 def evaluate_tensor_fetches(tensor, placeholder, vectors,
                             tf_saver, model_name, save_path):
-    '''
-    Runs operations and evaluates tensors in fetches.
+    """Runs operations and evaluates tensors in fetches.
+
     This method runs one "step" of TensorFlow computation, by running the
     necessary graph fragment to execute every Operation and evaluate every
     Tensor in fetches, substituting the values in feed_dict for the
     corresponding input values.
 
     Returns a model's path from the session's instance.
-    '''
+    """
     with tf.Session() as sess:
         sess.run(tensor, feed_dict={placeholder: vectors})
         # saves a configuration file that TensorBoard will read during startup.
         return tf_saver.save(sess, os.path.join(save_path, model_name))
 
 
-def create_embeddings(gensim_model,
-                      tf_value=0.0,
-                      tf_trainable=False,
-                      tf_varname='W',
-                      model_name='tf-model.cpkt',
-                      meta_name='metadata.tsv',
-                      save_path='models/',
-                      join_by='\n'):
-    '''
-    TensorBoard embedding visualizer for a gensim models.
+def create_embeddings(
+        gensim_model,
+        tf_value=0.0,
+        tf_trainable=False,
+        tf_varname='W',
+        model_name='tf-model.cpkt',
+        meta_name='metadata.tsv',
+        save_path='models/',
+        join_by='\n'):
+    """TensorBoard embedding visualizer for a gensim models.
 
     Parameters:
     ----------
-
-    `tf_value` : (int|list, default=0.0)
-        A constant value (or list) of output type `dtype`.
-
-    `tf_varname` : (str, default='W')
+    tf_value : (int|list, default=0.0)
+        A constant value (or list) of output type dtype.
+    tf_varname : (str, default='W')
         Optional name for the tensor.
-
-    '''
+    """
     vectors = gensim_model.wv.vectors
     index2word = gensim_model.wv.index2word
     vocab_size = vectors.shape[0]

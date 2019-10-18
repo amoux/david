@@ -95,6 +95,7 @@ def similar_response(text: str, sents: list, stop_words=STOP_WORDS):
 def start_chatbot_session(sents: list, intents: set, stop_flag='quit'):
     print('Ask chatbot related questions!\n'
           f'enter: < {stop_flag} > to stop anytime.\n')
+
     while True:
         chatbot_reply = 'bot : {}'
         text_input = input('you : ').lstrip().lower()

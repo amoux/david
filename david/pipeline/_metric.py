@@ -92,41 +92,6 @@ class TextMetrics(MutableSequence, object):
             Used to label a text for every index in a column from a
             table containing sentiment values. Pass a tuple to change
             the default labels to use. e.g. (1, 0, 'N')
-
-        String-level metric -> if string=True:
-        --------------------------------------
-
-        * stringLength  : sum of all words in a string.
-
-        Word-level metrics -> if words=True:
-        ------------------------------------
-
-        * avgWordLength     : average number of words.
-        * isStopwordCount   : count of stopwords only.
-        * noStopwordCount   : count of none stopwords.
-
-        Character-level metrics -> if character=True:
-        ---------------------------------------------
-
-        * charDigitCount    : count of digits chars.
-        * charUpperCount    : count of uppercase chars.
-        * charLowerCount    : count of lowercase chars.
-
-        Sentiment-level metrics -> if sentiment=True:
-        --------------------------------------------
-
-        * sentiPolarity     : polarity score with Textblob, (float).
-        * sentiSubjectivity : subjectivity score with Textblob (float).
-        * sentimentLabel    : labels row with one (pos, neg, neutral) tag.
-
-        Tag-extraction metrics -> if tags=True:
-        --------------------------------------
-
-        * authorTimeTag : extracts video time tags, e.g. 1:20.
-        * authorUrlLink : extracts urls links if found.
-        * authorHashTag : extracts hash tags, e.g. #numberOne.
-        * authorEmoji   : extracts emojis if found 👾.
-
         """
         if stopword_set:
             self.STOPWORDS = stopword_set
