@@ -18,7 +18,7 @@ def text2ngrams(
         spacy_model: str = None,
         pos_tags: list = None,
         stop_words: set = None,
-        spacy_model_disable: list = None,
+        disable_pipe_names: list = None,
         min_count: int = 5,
         threshold: float = 10.0) -> List[str]:
     """Convert texts to N-grams (Spacy & Gensim).
@@ -32,7 +32,7 @@ def text2ngrams(
     Default configurations if left as none:
 
         * `spacy_model = 'en_core_web_lg'`
-        * `spacy_model_disable = ['parser', 'ner']`
+        * `disable_pipe_names = ['parser', 'ner']`
         * `stop_words = SPACY_STOP_WORDS`
         * `pos_tags = ['NOUN', 'ADJ', 'VERB', 'ADV']`
 
@@ -57,8 +57,8 @@ def text2ngrams(
     """
     if not spacy_model:
         spacy_model = 'en_core_web_lg'
-    if not spacy_model_disable:
-        model_disable = ['parser', 'ner']
+    if not disable_pipe_names:
+        disable_pipe_names = ['parser', 'ner']
     if not pos_tags:
         pos_tags = ['NOUN', 'ADJ', 'VERB', 'ADV']
     if not stop_words:
@@ -72,7 +72,7 @@ def text2ngrams(
     texts = _gensim_prep(stop_words, sents)
     texts = [bigram_mod[text] for text in texts]
     texts = [trigram_mod[bigram_mod[text]] for text in texts]
-    nlp = spacy.load(spacy_model, disable=model_disable)
+    nlp = spacy.load(spacy_model, disable=disable_pipe_names)
     spacy.prefer_gpu()
 
     texts_out = []
