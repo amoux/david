@@ -1,7 +1,7 @@
 import os
 from collections import namedtuple
 from os import environ, makedirs
-from os.path import dirpath, exists, expanduser, join
+from os.path import dirpath, join
 
 import pandas as pd
 import requests

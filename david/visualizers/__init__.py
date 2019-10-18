@@ -1,1 +1,1 @@
-from .word_cloud import build_wordcloud
+from ._word_cloud import build_wordcloud

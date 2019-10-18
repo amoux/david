@@ -1,5 +1,4 @@
 import time
-from collections import namedtuple
 from os import makedirs
 from os.path import exists, join
 
@@ -37,21 +36,3 @@ def text2file(fn: str, docs: list, dirpath='output') -> None:
             if len(doc) > 1:
                 f.write('%s\n' % doc)
         f.close()
-
-
-_YOUTUBE_TAGS_REGEX_MATCHER = {
-    'titles': r"(-?([A-Z].\\s)?([A-Z][a-z]+)\\s?)+([A-Z]'([A-Z][a-z]+))?",
-    'quotes': r'"(?:\\.|(\\")|[^""\n])*"',
-    'times': r'([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?',
-    'username_v1': r'\B(\@[a-zA-Z_0-9]+\b)(?!;)',
-    'username_v2': r'(\@[a-zA-Z0-9_%]*)'}
-
-_YOUTUBE_URLS_REGEX_MATCHER = {
-    'videoId': r'v=([a-zA-Z0-9\_\-]+)&?',
-    'vid_url1': r'youtube.[a-z]+/[a-z\?\&]*v[/|=](\w+)',
-    'any_vidUrl': r'(?:https?:\/\/)?(?:www\.)?youtu(.be\/|be\.com\/watch\?v=)(.{8,})',
-    'vid_url2': r'(((\?v=)|(\/embed\/)|(youtu.be\/)|(\/v\/)|(\/a\/u\/1\/))(.+?){11})'}
-
-
-RegexMatchUrls = pointer('RegexMatchUrls', _YOUTUBE_URLS_REGEX_MATCHER)
-RegexMatchTags = pointer('RegexMatchTags', _YOUTUBE_TAGS_REGEX_MATCHER)

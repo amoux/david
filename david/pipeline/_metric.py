@@ -2,8 +2,8 @@
 from collections import MutableSequence
 
 import numpy as np
-from spacy.lang.en import STOP_WORDS as SPACY_STOPWORDS
 
+from ..lang import SPACY_STOP_WORDS
 from ..text import (get_emojis, get_sentiment_polarity,
                     get_sentiment_subjectivity, normalize_spaces)
 
@@ -16,7 +16,7 @@ TAG = r'(\#\w+)'
 class TextMetrics(MutableSequence, object):
     """Gathers Statistical Metrics from Texts."""
 
-    STOPWORDS = SPACY_STOPWORDS
+    STOP_WORDS = SPACY_STOP_WORDS
     SENTI_LABELS = ('positive', 'negative', 'neutral')
 
     def sentiment_labeler(self, score):
@@ -28,7 +28,7 @@ class TextMetrics(MutableSequence, object):
             return self.SENTI_LABELS[2]
 
     def avg_words(self, words: list):
-        return [len(w) for w in words.split(' ') if w not in self.STOPWORDS]
+        return [len(w) for w in words.split(' ') if w not in self.STOP_WORDS]
 
     def string_metric(self, text_col='text'):
         self[text_col] = self[text_col].apply(lambda s: normalize_spaces(s))
@@ -45,7 +45,7 @@ class TextMetrics(MutableSequence, object):
 
         self['noStopwordCount'] = self[text_col].apply(
             lambda texts: len([w for w in texts.split(' ')
-                               if w not in self.STOPWORDS]))
+                               if w not in self.STOP_WORDS]))
 
     def character_metrics(self, text_col='text'):
         self['charDigitCount'] = self[text_col].str.findall(
@@ -84,7 +84,7 @@ class TextMetrics(MutableSequence, object):
         Parameters:
         -----------
         stopword_set : (set)
-            default, STOPWORDS=spacy.lang.en.STOP_WORDS
+            default, STOP_WORDS=spacy.lang.en.STOP_WORDS
             Used to capture metrics of actual words and stopwords
             detected within a string sequence.
         senti_labels : (tuple)
@@ -94,7 +94,7 @@ class TextMetrics(MutableSequence, object):
             the default labels to use. e.g. (1, 0, 'N')
         """
         if stopword_set:
-            self.STOPWORDS = stopword_set
+            self.STOP_WORDS = stopword_set
         if senti_labels:
             self.SENTI_LABELS = senti_labels
         if string:

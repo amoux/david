@@ -68,12 +68,13 @@ def _ajax_request(session, url, params, data, retries=10, sleep=20):
             time.sleep(sleep)
 
 
-def _scrape_comments(youtube_id, sleep=1):
+def scrape_comments(youtube_id, sleep=1):
     session = _requests.Session()
     session.headers['User-Agent'] = _USER_AGENT
     response = session.get(_YT_COMMENTS_URL.format(youtube_id=youtube_id))
     html = response.text
     reply_cids = _extract_from_comment_replies(html)
+
     ret_cids = []
     for comment in _extract_comment_content(html):
         ret_cids.append(comment['cid'])
@@ -81,17 +82,17 @@ def _scrape_comments(youtube_id, sleep=1):
 
     page_token = _from_html_keys(html, 'data-token')
     session_token = _from_html_keys(html, 'XSRF_TOKEN', 4)
+
     first_iteration = True
     while page_token:
-        data = {
-            'video_id': youtube_id,
-            'session_token': session_token
-        }
-        params = {
-            'action_load_comments': 1,
-            'order_by_time': True,
-            'filter': youtube_id
-        }
+
+        data = {'video_id': youtube_id,
+                'session_token': session_token}
+
+        params = {'action_load_comments': 1,
+                  'order_by_time': True,
+                  'filter': youtube_id}
+
         if first_iteration:
             params['order_menu'] = True
         else:
@@ -136,11 +137,11 @@ def _scrape_comments(youtube_id, sleep=1):
         time.sleep(sleep)
 
 
-def _write2json(fn: str, video_id: str, limit=None):
+def save2json(fn: str, video_id: str, limit=None):
     """Jsonline file writer."""
     count = 0
     with io.open(fn, 'w', encoding='utf-8') as fp:
-        for comment in _scrape_comments(video_id):
+        for comment in scrape_comments(video_id):
             print(json.dumps(comment, ensure_ascii=False), file=fp)
             count += 1
             sys.stdout.write('mining %d comment(s)\r' % count)
@@ -150,9 +151,10 @@ def _write2json(fn: str, video_id: str, limit=None):
     print(f'done extracting comments')
 
 
-def download(video_id: str, dirpath='downloads',
-             limit=None, load_corpus=False, force_download=False):
-    """Downloads comments from a youtube videos.
+def scrape_comments_to_json(video_id: str, dirpath='downloads',
+                            limit=None, load_corpus=False,
+                            force_download=False):
+    """Downloads comments from a youtube videos. (JSON)
 
     The files are named after the video_id e.g. 4Dk3jOSbz_0.json
 
@@ -163,22 +165,21 @@ def download(video_id: str, dirpath='downloads',
     dirpath : (str, default='downloads')
         The directory path where the downloads will be saved.
     limit : (int, default=None)
-        Sets a limit to the number of comments to download
+        limits the number of comments to download.
     """
 
-    # TODO: I NEED TO ADD A DEFAULT GLOBAL ENVIROMENT VARIABLE TO THE
-    # LOCATION WHERE THE DOWNLOADS WILL BE SAVED. LIKE DAVID_DATA. I
-    # ALREADY STARTED WORKING ON THIS WILL SOME METHODS FROM THE SKLEARN
-    # LIBRARY. LOCATED IN THE MODELS DIRECTORY OF THIS PROJECT.
+    # TODO: GET RID OF THIS USELESS METHOD ASAP..
 
     if not exists(dirpath):
         os.makedirs(dirpath)
     fp = join(dirpath, f'{video_id}.json')
+
     # check if the video has already beed downloaded.
     if (isfile(fp) and not force_download):
         raise Exception(f'The video id: {video_id} already exists!\n'
                         'Set force_download=True to override the exception.')
-    _write2json(fp, video_id, limit)
+
+    save2json(fp, video_id, limit)
     # if true, return the full path of the scraped file.
     if load_corpus:
         return fp
