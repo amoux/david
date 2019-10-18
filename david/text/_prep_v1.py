@@ -60,8 +60,7 @@ def replace_numbers(
         one="one",
         decimal="point",
         threshold=None) -> List[str]:
-    if not isinstance(words, List[str]):
-        words = list([words])
+    """Replace numbers to word numbers."""
     p = inflect.engine()
     new_words = []
     for word in words:

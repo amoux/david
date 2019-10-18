@@ -97,4 +97,5 @@ def get_similar_docs(
                 'text': text,
                 'similarity': score,
                 'query': query})
+
     return matches

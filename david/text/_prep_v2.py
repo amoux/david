@@ -7,8 +7,7 @@ import nltk
 from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from pattern.text.en import tag as pattern_pos_tagger
-
-NLTK_STOPWORDS = nltk.corpus.stopwords.words('english')
+from ..lang import NLTK_STOP_WORDS
 
 
 def expand_contractions(text: str, leftovers=True, slang=True):
@@ -74,7 +73,7 @@ def remove_special_characters(text: str):
 
 def remove_stopwords(text: str, stop_words: list = None):
     if not stop_words:
-        stop_words = NLTK_STOPWORDS
+        stop_words = NLTK_STOP_WORDS
     tokens = nltk_tokenizer(text)
     filtered_tokens = [token for token in tokens if token not in stop_words]
     filtered_text = ' '.join(filtered_tokens)

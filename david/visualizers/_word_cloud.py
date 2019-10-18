@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
-from wordcloud import STOPWORDS, WordCloud
+from wordcloud import WordCloud
+
+from ..lang import SPACY_STOP_WORDS
 
 
 def build_wordcloud(
@@ -13,7 +15,7 @@ def build_wordcloud(
     """Build a word cloud image from text sequences."""
 
     if not stop_words:
-        stop_words = STOPWORDS
+        stop_words = SPACY_STOP_WORDS
 
     wordcloud = WordCloud(
         width=width,

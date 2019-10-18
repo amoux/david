@@ -4,6 +4,15 @@ from ._search_v1 import _search as search_v1
 from ._search_v2 import YoutubeConfig
 from ._search_v2 import _search as search_v2
 
+
+YOUTUBE_REGEX = {
+    'match_titles': "(-?([A-Z].\\s)?([A-Z][a-z]+)\\s?)+([A-Z]'([A-Z][a-z]+))?",
+    'match_quotes': '"(?:\\.|(\\")|[^""\n])*"',
+    'match_times': '([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?',
+    'match_youtubeurl': '(?:https?:\\/\\/)?(?:(?:(?:www\\.?)?youtube\\.com(?:\\/(?:(?:watch\\?.*?(v=[^&\\s]+).*)|(?:v(\\/.*))|(channel\\/.+)|(?:user\\/(.+))|(?:results\\?(search_query=.+))))?)|(?:youtu\\.be(\\/.*)?))',
+    'trim_whitespaces': '(?:\\s)\\s")'}
+
+
 YOUTUBE_CATEGORIES = {
     'film.animation': '1',
     'autos.vehicles': '2',

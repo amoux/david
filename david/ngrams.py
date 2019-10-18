@@ -4,27 +4,21 @@ import gensim
 import spacy
 from gensim.utils import simple_preprocess
 from sklearn.feature_extraction.text import CountVectorizer
-from spacy.lang.en import stop_words
 
-SPACY_MODEL = 'en_core_web_lg'
-SPACY_DISABLE = ['parser', 'ner']
-SPACY_POSTAGS = ['NOUN', 'ADJ', 'VERB', 'ADV']
-STOP_WORDS = stop_words.STOP_WORDS
+from .lang import SPACY_STOP_WORDS
 
 
-def _gensim_prep(stopwords: set, sents: list):
-    # removes stop-words and preprocess texts with gensim.
-    texts = [[word for word in simple_preprocess(str(sent))
-              if word not in stopwords] for sent in sents]
-    return texts
+def _gensim_prep(stopwords, sents):
+    return [[word for word in simple_preprocess(sent)
+             if word not in stopwords] for sent in sents]
 
 
 def text2ngrams(
         sents: Iterable[str],
-        spacy_model: str = SPACY_MODEL,
-        disable: list = SPACY_DISABLE,
-        stop_words: set = STOP_WORDS,
-        post_tags: list = SPACY_POSTAGS,
+        spacy_model: str = None,
+        pos_tags: list = None,
+        stop_words: set = None,
+        spacy_model_disable: list = None,
         min_count: int = 5,
         threshold: float = 10.0) -> List[str]:
     """Convert texts to N-grams (Spacy & Gensim).
@@ -35,12 +29,12 @@ def text2ngrams(
     into a list of lowercase tokens, ignoring tokens that are too short
     or too long.
 
-    - The following default parameters can be overwritten:
+    Default configurations if left as none:
 
-        * SPACY_MODEL = 'en_core_web_lg'
-        * SPACY_DISABLE = ['parser', 'ner']
-        * STOP_WORDS = spacy.lang.en.stop_words.STOP_WORDS
-        * SPACY_POSTAGS = ['NOUN', 'ADJ', 'VERB', 'ADV']
+        * `spacy_model = 'en_core_web_lg'`
+        * `spacy_model_disable = ['parser', 'ner']`
+        * `stop_words = SPACY_STOP_WORDS`
+        * `pos_tags = ['NOUN', 'ADJ', 'VERB', 'ADV']`
 
     Parameters:
     ----------
@@ -61,57 +55,57 @@ def text2ngrams(
     -------
     Returns preprocessed texts.
     """
-    if spacy_model:
-        SPACY_MODEL = spacy_model
-    if disable:
-        SPACY_DISABLE = disable
-    if stop_words:
-        STOP_WORDS = stop_words
-    if post_tags:
-        SPACY_POSTAGS = post_tags
+    if not spacy_model:
+        spacy_model = 'en_core_web_lg'
+    if not spacy_model_disable:
+        model_disable = ['parser', 'ner']
+    if not pos_tags:
+        pos_tags = ['NOUN', 'ADJ', 'VERB', 'ADV']
+    if not stop_words:
+        stop_words = SPACY_STOP_WORDS
+
     # build biagrams and trigram models
     bigram = gensim.models.Phrases(sents, min_count, threshold)
     trigram = gensim.models.Phrases(bigram[sents], threshold=threshold)
     bigram_mod = gensim.models.phrases.Phraser(bigram)
     trigram_mod = gensim.models.phrases.Phraser(trigram)
-    texts = _gensim_prep(STOP_WORDS, sents)
+    texts = _gensim_prep(stop_words, sents)
     texts = [bigram_mod[text] for text in texts]
     texts = [trigram_mod[bigram_mod[text]] for text in texts]
-    nlp = spacy.load(SPACY_MODEL, disable=SPACY_DISABLE)
+    nlp = spacy.load(spacy_model, disable=model_disable)
     spacy.prefer_gpu()
+
     texts_out = []
     for sent in texts:
         doc = nlp(' '.join(sent))
-        texts_out.append(
-            [
-                token.lemma_ for token in doc
-                if token.pos_ in SPACY_POSTAGS
-            ]
-        )
+        texts_out.append([token.lemma_ for token in doc
+                          if token.pos_ in pos_tags])
+
     # remove stopwords once more after lemmatization
-    texts_out = _gensim_prep(STOP_WORDS, texts_out)
+    texts_out = _gensim_prep(stop_words, texts_out)
     return texts_out
 
 
-def n_grams(corpus: list,
-            n: int = 5,
-            ngram_range: tuple = (1, 1),
-            max_features: int = None,
-            reverse: bool = True):
+def n_grams(
+        corpus: list,
+        n: int = 5,
+        ngram_range: tuple = None,
+        max_features: int = None,
+        reverse: bool = True):
     """N-gram Frequency with Sklearn CountVectorizer.
 
     Returns the most frequently occurring words.
     """
-    if not isinstance(ngram_range, tuple):
-        raise ValueError(f'{ngram_range} is not a tuple type = tuple(n, n)')
+    if not ngram_range:
+        ngram_range = (1, 1)
 
     vec = CountVectorizer(ngram_range=ngram_range,
-                          max_features=max_features
-                          ).fit(corpus)
+                          max_features=max_features).fit(corpus)
     bag_of_words = vec.transform(corpus)
     wordsums = bag_of_words.sum(axis=0)
     wordfreq = [(word, wordsums[0, idx])
                 for word, idx in vec.vocabulary_.items()]
+
     wordfreq = sorted(wordfreq, key=lambda x: x[1], reverse=reverse)
     return wordfreq[:n]
 
