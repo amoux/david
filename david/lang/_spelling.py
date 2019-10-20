@@ -18,10 +18,9 @@ class SpellCorrect(object):
         """SpellCorrect uses word frquencies for matching the _correct
         grammar of a word.
 
-        `corpus_path` : (str, default=None, 'big.txt')
-            If the left as None, it imports `big.txt` file as
+        corpus_path : (str)
+            If the left as None, it imports big.txt file as
             the dataset for _correct spelled words.
-
         """
         self.corpus_path = corpus_path
         if not self.corpus_path:
@@ -38,8 +37,7 @@ class SpellCorrect(object):
         return re.findall('[a-z]+', text.lower())
 
     def correct_text(self, text):
-        """Correct all the words within a text,
-        returning the corrected text.
+        """Correct all the words within a text, returning the corrected text.
         """
         return re.sub('[a-zA-Z]+', self.correct_match, text)
 
@@ -50,8 +48,8 @@ class SpellCorrect(object):
         word = match.group()
 
         def case_of(text):
-            """Return the case-function appropriate
-            for text: upper, lower, title, or just str.
+            """Return the case-function appropriate for text:
+            upper, lower, title, or just str.
             """
             return (str.upper if text.isupper() else
                     str.lower if text.islower() else

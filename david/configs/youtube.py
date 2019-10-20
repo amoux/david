@@ -1,7 +1,5 @@
 import os
 
-from ..utils._data_util import pointer
-
 API = {
     'api_key': os.environ.get('YOUTUBE_API_KEY'),
     'client_id': os.environ.get('YOUTUBE_CLIENT_ID'),
