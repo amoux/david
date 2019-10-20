@@ -1,17 +1,12 @@
 
 import logging
-import os
 
 import numpy as np
 import pandas as pd
-import requests
 import spacy
 import tensorflow as tf
 from IPython.display import HTML
-from sklearn import preprocessing
 from sklearn.metrics.pairwise import cosine_similarity
-from spacy import displacy
-from spacy.lang.en import English
 
 import tensorflow_hub as hub
 

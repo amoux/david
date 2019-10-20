@@ -3,10 +3,7 @@ import sys
 from sys import stdout
 
 import dataset
-from david.youtube import scraper
-
-sys.path.append('../')
-
+from david.youtube import scrape_comments
 
 FILE = 'pending_downloads.txt'
 DB_SQL = 'sqlite:///yt_comments.db'
@@ -30,11 +27,12 @@ def get_videos(fp):
 def download_comments(videoid: str, table: str, sqlite_url: str):
     count = 0
     with dataset.connect(sqlite_url) as sqlite:
-        for comment in scraper._scrape_comments(videoid):
+        for comment in scrape_comments(videoid):
             sqlite[table].insert(dict(
-                cid=comment['cid'], text=comment['text'],
-                time=comment['time'], author=comment['author'],
-                video_id=videoid))
+                cid=comment['cid'],
+                text=comment['text'],
+                time=comment['time'],
+                author=comment['author'], video_id=videoid))
 
             count += 1
             stdout.write('mining %d comment(s)\r' % count)

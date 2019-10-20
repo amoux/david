@@ -1,7 +1,6 @@
 import os
 from collections import namedtuple
-from os import environ, makedirs
-from os.path import dirpath, join
+from os import path
 
 import pandas as pd
 import requests
@@ -15,9 +14,9 @@ def pointer(n: str, params: dict):
 
 
 def load_comments_lg():
-    module_path = dirpath(__file__)
-    filename = join(module_path, 'ycd_csv', 'ycc_web_lg.csv')
-    with open(join(module_path, 'description', 'ytc_lg.rst')) as rst_file:
+    module_path = path.dirname(__file__)
+    filename = path.join(module_path, 'ycd_csv', 'ycc_web_lg.csv')
+    with open(path.join(module_path, 'description', 'ytc_lg.rst')) as rst_file:
         file_descr = rst_file.read()
     return _Bunch(DESCR=file_descr, filename=filename)
 
@@ -29,7 +28,7 @@ def load_datasets(container_path, description=None, categories=None,
 
     Return all categories and its files:
 
-    >>> ycd_json = join(get_data_home(), 'ycd_json')
+    >>> ycd_json = path.join(get_data_home(), 'ycd_json')
     >>> bunch = load_datasets(ycd_json, load_content=False)
     >>> bunch.filenames # list of all filenames
     >>> bunch.target_names # list of all categories.
@@ -39,7 +38,7 @@ def load_datasets(container_path, description=None, categories=None,
     category e.g. 'worst_car_trends' where the name of the category
     is the directory name:
 
-    >>> ycd_json = join(get_data_home(), 'ycd_json')
+    >>> ycd_json = path.join(get_data_home(), 'ycd_json')
     >>> file_names = load_datasets(
                             ycd_json,
                             categories='worst_car_trends',
@@ -78,7 +77,7 @@ class GoogleDriveDownloader:
         self.file_name = file_name
         self.dirpath = dirpath
         self.chunk_size = chunk_size
-        self.destination = os.path.join(self.dirpath, file_name)
+        self.destination = os.path.path.join(self.dirpath, file_name)
 
     def download_df(self, stream=True, load_df=False):
         session = requests.Session()

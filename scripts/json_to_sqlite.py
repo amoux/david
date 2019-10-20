@@ -25,8 +25,8 @@ def preprocess_dataframe(filepath: str, filename: str):
     df['video_id'] = filename.strip('.json')
     df[['cid', 'cid_reply']] = pd.DataFrame(
         [x.split('.') for x in df['cid'].tolist()])
-    df = arrange_index(df, 'cid_reply', rm_index=5, to_index=2)
-    return df
+
+    return arrange_index(df, 'cid_reply', rm_index=5, to_index=2)
 
 
 def from_dataframebatch(fpath: list, videoids: list):

@@ -5,40 +5,28 @@ from pprint import pprint
 import pandas as pd
 from tqdm import tqdm
 
-from david.config import CHANNEL_STATS_API
-from david.youtube import download, search_v1
-
-COMMENTS = CHANNEL_STATS_API['comments']
-VIDEO_ID = 'vidId'
+from david.youtube import scrape_comments_to_json, search_v1
 
 
-def make_savepath(query: str, save_path: str):
-    """Creates and names the directorier per query."""
+def create_directory(query: str, save_path: str):
+    """Creates directory names based on the query searched."""
     dir_name = re.sub(' ', '_', query)
-    dir_path = os.path.join(save_path, dir_name)
-    return dir_path
+    return os.path.join(save_path, dir_name)
 
 
-def save_corpus(df: object, query: str, save_path: str,
-                join_by='_', ftype='.csv'):
-    """Saves the CSV file to its parent directory.
-
-    The file is named in relation to the a search query.
-    """
-    fn = re.sub(' ', join_by, query)
-    fn = fn + ftype
-    fp = make_savepath(query, save_path)
-    fp = os.path.join(fp, fn)
-    df.to_csv(fp)
+def save_corpus(df: object, query: str,
+                save_path: str, join_by='_', ftype='.csv'):
+    """Saves the corpus file to its parent directory."""
+    file_name = re.sub(' ', join_by, query)
+    file_path = os.path.join(
+        create_directory(query, save_path), f'{file_name}{ftype}')
+    df.to_csv(file_path)
 
 
-def get_comments(videoids: list, fp: str, limit: int):
-    """Download youtube comments.
-
-    Scrapes comments for each video id in the list.
-    """
+def download_comments(videoids: list, file_path: str, limit: int):
     for vid in tqdm(videoids):
-        download(video_id=vid, dirpath=fp, limit=limit)
+        scrape_comments_to_json(
+            video_id=vid, dirpath=file_path, limit=limit)
 
 
 def build_corpus(
@@ -75,21 +63,27 @@ def build_corpus(
         Save search results from the Youtube Data API to
         a csv file.
     """
-    res = search_v1(query, max_results)
-    df = pd.DataFrame.from_dict(res, orient="columns")
-    df[COMMENTS] = df[COMMENTS].astype(int)
-    df = df[df[COMMENTS] > min_comments]
-    videoid = df[VIDEO_ID].values.tolist()
+    query_response = search_v1(query, max_results)
+    df = pd.DataFrame.from_dict(query_response, orient="columns")
+    df['commentCount'] = df['commentCount'].astype(int)
+    df = df.loc[df['commentCount'] > min_comments]
+    video_ids = df['vidId'].values.tolist()
+
     if download:
-        get_comments(videoid, save_path, limit)
+        download_comments(video_ids, save_path, limit)
     if to_csv:
         save_corpus(df, query, save_path, join_by)
-    elif not (download and to_csv):
-        pprint(res)
+    elif not download and to_csv:
+        pprint(query_response)
 
 
 if __name__ == '__main__':
-    QSEARCH = 'python is the future'
-    build_corpus(QSEARCH, max_results=10,
-                 min_comments=2000, download=True,
-                 limit=None, to_csv=True)
+
+    query = 'python is the future'
+    build_corpus(
+        query,
+        max_results=10,
+        min_comments=2000,
+        download=True,
+        limit=None,
+        to_csv=True)

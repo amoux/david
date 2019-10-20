@@ -1,8 +1,4 @@
-
 from ._scraper import scrape_comments, scrape_comments_to_json
-from ._search_v1 import _search as search_v1
-from ._search_v2 import YoutubeConfig
-from ._search_v2 import _search as search_v2
 
 REGX_MATCH_SPECIAL_TAGS = {
     'match_titles': "(-?([A-Z].\\s)?([A-Z][a-z]+)\\s?)+([A-Z]'([A-Z][a-z]+))?",
@@ -25,7 +21,7 @@ REGX_MATCH_URLS = {
     'vid_url2': r'(((\?v=)|(\/embed\/)|(youtu.be\/)|(\/v\/)|(\/a\/u\/1\/))(.+?){11})'}
 
 
-YOUTUBE_CATEGORIES = {
+CATEGORY_IDS = {
     'film.animation': '1',
     'autos.vehicles': '2',
     'music': '10',

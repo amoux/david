@@ -41,10 +41,8 @@ def remove_duplicates(text):
     return ' '.join(unique.keys())
 
 
-def pattern_search(
-        word: Sequence[str],
-        texts: Iterable[str],
-) -> Iterable[Dict]:
+def pattern_search(word: Sequence[str],
+                   texts: Iterable[str]) -> Iterable[Dict]:
     """Word pattern finder from a list of texts.
 
     Returns the following format, words not matched are not returned.

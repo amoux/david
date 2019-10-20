@@ -36,11 +36,9 @@ def _ints(collection):
     return d
 
 
-def constant_factory(
-        collection: List[Tuple],
-        func: Type[Set[List[int]]],
-        sort_items=False,
-) -> DefaultDict[Tuple]:
+def constant_factory(collection: List[Tuple],
+                     func: Type[Set[List[int]]],
+                     sort_items=False) -> DefaultDict[Tuple]:
     """Dictionary Factory Builder.
 
     Parameters:
