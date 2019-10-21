@@ -3,7 +3,6 @@ from collections import MutableSequence
 
 import numpy as np
 
-from ..lang import SPACY_STOP_WORDS
 from ..text import (get_emojis, get_sentiment_polarity,
                     get_sentiment_subjectivity, normalize_spaces)
 
@@ -16,7 +15,6 @@ TAG = r'(\#\w+)'
 class TextMetrics(MutableSequence, object):
     """Gathers Statistical Metrics from Texts."""
 
-    STOP_WORDS = SPACY_STOP_WORDS
     SENTI_LABELS = ('positive', 'negative', 'neutral')
 
     def sentiment_labeler(self, score):
@@ -31,7 +29,7 @@ class TextMetrics(MutableSequence, object):
         return [len(w) for w in words.split(' ') if w not in self.STOP_WORDS]
 
     def string_metric(self, text_col='text'):
-        self[text_col] = self[text_col].apply(lambda s: normalize_spaces(s))
+        self[text_col] = self[text_col].apply(normalize_spaces)
         self['stringLength'] = self[text_col].str.len()
 
     def word_metrics(self, text_col='text'):
@@ -77,13 +75,13 @@ class TextMetrics(MutableSequence, object):
             characters=True,
             sentiment=False,
             tags=False,
-            stopword_set=None,
+            stop_words=None,
             senti_labels=None) -> None:
         """Single function call to extract information from text.
 
         Parameters:
         -----------
-        stopword_set : (set)
+        stop_words : (set)
             default, STOP_WORDS=spacy.lang.en.STOP_WORDS
             Used to capture metrics of actual words and stopwords
             detected within a string sequence.
@@ -93,8 +91,8 @@ class TextMetrics(MutableSequence, object):
             table containing sentiment values. Pass a tuple to change
             the default labels to use. e.g. (1, 0, 'N')
         """
-        if stopword_set:
-            self.STOP_WORDS = stopword_set
+        if stop_words:
+            self.STOP_WORDS = stop_words
         if senti_labels:
             self.SENTI_LABELS = senti_labels
         if string:

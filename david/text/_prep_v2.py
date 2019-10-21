@@ -10,6 +10,23 @@ from pattern.text.en import tag as pattern_pos_tagger
 from ..lang import NLTK_STOP_WORDS
 
 
+def expand_contractions_basic(sentence: str, contraction_mapping: dict):
+    contractions_pattern = re.compile(
+        '({})'.format('|'.join(contraction_mapping.keys())),
+        flags=re.IGNORECASE | re.DOTALL)
+
+    def expand_match(contraction):
+        match = contraction.group(0)
+        first_char = match[0]
+        expanded_contraction = contraction_mapping.get(match)\
+            if contraction_mapping.get(match)\
+            else contraction_mapping.get(match.lower())
+        expanded_contraction = first_char+expanded_contraction[1:]
+        return expanded_contraction
+    expanded_sentence = contractions_pattern.sub(expand_match, sentence)
+    return expanded_sentence
+
+
 def expand_contractions(text: str, leftovers=True, slang=True):
     return contractions.fix(text, leftovers=leftovers, slang=slang)
 
@@ -99,7 +116,7 @@ def remove_repeated_characters(tokens: list):
     return correct_tokens
 
 
-def nltk_normalizer(corpus: list, tokenize=False):
+def nltk_corpus_normalizer(corpus: list, tokenize=False):
     normalized = []
     for text in corpus:
         text = encode_ascii(text)

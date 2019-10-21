@@ -11,11 +11,12 @@
 * configure the database and build a dataset from a search query. default parameters `db_name='comments_v2.db', table='comments'`.
 
 ```python
-from david_server.sql import SqliteCommentsDB
+from david.server import CommentsDB
 
-sql = SqliteCommentsDB()
-docs = sql.get_similartexts('i subscribed')
-[doc.text for doc in docs][:5]
+db = CommentsDB()
+comments = db.get_all_comments()
+
+[comment.text for comment in comments][:5]
 ```
 
 ```bash
@@ -36,7 +37,7 @@ docs = sql.get_similartexts('i subscribed')
 ```python
 from david.pipeline import Pipeline
 
-pipe = Pipeline(docs.export('df'))
+pipe = Pipeline(comments.export('df'))
 ```
 
 ## metrics 📊
@@ -121,3 +122,21 @@ array([nan, '10:06'], dtype=object)
 
 * text cleaning routines.
 
+### stop words
+
+> you can access multiple collections of stop words from the lang module. all the following are available: `DAVID_STOP_WORDS, GENSIM_STOP_WORDS, NLTK_STOP_WORDS, SPACY_STOP_WORDS`
+
+```python
+from david.lang import SPACY_STOP_WORDS
+
+# if stop_words param left as None, it defaults to spaCy's set.
+pipe_stop_words = pipe.custom_stopwords_from_freq(
+       top_n=30, stop_words=SPACY_STOP_WORDS)
+list(pipe_stop_words)[:5]
+```
+
+* returns a set containing the most frequent words used in a dataset and adds them to any existing collection of stop-words (in this case we have top words from both our corpus and spaCy's set)
+
+```ipython
+['tides...cardinal', 'into', 'less', 'same', 'under']
+```

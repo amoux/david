@@ -15,11 +15,9 @@ class TextPreprocess(MutableSequence, object):
     def lower_texts(self, text_col: str = 'text') -> None:
         self[text_col] = self[text_col].str.lower()
 
-    def fix_contractions(self, text_col: str = 'text',
-                         leftovers=True, slang=True):
+    def fix_contractions(self, text_col: str = 'text'):
         self.strip_spaces(text_col)
-        self[text_col] = self[text_col].apply(
-            lambda s: expand_contractions(s, leftovers, slang))
+        self[text_col] = self[text_col].apply(expand_contractions)
 
     def normalize_texts(self, text_col: str = 'text') -> None:
         self[text_col] = self[text_col].apply(
@@ -51,8 +49,6 @@ class TextPreprocess(MutableSequence, object):
             text_col: str = 'text',
             standardize=True,
             contractions=True,
-            leftovers=True,
-            slang=True,
             lemmatize=False,
             normalize=True,
             lower_texts=False,
@@ -89,7 +85,7 @@ class TextPreprocess(MutableSequence, object):
         """
         self.strip_spaces(text_col)
         if contractions:
-            self.fix_contractions(text_col, leftovers, slang)
+            self.fix_contractions(text_col)
         if standardize:
             # NOTE: improve these methods names
             # and the order and instention to what

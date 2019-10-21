@@ -1,7 +1,10 @@
-from pandas import DataFrame
+from pandas import DataFrame, Series
+
+from ..lang import SPACY_STOP_WORDS
 
 
 class DavidDataFrame(DataFrame):
+    STOP_WORDS = SPACY_STOP_WORDS
 
     def __init__(self, *args, **kwargs):
         super(DavidDataFrame, self).__init__(*args, **kwargs)
@@ -22,38 +25,64 @@ class DavidDataFrame(DataFrame):
                     f.write('%s\n' % text)
             f.close()
 
-    def slice_shape(
-            self,
-            ref_col: str = 'stringLength',
-            min_val: int = None,
-            max_val: int = None,
-            as_copy: bool = True):
+    def custom_stopwords_from_freq(self, text_col='text',
+                                   top_n=10, stop_words=None):
+        """Construct a new custom stop-word set from the top most frequently
+        used words in the corpus.
+
+        Returns a new set of from the frequency of words in the corpus and
+        the existing stop word collection.
+
+        Parameters:
+        -----------
+        top_n : (int)
+            The number of top words to include to an existent stop word
+            collection. e.g., top_n=10  counts words from both sides of
+            the corpus - most frequent negative and positive words.
+        stop_words : ([set|list])
+            An existing collection of stop words to use and include frequent
+            words from the corpus. If left as None, spaCy's stop word set is
+            used instead.
+        """
+        common = Series(' '.join(
+            self[text_col]).lower().split()).value_counts()[:top_n]
+        uncommon = Series(' '.join(
+            self[text_col]).lower().split()).value_counts()[-top_n:]
+        if not stop_words:
+            stop_words = self.STOP_WORDS
+        stop_words = set(stop_words)
+        stop_words = stop_words.union(list(common.keys()))
+        return stop_words.union(list(uncommon.keys()))
+
+    def slice_shape(self,
+                    ref_col='stringLength',
+                    min_val: int = None,
+                    max_val: int = None,
+                    as_copy: bool = True):
         """Use a reference metric table to reduce the size of the dataframe.
 
         Parameters:
         ----------
-        ref_col : (type=str)
+        ref_col : (str)
             The table to use as a reference to reduce the size of a dataframe.
             You can additionally use any tables with indexed-like values. For
             instance, if the minimun value for TABLE_C is 2, then applying
             value 35; removed all rows in the corpus by that value.
-        min_val : (type=int)
+        min_val : (int)
             The minimum number of values in a column to use as a rule to slice
             a dataframe.
 
-        Does not work:
-        -------------
-        >>> metrics.slice_shape(min_val=40)
-        >>> metrics.text.describe()
-        'count 3361'
-        'unique 3294'
-
-        Works:
+        Usage:
         -----
-        >>> reduced = metrics.slice_shape(min_val=40)
-        >>> reduced.text.describe()
-        'count 151'
-        'unique 151'
+            >>> pipe = Pipeline()
+            >>> pipe.get_all_metrics(string=True)
+            >>> pipe.text.describe()
+            >>> 'count 3361'
+            >>> 'unique 3294'
+            >>> pipe_copy = pipe.slice_shape('stringLength', min_val=40)
+            >>> pipe_copy.text.describe()
+            >>> 'count 151'
+            >>> 'unique 151'
         """
         temp_df = self.copy(deep=as_copy)
         if min_val > 0:
