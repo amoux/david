@@ -76,3 +76,26 @@ tensorboard --logdir=models/ycc_web --reload_interval 1
 ```bash
 ~/ngrok http < TENSORBOARD:PORT >
 ```
+
+## dev
+
+### models.create_embeddings
+
+* about projector's configuration format see here:  [source-code](https://github.com/tensorflow/tensorboard/blob/master/tensorboard/plugins/projector/projector_config.proto)
+
+```python
+config = projector.ProjectorConfig()
+```
+
+* you can add multiple embeddings (only one is added in this experiment).
+
+```python
+embedding = config.embeddings.add()
+embedding.tensor_name = W.name
+```
+
+* saves a configuration file that tensorBoard will read during startup.
+
+```python
+projector.visualize_embeddings(writer, config)
+```

@@ -18,10 +18,11 @@ class CsvConnector(object):
 
         with open(filepath, 'r', encoding='utf-8') as f:
             self.reader = csv.DictReader(f, delimiter=separator, quotechar='"')
-            columns = self.reader.fieldnames
-            for col in text_columns:
-                if col not in columns:
-                    print("{} is not a valid column. Found {}".format(col, columns))
+            column_names = self.reader.fieldnames
+            for column in text_columns:
+                if column not in column_names:
+                    print("{} is not a valid column. Found {}".format(
+                        column, column_names))
                     raise
 
         if not preprocessing:
@@ -70,7 +71,8 @@ class Bigram(object):
 class Word2Vec(object):
     def __init__(self, model=None, save_folder=None, phrases=False):
         if not os.path.exists(save_folder):
-            print("{} Folder does not exist, create it first".format(save_folder))
+            print("{} Folder does not exist, create it first".format(
+                save_folder))
 
         self.model = model
         self.save_folder = save_folder
@@ -119,14 +121,11 @@ def create_embeddings(gensim_model=None, model_folder=None):
 
     writer = tf.summary.FileWriter(model_folder, graph=tf.get_default_graph())
     saver = tf.train.Saver()
-    # Format: tensorflow/contrib/tensorboard/plugins/projector/projector_config.proto
     config = projector.ProjectorConfig()
 
-    # You can add multiple embeddings. Here we add only one.
     embedding = config.embeddings.add()
     embedding.tensor_name = W.name
     embedding.metadata_path = os.path.join(model_folder, "metadata.tsv")
-    # Saves a configuration file that TensorBoard will read during startup.
     projector.visualize_embeddings(writer, config)
 
     with tf.Session() as sess:
