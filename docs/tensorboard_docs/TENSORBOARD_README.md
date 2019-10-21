@@ -10,7 +10,7 @@ I renamed the output directory, previously named `models` to
 * train from the csv file on column text
 
 ```bash
-python -m src.train --file "data/ycc_tensorboard.csv" --input_type "csv" --separator "," --folder "models/ycc_web" --columns_to_select "text" --size 50 --alpha 0.025 --window 5 --min_count 5
+python -m src.train --file "data/ycc_tensorboard.csv" --input_type "csv" --separator "," --folder "models/ycc_web" --text_columns "text" --size 50 --alpha 0.025 --window 5 --min_count 5
 ```
 
 * run tensorboard
@@ -74,7 +74,7 @@ python3 -m src.train --file "data/movie_reviews.csv" \
                      --input_type "csv" \
                      --separator "," \
                      --folder "models/movie_reviews" \
-                     --columns_to_select "Phrase" \
+                     --text_columns "Phrase" \
                      --size 50 \
                      --alpha 0.025 \
                      --window 5 \

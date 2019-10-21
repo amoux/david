@@ -2,7 +2,7 @@
   "file": "data/ycc_tensorboard.csv",
   "input_type": "csv",
   "separator": ",",
-  "columns_to_select": "text",
+  "text_columns": "text",
   "columns_joining_token": ". ",
   "folder": "/mnt/drive_4/Vuepoint-Backups/vuepoint_v3.2/Gensim-Tensorboard/models/ycc_web",
   "size": 50,

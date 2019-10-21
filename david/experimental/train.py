@@ -19,7 +19,7 @@ def get_args():
                         default="csv", help="The kind of input data")
     parser.add_argument("--separator", type=str,
                         default=',', help="csv separator.")
-    parser.add_argument("--columns_to_select", type=str,
+    parser.add_argument("--text_columns", type=str,
                         default="Phrase", help="column names comma separated.")
     parser.add_argument("--columns_joining_token", type=str,
                         default='. ', help="join multiple columns.")
@@ -65,7 +65,7 @@ if __name__ == '__main__':
             filepath=opt.file,
             preprocessing=preprocessing,
             separator=opt.separator,
-            columns_to_select=opt.columns_to_select.split(","),
+            text_columns=opt.text_columns.split(","),
             columns_joining_token=opt.columns_joining_token)
 
     elif opt.input_type == 'txt':

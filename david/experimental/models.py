@@ -6,25 +6,20 @@ import tensorflow as tf
 from tensorflow.contrib.tensorboard.plugins import projector
 
 
-def preprocessing(sentence):
-    sentence = sentence.lower()
-    return sentence
-
-
 class CsvConnector(object):
     def __init__(self, filepath=None,
                  separator=',',
-                 columns_to_select=(),
+                 text_columns=(),
                  columns_joining_token='. ',
                  preprocessing=None):
-        if not columns_to_select:
+        if not text_columns:
             print("You have to select at least one column on your input data")
             raise
 
         with open(filepath, 'r', encoding='utf-8') as f:
             self.reader = csv.DictReader(f, delimiter=separator, quotechar='"')
             columns = self.reader.fieldnames
-            for col in columns_to_select:
+            for col in text_columns:
                 if col not in columns:
                     print("{} is not a valid column. Found {}".format(col, columns))
                     raise
@@ -34,7 +29,7 @@ class CsvConnector(object):
 
         self.filepath = filepath
         self.separator = separator
-        self.columns_to_select = columns_to_select
+        self.text_columns = text_columns
         self.columns_joining_token = columns_joining_token
         self.preprocessing = preprocessing
 
@@ -43,7 +38,7 @@ class CsvConnector(object):
             reader = csv.DictReader(f, delimiter=self.separator, quotechar='"')
             for line in reader:
                 sentence = self.columns_joining_token.join(
-                    [line[col] for col in self.columns_to_select if line[col]])
+                    [line[col] for col in self.text_columns if line[col]])
                 yield self.preprocessing(sentence).split()
 
 

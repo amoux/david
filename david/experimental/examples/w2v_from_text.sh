@@ -25,7 +25,7 @@ python3 -m src.train --file "data/movie_reviews.csv" \
                      --input_type "csv" \
                      --separator "," \
                      --folder "models/movie_reviews" \
-                     --columns_to_select "Phrase" \
+                     --text_columns "Phrase" \
                      --size 10 \
                      --alpha 0.025 \
                      --window 5 \
