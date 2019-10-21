@@ -8,6 +8,11 @@ from sklearn.datasets import load_files as _load_files
 from sklearn.utils import Bunch as _Bunch
 
 
+def current_path(target_dirname: str):
+    return os.path.abspath(
+        os.path.join(os.path.dirname(__file__), target_dirname))
+
+
 def pointer(n: str, params: dict):
     p = namedtuple(n, params.keys())
     return p(*params.values())
