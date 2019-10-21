@@ -7,6 +7,7 @@ import nltk
 from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from pattern.text.en import tag as pattern_pos_tagger
+
 from ..lang import NLTK_STOP_WORDS
 
 
@@ -116,16 +117,38 @@ def remove_repeated_characters(tokens: list):
     return correct_tokens
 
 
-def nltk_corpus_normalizer(corpus: list, tokenize=False):
+def preprocess_doc(doc: str,
+                   contractions=True,
+                   lemma=False,
+                   special_chars=True,
+                   stopwords=True,
+                   tokenize=False):
+    """NLTK text preprocessing for a string of text."""
+    doc = encode_ascii(doc)
+    if contractions:
+        doc = expand_contractions(doc)
+    if lemma:
+        doc = wordnet_lemmatizer(doc)
+    if special_chars:
+        doc = remove_special_characters(doc)
+    if stopwords:
+        doc = remove_stopwords(doc)
+    if tokenize:
+        doc = nltk_tokenizer(doc)
+    return doc
+
+
+def preprocess_docs(docs: list,
+                    contractions=True,
+                    lemma=False,
+                    special_chars=True,
+                    stopwords=True,
+                    tokenize=False):
+    """NLTK text preprocessing for a list of texts."""
     normalized = []
-    for text in corpus:
-        text = encode_ascii(text)
-        text = expand_contractions(text)
-        text = wordnet_lemmatizer(text)
-        text = remove_special_characters(text)
-        text = remove_stopwords(text)
-        normalized.append(text)
-        if tokenize:
-            text = nltk_tokenizer(text)
-            normalized.append(text)
+    for doc in docs:
+        normalized.append(preprocess_doc(
+            doc=doc, contractions=contractions,
+            lemma=lemma, special_chars=special_chars,
+            stopwords=stopwords, tokenize=tokenize))
     return normalized

@@ -17,7 +17,8 @@ class TextPreprocess(MutableSequence, object):
 
     def fix_contractions(self, text_col: str = 'text'):
         self.strip_spaces(text_col)
-        self[text_col] = self[text_col].apply(expand_contractions)
+        self[text_col] = self[text_col].apply(
+            lambda x: expand_contractions(x) if len(x) > 0 else '')
 
     def normalize_texts(self, text_col: str = 'text') -> None:
         self[text_col] = self[text_col].apply(
