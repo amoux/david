@@ -5,5 +5,6 @@ from ._prep_v1 import (get_emojis, get_sentiment_polarity,
                        replace_numbers)
 from ._prep_v2 import (encode_ascii, expand_contractions,
                        nltk_corpus_normalizer, nltk_tokenizer,
-                       remove_repeated_characters, remove_stopwords,
-                       treebank_to_wordnet_postag, wordnet_lemmatizer)
+                       remove_repeated_characters, remove_special_characters,
+                       remove_stopwords, treebank_to_wordnet_postag,
+                       wordnet_lemmatizer)
