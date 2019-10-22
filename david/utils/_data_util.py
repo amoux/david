@@ -1,4 +1,6 @@
 import os
+import urllib
+import zipfile
 from collections import namedtuple
 from os import path
 
@@ -6,6 +8,8 @@ import pandas as pd
 import requests
 from sklearn.datasets import load_files as _load_files
 from sklearn.utils import Bunch as _Bunch
+
+import tf
 
 
 def current_path(target_dirname: str):
@@ -24,6 +28,27 @@ def load_comments_lg():
     with open(path.join(module_path, 'description', 'ytc_lg.rst')) as rst_file:
         file_descr = rst_file.read()
     return _Bunch(DESCR=file_descr, filename=filename)
+
+
+def tf_unzipfile_extractor(filename):
+    """Extract the first file enclosed in a zip file as a list of words."""
+    with zipfile.ZipFile(filename) as f:
+        data = tf.compat.as_str(f.read(f.namelist()[0])).split()
+    return data
+
+
+def download_url_file(filename, url, expected_bytes):
+    """Download a file if not present, and make sure it's the right size."""
+    if not os.path.exists(filename):
+        filename, _ = urllib.request.urlretrieve(url + filename, filename)
+    statinfo = os.stat(filename)
+    if statinfo.st_size == expected_bytes:
+        print('Found and verified', filename)
+    else:
+        print(statinfo.st_size)
+        raise Exception(
+            'Failed to verify {filename}. Can you get to it with a browser?')
+    return filename
 
 
 def load_datasets(container_path, description=None, categories=None,

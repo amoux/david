@@ -6,12 +6,22 @@ import tensorflow as tf
 from tensorflow.contrib.tensorboard.plugins import projector
 
 
+def join_paths(dirname, filename):
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    return os.path.join(dirname, filename)
+
+
 class CsvConnector(object):
-    def __init__(self, filepath=None,
-                 separator=',',
-                 text_columns=(),
-                 columns_joining_token='. ',
-                 preprocessing=None):
+    def __init__(
+            self,
+            filepath=None,
+            separator=',',
+            text_columns=(),
+            columns_joining_token='. ',
+            preprocessing=None,
+    ):
+        """CSV data loader class."""
         if not text_columns:
             print("You have to select at least one column on your input data")
             raise
@@ -45,10 +55,8 @@ class CsvConnector(object):
 
 class TxtConnector(object):
     def __init__(self, filepath=None, preprocessing=None):
-
         if not preprocessing:
             def preprocessing(x): return x
-
         self.filepath = filepath
         self.preprocessing = preprocessing
 
@@ -58,7 +66,6 @@ class TxtConnector(object):
 
 
 class Bigram(object):
-
     def __init__(self, iterator):
         self.iterator = iterator
         self.bigram = gensim.models.Phrases(self.iterator)
@@ -70,51 +77,31 @@ class Bigram(object):
 
 class Word2Vec(object):
     def __init__(self, model=None, save_folder=None, phrases=False):
-        if not os.path.exists(save_folder):
-            print("{} Folder does not exist, create it first".format(
-                save_folder))
-
         self.model = model
-        self.save_folder = save_folder
+        self.save_folder = join_paths(save_folder, 'gensim-model.cpkt')
         self.phrases = phrases
 
-    def fit(self, sentences, size=100, alpha=0.025, window=5, min_count=5, max_vocab_size=None,
-            sample=1e-3, seed=1, workers=4, min_alpha=0.0001, sg=0, hs=0, negative=10,
-            cbow_mean=1, iter=5, null_word=0):
-        self.model = gensim.models.Word2Vec(sentences,
-                                            size=size,
-                                            alpha=alpha,
-                                            window=window,
-                                            min_count=min_count,
-                                            max_vocab_size=max_vocab_size,
-                                            sample=sample,
-                                            seed=seed,
-                                            workers=workers,
-                                            min_alpha=min_alpha,
-                                            sg=sg,
-                                            hs=hs,
-                                            negative=negative,
-                                            cbow_mean=cbow_mean,
-                                            iter=iter,
-                                            null_word=null_word)
-
-        self.model.save(os.path.join(self.save_folder, "gensim-model.cpkt"))
+    def fit(self, *args, **kwargs):
+        self.model = gensim.models.Word2Vec(*args, **kwargs)
+        self.model.save(self.save_folder)
 
 
-def create_embeddings(gensim_model=None, model_folder=None):
+def create_embeddings(gensim_model, model_folder, trainable=False):
     weights = gensim_model.wv.vectors
     idx2words = gensim_model.wv.index2word
 
     vocab_size = weights.shape[0]
     embedding_dim = weights.shape[1]
 
-    with open(os.path.join(model_folder, "metadata.tsv"), 'w') as f:
-        f.writelines("\n".join(idx2words))
+    metadata_filepath = join_paths(model_folder, 'metadata.tsv')
+
+    with open(metadata_filepath, 'w') as tsv_file:
+        tsv_file.writelines('\n'.join(idx2words))
 
     tf.reset_default_graph()
 
-    W = tf.Variable(
-        tf.constant(0.0, shape=[vocab_size, embedding_dim]), trainable=False, name="W")
+    X = tf.constant(0.0, shape=[vocab_size, embedding_dim])
+    W = tf.Variable(X, trainable=trainable, name='W')
     embedding_placeholder = tf.placeholder(
         tf.float32, [vocab_size, embedding_dim])
     embedding_init = W.assign(embedding_placeholder)
@@ -125,12 +112,18 @@ def create_embeddings(gensim_model=None, model_folder=None):
 
     embedding = config.embeddings.add()
     embedding.tensor_name = W.name
-    embedding.metadata_path = os.path.join(model_folder, "metadata.tsv")
+    embedding.metadata_path = metadata_filepath
     projector.visualize_embeddings(writer, config)
 
     with tf.Session() as sess:
+        tf_model_filepath = join_paths(model_folder, 'tf-model.cpkt')
         sess.run(embedding_init, feed_dict={embedding_placeholder: weights})
-        save_path = saver.save(sess, os.path.join(
-            model_folder, "tf-model.cpkt"))
-
+        save_path = saver.save(sess, tf_model_filepath)
     return save_path
+
+
+class Embeddings(Bigram, Word2Vec):
+    def __init__(gensim_model, model_folder):
+        self.gensim_model = gensim_model
+        self.model_folder = model_folder
+        pass

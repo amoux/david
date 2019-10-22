@@ -12,6 +12,7 @@ model_name: {model_name}
 model_path: {model_path}
 
 [Word2Vec]
+sentences: None
 size: 100
 alpha: 0.025
 window: 5
@@ -25,7 +26,7 @@ sg: 0
 hs: 0
 negative: 10
 cbow_mean: 1
-iter: 5
+iter: iter
 null_word: 0'''
 
 
