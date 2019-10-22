@@ -113,8 +113,8 @@ def create_embeddings(gensim_model=None, model_folder=None):
 
     tf.reset_default_graph()
 
-    W = tf.Variable(tf.constant(
-        0.0, shape=[vocab_size, embedding_dim]), trainable=False, name="W")
+    W = tf.Variable(
+        tf.constant(0.0, shape=[vocab_size, embedding_dim]), trainable=False, name="W")
     embedding_placeholder = tf.placeholder(
         tf.float32, [vocab_size, embedding_dim])
     embedding_init = W.assign(embedding_placeholder)
