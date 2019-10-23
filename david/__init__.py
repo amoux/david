@@ -1,6 +1,3 @@
-import logging
-import warnings
-
 """Main logging for david.
 David uses Python's default logging system.
 Each module has it's own logger, so you can control the verbosity of each
@@ -18,6 +15,8 @@ Logger-Modes:
     CRITICAL: program itself may be unable to continue running.
 """
 
+import logging
+import warnings
 logging.basicConfig(level=logging.WARN)
 del logging
 
