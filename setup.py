@@ -1,0 +1,51 @@
+from setuptools import find_packages, setup
+
+PACKAGES = find_packages()
+
+requires = [
+    'isodate>=0.6.0',
+    'pandas>=0.25.2',
+    'contractions>=0.0.21',
+    'numpy>=1.17.2',
+    'records>=0.5.2',
+    'requests>=2.22.0',
+    'gensim>=3.8.1',
+    'tensorflow>=1.14.0',
+    'textblob>=0.15.3',
+    'matplotlib>=3.1.1',
+    'regex>=2019.8.19',
+    'setuptools>=41.4.0',
+    'tqdm>=4.36.1',
+    'nltk>=3.4.4',
+    'transformers>=2.1.1',
+    'more_itertools>=7.2.0',
+    'emoji>=0.5.3',
+    'inflect>=2.1.0',
+    'spacy>=2.2.1',
+    'astor>=0.7.1',
+    'tensorflow_hub>=0.6.0',
+    'torch>=1.3.0',
+    'ipython>=7.8.0',
+    'beautifulsoup4>=4.8.1',
+    'dataset>=1.1.2',
+    'google_api_python_client>=1.7.11',
+    'lxml>=4.4.1',
+    'pathos>=0.2.5',
+    'pattern>=3.6',
+    'scikit_learn>=0.21.3',
+    'typing>=3.7.4.1',
+    'wordcloud>=1.5.0',
+    'textsearch>=0.0.17',
+]
+
+setup(
+    name='david',
+    packages=PACKAGES,
+    version='0.0.1',
+    url='https://github.com/amoux/david',
+    author='Carlos A. Segura Diaz De Leon',
+    author_email='carlosdeveloper2@gmail.com',
+    license='MIT',
+    zip_safe=False,
+    install_requires=requires,
+    scripts=['bin/download-spacy-models'])

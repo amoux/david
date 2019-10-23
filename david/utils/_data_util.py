@@ -6,10 +6,9 @@ from os import path
 
 import pandas as pd
 import requests
+import tensorflow as tf
 from sklearn.datasets import load_files as _load_files
 from sklearn.utils import Bunch as _Bunch
-
-import tf
 
 
 def current_path(target_dirname: str):
@@ -49,6 +48,53 @@ def download_url_file(filename, url, expected_bytes):
         raise Exception(
             'Failed to verify {filename}. Can you get to it with a browser?')
     return filename
+
+
+class GoogleDriveDownloader:
+    DRIVE_URL = 'https://docs.google.com/uc?export=download'
+
+    def __init__(self, file_id: str, file_name='temp.p',
+                 dirpath='data', chunk_size=32_768):
+        self.file_id = file_id
+        self.file_name = file_name
+        self.dirpath = dirpath
+        self.chunk_size = chunk_size
+        self.destination = os.path.join(self.dirpath, file_name)
+
+    def download_df(self, stream=True, load_df=False):
+        session = requests.Session()
+        response = session.get(
+            self.DRIVE_URL,
+            params={'id': self.file_id},
+            stream=stream)
+        token = self._confirm_token(response)
+        if token:
+            params = {'id': self.file_id, 'confirm': token}
+            response = session.get(
+                self.DRIVE_URL,
+                params=params,
+                stream=stream)
+        self._save_content(response)
+        if load_df:
+            return self._load_df()
+
+    def _confirm_token(self, response):
+        for (key, val) in response.cookies.items():
+            if key.startswith('download_warning'):
+                return val
+        return None
+
+    def _save_content(self, response):
+        if not os.path.exists(self.dirpath):
+            os.makedirs(self.dirpath)
+        with open(self.destination, 'wb') as f:
+            for chunk in response.iter_content(self.chunk_size):
+                if chunk:
+                    f.write(chunk)
+
+    def _load_df(self):
+        df = pd.read_pickle(self.destination)
+        return df
 
 
 def load_datasets(container_path, description=None, categories=None,
@@ -96,50 +142,3 @@ def load_datasets(container_path, description=None, categories=None,
     return _load_file(container_path, description, categories,
                       load_content, shuffle, encoding,
                       decode_error, random_state)
-
-
-class GoogleDriveDownloader:
-    DRIVE_URL = 'https://docs.google.com/uc?export=download'
-
-    def __init__(self, file_id: str, file_name='temp.p',
-                 dirpath='data', chunk_size=32_768):
-        self.file_id = file_id
-        self.file_name = file_name
-        self.dirpath = dirpath
-        self.chunk_size = chunk_size
-        self.destination = os.path.path.join(self.dirpath, file_name)
-
-    def download_df(self, stream=True, load_df=False):
-        session = requests.Session()
-        response = session.get(
-            self.DRIVE_URL,
-            params={'id': self.file_id},
-            stream=stream)
-        token = self._confirm_token(response)
-        if token:
-            params = {'id': self.file_id, 'confirm': token}
-            response = session.get(
-                self.DRIVE_URL,
-                params=params,
-                stream=stream)
-        self._save_content(response)
-        if load_df:
-            return self._load_df()
-
-    def _confirm_token(self, response):
-        for (key, val) in response.cookies.items():
-            if key.startswith('download_warning'):
-                return val
-        return None
-
-    def _save_content(self, response):
-        if not os.path.exists(self.dirpath):
-            os.makedirs(self.dirpath)
-        with open(self.destination, 'wb') as f:
-            for chunk in response.iter_content(self.chunk_size):
-                if chunk:
-                    f.write(chunk)
-
-    def _load_df(self):
-        df = pd.read_pickle(self.destination)
-        return df
