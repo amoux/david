@@ -5,6 +5,7 @@ from os.path import join
 import gensim
 import tensorflow as tf
 from tensorflow.contrib.tensorboard.plugins import projector
+from ..text.nltk_textpipe import preprocess_doc
 
 
 class CsvConnector(object):
@@ -12,7 +13,7 @@ class CsvConnector(object):
                  filepath=None,
                  separator=',',
                  text_columns=(),
-                 columns_joining_token='. ',
+                 concate_by='. ',
                  preprocessing=None):
         """CSV data loader class."""
         if not text_columns:
@@ -22,6 +23,7 @@ class CsvConnector(object):
         with open(filepath, 'r', encoding='utf-8') as f:
             self.reader = csv.DictReader(f, delimiter=separator, quotechar='"')
             column_names = self.reader.fieldnames
+
             for column in text_columns:
                 if column not in column_names:
                     print("{} is not a valid column. Found {}".format(
@@ -33,38 +35,36 @@ class CsvConnector(object):
         self.filepath = filepath
         self.separator = separator
         self.text_columns = text_columns
-        self.columns_joining_token = columns_joining_token
+        self.concate_by = concate_by
         self.preprocessing = preprocessing
 
     def __iter__(self):
         with open(self.filepath, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f, delimiter=self.separator, quotechar='"')
+
             for line in reader:
-                sentence = self.columns_joining_token.join(
-                    [line[col] for col in self.text_columns if line[col]])
+                sentence = self.concate_by.join([line[col] for col in self.text_columns if line[col]])
                 yield self.preprocessing(sentence).split()
 
 
 class TxtConnector(object):
-    def __init__(self, filepath=None, preprocessing=None):
-        if not preprocessing:
-            def preprocessing(x): return x
+    def __init__(self, filepath=None):
         self.filepath = filepath
-        self.preprocessing = preprocessing
 
     def __iter__(self):
-        for line in open(self.filepath, 'r', encoding='utf-8'):
-            yield self.preprocessing(line).split()
+        for text in open(self.filepath, 'r', encoding='utf-8'):
+            yield preprocess_doc(text)
 
 
 class Bigram(object):
-    def __init__(self, iterator):
-        self.iterator = iterator
-        self.bigram = gensim.models.Phrases(self.iterator)
+    def __init__(self, sentences):
+        self.sentences = sentences
 
     def __iter__(self):
-        for sentence in self.iterator:
-            yield self.bigram[sentence]
+        bigram = gensim.models.Phrases(self.sentences)
+        bigram_mod = gensim.models.phrases.Phraser(bigram)
+        for sent in self.sentences:
+            yield bigram_mod[sent]
 
 
 class Word2Vec(object):
@@ -96,7 +96,7 @@ def create_embeddings(gensim_model, model_folder, trainable=False):
     embedding_init = W.assign(embedding_placeholder)
 
     writer = tf.compat.v1.summary.FileWriter(
-        model_folder, graph=tf.get_default_graph())
+        model_folder, graph=tf.compat.v1.get_default_graph())
     saver = tf.compat.v1.train.Saver()
     config = projector.ProjectorConfig()
 

@@ -20,7 +20,8 @@ def text2ngrams(
         stop_words: set = None,
         disable_pipe_names: list = None,
         min_count: int = 5,
-        threshold: float = 10.0) -> List[str]:
+        threshold: float = 10.0,
+        gensim_preprocess=False) -> List[str]:
     """Convert texts to N-grams (Spacy & Gensim).
 
     Removes stopwords, forms (bigrams & trigrams), and lemmatizes texts.
@@ -69,7 +70,8 @@ def text2ngrams(
     trigram = gensim.models.Phrases(bigram[sents], threshold=threshold)
     bigram_mod = gensim.models.phrases.Phraser(bigram)
     trigram_mod = gensim.models.phrases.Phraser(trigram)
-    texts = _gensim_prep(stop_words, sents)
+    if gensim_preprocess:
+        texts = _gensim_prep(stop_words, sents)
     texts = [bigram_mod[text] for text in texts]
     texts = [trigram_mod[bigram_mod[text]] for text in texts]
     nlp = spacy.load(spacy_model, disable=disable_pipe_names)
@@ -78,12 +80,14 @@ def text2ngrams(
     texts_out = []
     for sent in texts:
         doc = nlp(' '.join(sent))
-        texts_out.append([token.lemma_ for token in doc
-                          if token.pos_ in pos_tags])
-
+        texts_out.append(
+            [token.lemma_ for token in doc
+             if token.pos_ in pos_tags])
     # remove stopwords once more after lemmatization
-    texts_out = _gensim_prep(stop_words, texts_out)
-    return texts_out
+    if gensim_preprocess:
+        texts_out = _gensim_prep(stop_words, texts_out)
+    else:
+        return texts_out
 
 
 def n_grams(
