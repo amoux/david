@@ -1,10 +1,40 @@
 # david nlp 💬
 
-* David is an NLP toolkit implemented with Gensim, Tensorflow, PyTorch, NLTK, and spaCy among other open-source libraries. At Vuepoint, we are applying models built on these libraries for text-classification, intent-detection, topic-modeling to improve youtube content creators view of their audience to produce more suitable content.
+* David is an NLP toolkit implemented with Gensim, Tensorflow, PyTorch, NLTK, and spaCy among other open-source libraries.
 
 ![image](https://fromdirectorstevenspielberg.com/wp-content/uploads/2017/07/15.jpg?raw=true)
 
 *The goal for David is to assist content creators to increase the exposure on YouTube and their videos in the presence of more viewers. From live/historical textual information.*
+
+## configuration
+
+* clone or download the repo. use `git pull` to have the latest release.
+
+```bash
+git clone https://github.com/amoux/david
+```
+
+* navigate to the repo's root directory and install.
+
+```bash
+pip install .
+```
+
+> **NOTE** download the required language models with one command (you don't need to be in the root project directory).
+
+* the following models will be downloaded.
+  * `en_core_web_sm`
+  * `en_core_web_lg`
+
+```bash
+$ download-spacy-models
+...
+✔ Download and installation successful
+You can now load the model via spacy.load('en_core_web_lg')
+...
+✔ Download and installation successful
+You can now load the model via spacy.load('en_core_web_sm')
+```
 
 ## server 📡
 
@@ -16,10 +46,8 @@ from david.server import CommentsDB
 db = CommentsDB()
 comments = db.get_all_comments()
 
-[comment.text for comment in comments][:5]
-```
-
-```bash
+[c.text for c in comments][:5]
+...
 ['Video was hilarious, subscribed!',
  'Hamazingly educational; Subscribed for more :)',
  'Great vid....SUBSCRIBED with the Bell👍',
@@ -32,47 +60,12 @@ comments = db.get_all_comments()
 
 ## pipeline 🛠
 
-* export a document to a dataframe with the `export` attribute.
+* export a document to a df with the `export` attribute.
 
 ```python
 from david.pipeline import Pipeline
 
 pipe = Pipeline(comments.export('df'))
-```
-
-## metrics 📊
-
-* call the `get_all_metrics` instance method to quickly get basic stats on the texts.
-
-```markdown
-* String-level    -> if `string=True`:
-
-  - stringLength        : sum of all words in a string.
-
-* Word-level      -> if `words=True`:
-  
-  - avgWordLength       : average number of words.
-  - isStopwordCount     : count of stopwords only.
-  - noStopwordCount     : count of none stopwords.
-
-* Character-level -> if `character=True`:
-
-  - charDigitCount      : count of digits chars.
-  - charUpperCount      : count of uppercase chars.
-  - charLowerCount      : count of lowercase chars.
-
-* Sentiment-level -> if `sentiment=True`:
-
-  - sentiPolarity       : polarity score with Textblob, (float).
-  - sentiSubjectivity   : subjectivity score with Textblob (float).
-  - sentimentLabel      : labels row with one (pos, neg, neutral) tag.
-
-* Tag-extraction  -> if `tags=True`:
-
-  - authorTimeTag       : extracts video time tags, e.g. 1:20.
-  - authorUrlLink       : extracts urls links if found.
-  - authorHashTag       : extracts hash tags, e.g. #numberOne.
-  - authorEmoji         : extracts emojis  👾.
 ```
 
 * the following metrics are available one call away 🤖
@@ -82,21 +75,7 @@ pipe.get_all_metrics(string=True, words=True, characters=True, tags=True)
 pipe.describe()
 ```
 
-```ipython
-       stringLength  avgWordLength  ...  charUpperCount  charLowerCount
-count     88.000000      88.000000  ...       88.000000       88.000000
-mean     156.818182       5.916454  ...        6.375000      116.704545
-std      162.526924       1.176320  ...        7.886133      124.026986
-min       12.000000       4.166667  ...        0.000000       10.000000
-25%       49.000000       5.164435  ...        2.000000       37.000000
-50%      103.000000       5.557041  ...        3.000000       70.500000
-75%      199.500000       6.375000  ...        8.000000      147.250000
-max      836.000000       9.000000  ...       46.000000      647.000000
-
-[8 rows x 7 columns]
-```
-
-* with `tags=True` the following attributes are available. (the amout of tags varies on the size of the dataset)
+* with `tags=True` the following attributes are available. (the amount of tags varies on the size of the dataset)
 
 ```ipython
 pipe.authorEmoji.unique()
