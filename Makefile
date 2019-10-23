@@ -12,7 +12,7 @@ help:
 	@echo "clean-pyc - remove Python file artifacts"
 	@echo "install - install the package to the active python's site-packages"
 
-clean: clean-build clean-pyc clean-test
+clean: clean-build clean-pyc
 
 clean-build:
 	rm -fr build/
