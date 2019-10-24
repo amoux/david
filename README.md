@@ -16,33 +16,21 @@ git clone https://github.com/amoux/david
 
 Error: ***OSError: mysql_config not found***
 
-> **NOTE** before you install all the dependecies, the package `pattern` is known to have a common error due to the missing `libmysqlclient-dev` linux package. to fix this issue, execute: `sudo apt install libmysqlclient-dev` and then follow the steps below.
-
-* after installing the missing package - in a virtual enviroment then run:
+> **NOTE** before you install all the dependecies, the package `pattern` is known to have a common error due to the missing `libmysqlclient-dev` linux package. to fix this issue run the following command before installing the requirements.
 
 ```bash
-git clone https://github.com/clips/pattern
-cd pattern/
-python setup.py install
+sudo apt install libmysqlclient-dev
 ```
 
 ### requirements
 
-* CPU
+* install the requirements:
 
 ```bash
-pip install -r cpu-requirements.txt
+pip install -r requirements.txt
 ```
 
-* GPU
-
-```bash
-pip install -r gpu-requirements.txt
-```
-
-> to install everything (including all dependancies) run:
-
-* navigate to the repo's root directory and install.
+* in the root directory then install the package:
 
 ```bash
 pip install .

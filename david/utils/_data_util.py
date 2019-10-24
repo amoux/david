@@ -1,3 +1,4 @@
+import fnmatch
 import os
 import urllib
 import zipfile
@@ -9,6 +10,22 @@ import requests
 import tensorflow as tf
 from sklearn.datasets import load_files as _load_files
 from sklearn.utils import Bunch as _Bunch
+
+
+def delete_files(target_dirpath, file_type='*.db'):
+    exception_files = list()
+    for root_dir, sub_dir, file_name in os.walk(target_dirpath):
+        for file in fnmatch.filter(file_name, file_type):
+            try:
+                print('deleted : ', os.path.join(root_dir, file))
+                os.remove(os.path.join(root_dir, file))
+            except Exception as err:
+                print(f'{err} while deleting file :', os.path.join(root_dir, file))
+                exception_files.append(os.path.join(root_dir, file))
+    if len(exception_files) != 0:
+        return exception_files
+    else:
+        return None
 
 
 def current_path(target_dirname: str):
