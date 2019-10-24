@@ -6,9 +6,8 @@ import time
 
 import regex as re
 
-from ..text.nltk_textpipe import preprocess_doc
 from .models import (Bigram, CsvConnector, TxtConnector, Word2Vec,
-                     create_embeddings)
+                     create_embeddings, preprocess_doc)
 
 
 def get_args():

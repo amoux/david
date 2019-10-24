@@ -8,20 +8,28 @@ from sklearn.feature_extraction.text import CountVectorizer
 from .lang import SPACY_STOP_WORDS
 
 
-def _gensim_prep(stopwords, sents):
+def gensim_preprocess(stopwords, sentences):
     return [[word for word in simple_preprocess(sent)
-             if word not in stopwords] for sent in sents]
+             if word not in stopwords] for sent in sentences]
 
 
-def text2ngrams(
-        sents: Iterable[str],
-        spacy_model: str = None,
-        pos_tags: list = None,
-        stop_words: set = None,
-        disable_pipe_names: list = None,
-        min_count: int = 5,
-        threshold: float = 10.0,
-        gensim_preprocess=False) -> List[str]:
+def spacy_preprocess(docs, spacy_model, pos_tags, disable_pipe_names):
+    nlp = spacy.load(spacy_model, disable=disable_pipe_names)
+    prep_docs = []
+    for doc in docs:
+        doc = nlp(' '.join(doc))
+        prep_docs.append(
+            [token.lemma_ for token in doc if token.pos_ in pos_tags])
+    return prep_docs
+
+
+def text2ngrams(sentences: Iterable[str],
+                spacy_model: str = None,
+                pos_tags: list = None,
+                stop_words: set = None,
+                disable_pipe_names: list = None,
+                min_count: int = 5,
+                threshold: float = 10.0) -> List[str]:
     """Convert texts to N-grams (Spacy & Gensim).
 
     Removes stopwords, forms (bigrams & trigrams), and lemmatizes texts.
@@ -39,8 +47,8 @@ def text2ngrams(
 
     Parameters:
     ----------
-    sents : (iterable of str)
-        A processed text data with: data_ready = text2ngrams(sents).
+    sentences : (iterable of str)
+        A processed text data with: data_ready = text2ngrams(sentences).
     spacy_model : (spacy language model, default='en_core_web_lg')
         Other spacy models are compatible with this function.
     min_count : (Type[int|float], default=5)
@@ -54,7 +62,7 @@ def text2ngrams(
 
     Returns:
     -------
-    Returns preprocessed texts.
+        Returns preprocessed texts.
     """
     if not spacy_model:
         spacy_model = 'en_core_web_lg'
@@ -64,38 +72,26 @@ def text2ngrams(
         pos_tags = ['NOUN', 'ADJ', 'VERB', 'ADV']
     if not stop_words:
         stop_words = SPACY_STOP_WORDS
-
     # build biagrams and trigram models
-    bigram = gensim.models.Phrases(sents, min_count, threshold)
-    trigram = gensim.models.Phrases(bigram[sents], threshold=threshold)
+    bigram = gensim.models.Phrases(sentences, min_count, threshold)
+    trigram = gensim.models.Phrases(bigram[sentences], threshold=threshold)
     bigram_mod = gensim.models.phrases.Phraser(bigram)
     trigram_mod = gensim.models.phrases.Phraser(trigram)
-    if gensim_preprocess:
-        texts = _gensim_prep(stop_words, sents)
+    texts = gensim_preprocess(stop_words, sentences)
     texts = [bigram_mod[text] for text in texts]
     texts = [trigram_mod[bigram_mod[text]] for text in texts]
-    nlp = spacy.load(spacy_model, disable=disable_pipe_names)
-    spacy.prefer_gpu()
-
-    texts_out = []
-    for sent in texts:
-        doc = nlp(' '.join(sent))
-        texts_out.append(
-            [token.lemma_ for token in doc
-             if token.pos_ in pos_tags])
+    texts = spacy_preprocess(texts, spacy_model, pos_tags,
+                             disable_pipe_names)
     # remove stopwords once more after lemmatization
-    if gensim_preprocess:
-        texts_out = _gensim_prep(stop_words, texts_out)
-    else:
-        return texts_out
+    texts = gensim_preprocess(stop_words, texts)
+    return texts
 
 
-def n_grams(
-        corpus: list,
-        n: int = 5,
-        ngram_range: tuple = None,
-        max_features: int = None,
-        reverse: bool = True):
+def n_grams(corpus: list,
+            n: int = 5,
+            ngram_range: tuple = None,
+            max_features: int = None,
+            reverse: bool = True):
     """N-gram Frequency with Sklearn CountVectorizer.
 
     Returns the most frequently occurring words.

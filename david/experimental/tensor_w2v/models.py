@@ -5,7 +5,8 @@ from os.path import join
 import gensim
 import tensorflow as tf
 from tensorflow.contrib.tensorboard.plugins import projector
-from ..text.nltk_textpipe import preprocess_doc
+
+from ...text.nltk_textpipe import preprocess_doc
 
 
 class CsvConnector(object):
@@ -43,7 +44,8 @@ class CsvConnector(object):
             reader = csv.DictReader(f, delimiter=self.separator, quotechar='"')
 
             for line in reader:
-                sentence = self.concate_by.join([line[col] for col in self.text_columns if line[col]])
+                sentence = self.concate_by.join(
+                    [line[col] for col in self.text_columns if line[col]])
                 yield self.preprocessing(sentence).split()
 
 
