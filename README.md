@@ -2,8 +2,6 @@
 
 * David is an NLP toolkit implemented with Gensim, Tensorflow, PyTorch, NLTK, and spaCy among other open-source libraries.
 
-![image](https://fromdirectorstevenspielberg.com/wp-content/uploads/2017/07/15.jpg?raw=true)
-
 *The goal for David is to assist content creators to increase the exposure on YouTube and their videos in the presence of more viewers. From live/historical textual information.*
 
 ## configuration
@@ -61,7 +59,6 @@ from david.server import CommentsDB
 
 db = CommentsDB()
 comments = db.get_all_comments()
-
 [c.text for c in comments][:5]
 ...
 ['Video was hilarious, subscribed!',
@@ -80,7 +77,6 @@ comments = db.get_all_comments()
 
 ```python
 from david.pipeline import Pipeline
-
 pipe = Pipeline(comments.export('df'))
 ```
 
@@ -98,19 +94,6 @@ pipe.authorEmoji.unique()
 ...
 array(['👍', '😍😍', '😂💙👄', '😊', '💕💕💕', '✌🏾', '😙', '🤔🤷♂'],
 dtype=object)
-
-pipe.authorUrlLink.unique()
-...
-array([nan, 'https://www.youtube.com/channel/UCywXyzx6GZpDyxRvMOqLMiw'],
-dtype=object)
-
-pipe.authorHashTags.unique()
-...
-array([nan, '#SUBSCRIBED'], dtype=object)
-
-pipe.authorTimeTag.unique()
-...
-array([nan, '10:06'], dtype=object)
 ```
 
 ## preprocessing 🔬
@@ -123,10 +106,8 @@ array([nan, '10:06'], dtype=object)
 
 ```python
 from david.lang import SPACY_STOP_WORDS
-
 # if stop_words param left as None, it defaults to spaCy's set.
-pipe_stop_words = pipe.custom_stopwords_from_freq(
-       top_n=30, stop_words=SPACY_STOP_WORDS)
+pipe_stop_words = pipe.custom_stopwords_from_freq(top_n=30, stop_words=SPACY_STOP_WORDS)
 list(pipe_stop_words)[:5]
 ```
 
@@ -134,4 +115,48 @@ list(pipe_stop_words)[:5]
 
 ```ipython
 ['tides...cardinal', 'into', 'less', 'same', 'under']
+```
+
+* a quick look at the results from the three possible preprocessing modes.
+
+```python
+from david.text import preprocess_docs
+doc_a = preprocess_docs(docs, stopwords=False, tokenize=True)
+doc_b = preprocess_docs(docs, stopwords=True, tokenize=True)
+doc_c = preprocess_docs(docs, stopwords=False, tokenize=False)
+doc_d = preprocess_docs(docs, stopwords=True, tokenize=True, lemma=True)
+```
+
+```python
+doc_a[:3] # stopwords=False, tokenize=True 
+...
+[['Love', 'it'],
+ ['Put', 'the', 'solar', 'kit', 'on', 'top', 'during', 'the', 'day'],
+ ['Police', 'car', 'runs', 'out', 'of', 'gas', 'during', 'chase']]
+ 
+doc_b[:3] # stopwords=True, tokenize=True
+...
+ [['Love'],
+ ['Put', 'solar', 'kit', 'top', 'day'],
+ ['Police', 'car', 'runs', 'gas', 'chase']]
+ 
+doc_c[:3] # stopwords=False, tokenize=False
+...
+ ['Love it',
+  'Put the solar kit on top during the day',
+  'Police car runs out of gas during chase']
+```
+
+* applying lemma vs not
+
+```python
+doc_b[5:6] # lemma not applied
+...
+[['Except', 'filling', 'gas', 'takes', 'like', '10', 'minutes',
+  'charging', 'Tesla', 'takes', 'several', 'hours']]
+
+doc_d[5:6] # lemma applied
+...
+[['except', 'fill', 'gas', 'take', 'like', '10', 'minute',
+'charge', 'tesla', 'take', 'several', 'hour']]
 ```
