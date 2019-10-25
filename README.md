@@ -98,19 +98,6 @@ pipe.authorEmoji.unique()
 ...
 array(['👍', '😍😍', '😂💙👄', '😊', '💕💕💕', '✌🏾', '😙', '🤔🤷♂'],
 dtype=object)
-
-pipe.authorUrlLink.unique()
-...
-array([nan, 'https://www.youtube.com/channel/UCywXyzx6GZpDyxRvMOqLMiw'],
-dtype=object)
-
-pipe.authorHashTags.unique()
-...
-array([nan, '#SUBSCRIBED'], dtype=object)
-
-pipe.authorTimeTag.unique()
-...
-array([nan, '10:06'], dtype=object)
 ```
 
 ## preprocessing 🔬
@@ -123,10 +110,8 @@ array([nan, '10:06'], dtype=object)
 
 ```python
 from david.lang import SPACY_STOP_WORDS
-
 # if stop_words param left as None, it defaults to spaCy's set.
-pipe_stop_words = pipe.custom_stopwords_from_freq(
-       top_n=30, stop_words=SPACY_STOP_WORDS)
+pipe_stop_words = pipe.custom_stopwords_from_freq(top_n=30, stop_words=SPACY_STOP_WORDS)
 list(pipe_stop_words)[:5]
 ```
 
@@ -134,4 +119,33 @@ list(pipe_stop_words)[:5]
 
 ```ipython
 ['tides...cardinal', 'into', 'less', 'same', 'under']
+```
+
+* a quick look at the results from the three possible preprocessing modes.
+
+```python
+from david.text import preprocess_docs
+doc_a = preprocess_docs(docs, stopwords=False, tokenize=True)
+doc_b = preprocess_docs(docs, stopwords=True, tokenize=True)
+doc_c = preprocess_docs(docs, stopwords=False, tokenize=False)
+```
+
+```python
+doc_a[:3] # stopwords=False, tokenize=True 
+...
+[['Love', 'it'],
+ ['Put', 'the', 'solar', 'kit', 'on', 'top', 'during', 'the', 'day'],
+ ['Police', 'car', 'runs', 'out', 'of', 'gas', 'during', 'chase']]
+ 
+doc_b[:3] # stopwords=True, tokenize=True
+...
+ [['Love'],
+ ['Put', 'solar', 'kit', 'top', 'day'],
+ ['Police', 'car', 'runs', 'gas', 'chase']]
+ 
+doc_c[:3] # stopwords=False, tokenize=False
+...
+ ['Love it',
+  'Put the solar kit on top during the day',
+  'Police car runs out of gas during chase']
 ```
