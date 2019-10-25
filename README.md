@@ -2,8 +2,6 @@
 
 * David is an NLP toolkit implemented with Gensim, Tensorflow, PyTorch, NLTK, and spaCy among other open-source libraries.
 
-![image](https://fromdirectorstevenspielberg.com/wp-content/uploads/2017/07/15.jpg?raw=true)
-
 *The goal for David is to assist content creators to increase the exposure on YouTube and their videos in the presence of more viewers. From live/historical textual information.*
 
 ## configuration
@@ -61,7 +59,6 @@ from david.server import CommentsDB
 
 db = CommentsDB()
 comments = db.get_all_comments()
-
 [c.text for c in comments][:5]
 ...
 ['Video was hilarious, subscribed!',
@@ -80,7 +77,6 @@ comments = db.get_all_comments()
 
 ```python
 from david.pipeline import Pipeline
-
 pipe = Pipeline(comments.export('df'))
 ```
 
@@ -128,6 +124,7 @@ from david.text import preprocess_docs
 doc_a = preprocess_docs(docs, stopwords=False, tokenize=True)
 doc_b = preprocess_docs(docs, stopwords=True, tokenize=True)
 doc_c = preprocess_docs(docs, stopwords=False, tokenize=False)
+doc_d = preprocess_docs(docs, stopwords=True, tokenize=True, lemma=True)
 ```
 
 ```python
@@ -148,4 +145,18 @@ doc_c[:3] # stopwords=False, tokenize=False
  ['Love it',
   'Put the solar kit on top during the day',
   'Police car runs out of gas during chase']
+```
+
+* applying lemma vs not
+
+```python
+doc_b[5:6] # lemma not applied
+...
+[['Except', 'filling', 'gas', 'takes', 'like', '10', 'minutes',
+  'charging', 'Tesla', 'takes', 'several', 'hours']]
+
+doc_d[5:6] # lemma applied
+...
+[['except', 'fill', 'gas', 'take', 'like', '10', 'minute',
+'charge', 'tesla', 'take', 'several', 'hour']]
 ```
