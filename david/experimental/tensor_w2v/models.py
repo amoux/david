@@ -4,7 +4,7 @@ from os.path import join
 
 import gensim
 import tensorflow as tf
-from tensorflow.contrib.tensorboard.plugins import projector
+from tensorboard.plugins import projector
 
 from ...text.nltk_textpipe import preprocess_doc
 
