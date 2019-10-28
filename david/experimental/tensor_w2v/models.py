@@ -80,6 +80,18 @@ class Word2Vec(object):
         self.model.save(self.save_folder)
 
 
+def compile_embeddings_v2(gensim_model, model_path):
+    # TODO: https://www.tensorflow.org/tutorials/text/word_embeddings
+    # rewrite the embedding model.
+    vocab_size = gensim_model.shape[0]
+    seqlength = gensim_model.shape[1]
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.Embedding(vocab_size, 64))
+    # long-term short-memory LSTM.
+    model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64)))
+    pass
+
+
 def create_embeddings(gensim_model, model_folder, trainable=False):
     weights = gensim_model.wv.vectors
     idx2words = gensim_model.wv.index2word
@@ -112,10 +124,3 @@ def create_embeddings(gensim_model, model_folder, trainable=False):
         sess.run(embedding_init, feed_dict={embedding_placeholder: weights})
         save_path = saver.save(sess, tf_model_filepath)
     return save_path
-
-
-class Embeddings(Bigram, Word2Vec):
-    def __init__(gensim_model, model_folder):
-        self.gensim_model = gensim_model
-        self.model_folder = model_folder
-        pass
