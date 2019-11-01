@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+# install the models for spacy_transformers wrapper api
+python -m spacy download en_trf_bertbaseuncased_lg
+python -m spacy download de_trf_bertbasecased_lg

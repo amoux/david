@@ -11,4 +11,8 @@ setup(
     author_email='carlosdeveloper2@gmail.com',
     license='MIT',
     zip_safe=False,
-    scripts=['bin/download-spacy-models'])
+    scripts=[
+        'bin/download-spacy-models',
+        'bin/download-spacy-elmo-x2',
+    ]
+)
