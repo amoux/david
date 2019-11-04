@@ -12,12 +12,27 @@
 git clone https://github.com/amoux/david
 ```
 
-Error: ***OSError: mysql_config not found***
+Error installing `pattern`: ***OSError: mysql_config not found*** 
 
 > **NOTE** before you install all the dependecies, the package `pattern` is known to have a common error due to the missing `libmysqlclient-dev` linux package. to fix this issue run the following command before installing the requirements.
 
 ```bash
 sudo apt install libmysqlclient-dev
+conda activate < YOUR ENVIROMENT >
+(conda-env) cd pattern/
+(conda-env) python setup.py install
+```
+
+* If you still get ` fatal error: mysql/udf_registration_types.h: No such file or directory #include <mysql/udf_registration_types.h>` when installing in a Ubuntu + Anaconda enviroment try:
+
+ * tested on: Ubuntu 19.10
+ * anaconda enviroment: python=3.6
+
+```bash
+(conda-env) conda install gxx_linux-64
+(conda-env) conda install mysqlclient
+(conda-env) cd pattern/
+(conda-env) python setup.py install
 ```
 
 ### requirements
