@@ -20,6 +20,16 @@ Error: ***OSError: mysql_config not found***
 sudo apt install libmysqlclient-dev
 ```
 
+* If you still get ` fatal error: mysql/udf_registration_types.h: No such file or directory #include <mysql/udf_registration_types.h>` when installing in a Ubuntu + Anaconda enviroment try:
+
+ * tested on: Ubuntu 19.10
+ * anaconda enviroment: python=3.6
+
+```bash
+conda install gxx_linux-64
+conda install mysqlclient
+```
+
 ### requirements
 
 * install the requirements:
