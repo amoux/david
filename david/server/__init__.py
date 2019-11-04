@@ -2,6 +2,7 @@ import json
 import os
 
 import records
+from david.utils.io import as_jsonl_file as _as_jsonl_file
 
 COUNT_QUERIES = {
     'videos': 'SELECT DISTINCT video_id FROM comments;',
@@ -27,24 +28,9 @@ class CommentsDB(records.Database):
         if not self.table_name:
             self.table_name = self.get_table_names()[0]
 
-    def as_jsonl(self, doc_obj, fname, output_dir='data'):
-        """Write a search query iterable to file as JSONL format.
-
-        Usage:
-        -----
-            >>> db = CommentsDB()
-            >>> comments = db.search_comments("%make a video%")
-            >>> db.as_jsonl(comments, 'comments.jsonl')
-        """
-        if isinstance(doc_obj, CommentsDB.__class__.__base__):
-            is_valid_obj = doc_obj.as_dict()
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        file_path = os.path.join(output_dir, fname)
-        with open(file_path, 'w', encoding='utf-8') as jsonl_file:
-            for line in is_valid_obj:
-                json.dump(line, jsonl_file)
-                jsonl_file.write('\n')
+    def as_jsonl_file(self, texts, fname, output_dir='.'):
+        """Write an Iterable of sequences (texts) as a JSONL file."""
+        _as_jsonl_file(texts, fname, output_dir)
 
     def search_comments(self, text_pattern: str):
         """Query comments based on word patterns e.g., '%make a video%'"""

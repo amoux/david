@@ -5,7 +5,7 @@ import string
 import unicodedata
 from collections import Counter
 from itertools import groupby
-from typing import List, AnyStr
+from typing import AnyStr, List
 
 import contractions
 import emoji

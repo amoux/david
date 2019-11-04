@@ -7,9 +7,8 @@ import sys
 import time
 from os.path import exists, isfile, join
 
-import requests as _requests
-
 import lxml.html
+import requests as _requests
 from lxml.cssselect import CSSSelector as _CSSSelector
 
 _YT_COMMENTS_URL = 'https://www.youtube.com/all_comments?v={youtube_id}'

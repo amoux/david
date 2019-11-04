@@ -1,6 +1,8 @@
 from pandas import DataFrame, Series
 
 from ..lang import SPACY_STOP_WORDS
+from ..utils.io import as_jsonl_file as _as_jsonl_file
+from ..utils.io import as_txt_file as _as_txt_file
 
 
 class DavidDataFrame(DataFrame):
@@ -17,13 +19,13 @@ class DavidDataFrame(DataFrame):
     def missing_values(self):
         return self.isnull().sum()
 
-    def to_textfile(self, fn: str, text_col='text'):
-        with open(fn, 'w', encoding='utf-8') as f:
-            texts = self[text_col].values.tolist()
-            for text in texts:
-                if len(text) > 0:
-                    f.write('%s\n' % text)
-            f.close()
+    def as_txt_file(self, fname: str, output_dir='.', text_col='text'):
+        texts = self[text_col].values.tolist()
+        _as_txt_file(texts, fname, output_dir)
+
+    def as_jsonl_file(self, fname: str, output_dir='.', text_col='text'):
+        texts = self[text_col].values.tolist()
+        _as_jsonl_file(texts, fname, output_dir)
 
     def custom_stopwords_from_freq(self, text_col='text',
                                    top_n=10, stop_words=None):
