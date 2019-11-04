@@ -9,30 +9,32 @@ COUNT_QUERIES = {
 
 
 class CommentsDB(records.Database):
+    """Comments Database Data Loader Component."""
 
-    BASE_SQL_URL = os.environ.get('DAVID_COMMENTS_DB')
-    BASE_DB_NAME = 'comments_v2.db'
+    DAVID_HOME_SQLITE = os.environ.get('DAVID_COMMENTS_DB')
+    DEFAULT_DB_FILE = 'comments_v2.db'
 
-    def __init__(self, sql_url=None, table_name=None):
+    def __init__(self, sql_url=None, db_name=None, table_name=None):
         self.sql_url = sql_url
-        self.table_name = table_name
-
+        self.db_name = db_name
+        if not self.db_name:
+            self.db_name = self.DEFAULT_DB_FILE
         if not self.sql_url:
-            self.sql_url = 'sqlite:///{}'.format(
-                os.path.join(self.BASE_SQL_URL, self.BASE_DB_NAME))
-
+            sql_url = os.path.join(self.DAVID_HOME_SQLITE, self.db_name)
+            self.sql_url = 'sqlite:///{}'.format(sql_url)
         super().__init__(self.sql_url)
+        self.table_name = table_name
         if not self.table_name:
             self.table_name = self.get_table_names()[0]
 
     def as_jsonl(self, doc_obj, fname, output_dir='data'):
-        """Write an Iterable[Dict] object to a JSONL file.
+        """Write a search query iterable to file as JSONL format.
 
         Usage:
         -----
             >>> db = CommentsDB()
-            >>> docs = db.search_comments("%make a video%")
-            >>> as_jsonl(iterable_dict, 'dict_obj.jsonl')
+            >>> comments = db.search_comments("%make a video%")
+            >>> db.as_jsonl(comments, 'comments.jsonl')
         """
         if isinstance(doc_obj, CommentsDB.__class__.__base__):
             is_valid_obj = doc_obj.as_dict()
