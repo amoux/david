@@ -21,12 +21,10 @@ logging.basicConfig(level=logging.WARN)
 del logging
 
 # silence tensorflow warnings.
-warnings.filterwarnings('ignore',
-                        category=DeprecationWarning, module='tensorflow')
-warnings.filterwarnings('ignore',
-                        category=DeprecationWarning, module='google')
-warnings.filterwarnings('ignore',
-                        module='tensorflow.core.platform.cpu_feature_guard')
+warnings.filterwarnings('ignore', category=DeprecationWarning, module='google')
+warnings.filterwarnings("ignore", message="numpy.dtype size changed")
+warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
+warnings.filterwarnings("ignore", message="DeprecationWarning")
 
 # seeds random states for sources.
 seed = 0
