@@ -1,3 +1,5 @@
+import json
+import urllib
 from typing import Dict, Iterable, List
 
 from googleapiclient import discovery
@@ -65,3 +67,25 @@ def video(q: str, max_results: int = 10) -> Iterable[List[Dict]]:
 
             results.append(temp)
     return results
+
+
+def get_all_video_in_channel(channel_id: str, max_results=25):
+    search_url = 'https://www.googleapis.com/youtube/v3/search?'
+    url_params = 'key={}&channelId={}&part=snippet,id&order=date&maxResults={}'
+    first_url = search_url + url_params.format(
+        _API['api_key'], channel_id, max_results)
+
+    video_ids = list()
+    url = first_url
+    while True:
+        req_url = urllib.request.urlopen(url)
+        response = json.load(req_url)
+        for i in response['items']:
+            if i['id']['kind'] == "youtube#video":
+                video_ids.append(i['id']['videoId'])
+        try:
+            next_page_token = response['nextPageToken']
+            url = first_url + '&pageToken={}'.format(next_page_token)
+        except ValueError:
+            break
+    return video_ids
