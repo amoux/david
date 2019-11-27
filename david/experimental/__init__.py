@@ -1,18 +1,12 @@
+import collections
 import math
+import os
 import string
+import urllib
+import zipfile
 
-from ..server import CommentsDB
 from ..text import encode_ascii, sent_tokenizer
 from . import tensor_w2v
-
-
-def get_from_dbs(query, db_v1=False):
-    db = CommentsDB(db_name='comments_v2.db')
-    texts = [comment.text for comment in db.search_comments(query)]
-    if db_v1:
-        db = CommentsDB(db_name='comments_v1.db')
-        texts += [comment.text for comment in db.search_comments(query)]
-    return texts
 
 
 def transform_texts(texts):
@@ -54,7 +48,7 @@ def clean_tokens(doc: list, discard_punct="_", min_seqlen=1):
         ...
         '[['Hello', 'keep', 'this_punct', '2020'], ['tokens', 'hidden']]'
     """
-    # discarding punctuation can be further extened.
+    # discarding punctuation can be further extended.
     punctuation = set([p for p in string.punctuation])
     punctuation.discard(discard_punct)
     cleantokens = list()
@@ -66,3 +60,32 @@ def clean_tokens(doc: list, discard_punct="_", min_seqlen=1):
         tokens = list(filter(lambda seq: len(seq) > min_seqlen, tokens))
         cleantokens.append(tokens)
     return cleantokens
+
+
+def download_movielens_datasets(datasets,
+                                savepath='datasets',
+                                file_ext='.zip'):
+    """Downloads zip files from urls and loads them in the right format.
+
+    NOTE: This method can be improved to work with many datasets with
+    different file extensions. And not just `.zip` files. key areas:
+
+    feature_one : `filename = dataset[dataset.rfind('ml'):]`
+        str.rfind() returns the start idx value of a file from a string (url)
+        which I used to slice off the file extension: `file.ext` -> `file`.
+    """
+    extlen = len(file_ext)
+    if not os.path.exists(savepath):
+        os.makedirs(savepath)
+    dataset_fpaths = collections.defaultdict(list)
+    for dataset in datasets:
+        filename = dataset[dataset.rfind('ml'):]
+        filepath = os.path.join(savepath, filename)
+        if not os.path.exists(filepath[:-extlen]):
+            download = urllib.request.urlretrieve(dataset, filepath)
+            with zipfile.ZipFile(filepath, "r") as zf:
+                zf.extractall(savepath)
+        dataset_fpaths[filename[:-extlen]] = {
+            fn[:-extlen]: os.path.join(filepath[:-extlen], fn)
+            for fn in os.listdir(filepath[:-extlen])}
+    return dataset_fpaths

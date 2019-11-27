@@ -12,7 +12,7 @@ class TextPreprocess(MutableSequence, object):
         self[text_col] = self[text_col].apply(
             lambda s: normalize_spaces(s))
 
-    def lower_texts(self, text_col: str = 'text') -> None:
+    def lower_texts(self, text_col: str = 'text'):
         self[text_col] = self[text_col].str.lower()
 
     def fix_contractions(self, text_col: str = 'text'):
@@ -20,29 +20,29 @@ class TextPreprocess(MutableSequence, object):
         self[text_col] = self[text_col].apply(
             lambda x: expand_contractions(x) if len(x) > 0 else '')
 
-    def normalize_texts(self, text_col: str = 'text') -> None:
+    def normalize_texts(self, text_col: str = 'text'):
         self[text_col] = self[text_col].apply(
             lambda s: remove_duplicate_words(s))
         self[text_col] = self[text_col].apply(
             lambda s: reduce_repeating_chars_v1(s))
 
-    def standardizerA(self, text_col: str = 'text') -> None:
+    def standardizerA(self, text_col: str = 'text'):
         self[text_col] = self[text_col].str.replace(r"http\S+", "")
         self[text_col] = self[text_col].str.replace(r"@\S+", "")
         self[text_col] = self[text_col].str.replace(
             r"([^A-Za-z0-9(),!?@\'\`\"\_\n])", " ")
 
-    def standardizerB(self, text_col: str = 'text') -> None:
+    def standardizerB(self, text_col: str = 'text'):
         self[text_col] = self[text_col].str.replace(
             r"&lt;/?.*?&gt;", " &lt;&gt; ")
         self[text_col] = self[text_col].str.replace(r"(\\d|\\W)+", " ")
         self[text_col] = self[text_col].str.replace(r"[^a-zA-Z]", " ")
 
-    def lemmetize_texts(self, text_col: str = 'text') -> None:
+    def lemmetize_texts(self, text_col: str = 'text'):
         self[text_col] = self[text_col].str.split()
         self[text_col] = self[text_col].apply(lambda s: lemmatizer(s))
 
-    def tokenize_texts(self, text_col: str = 'text') -> None:
+    def tokenize_texts(self, text_col: str = 'text'):
         self[text_col] = self[text_col].apply(lambda s: regex_tokenizer(s))
 
     def clean_all_text(
@@ -53,7 +53,7 @@ class TextPreprocess(MutableSequence, object):
             lemmatize=False,
             normalize=True,
             lower_texts=False,
-            tokenize=False) -> None:
+            tokenize=False):
         """Dataframe Text Preprocessing Method.
 
         The arrangements have been crafted uniquely for Youtube Comments.

@@ -15,16 +15,43 @@ Logger-Modes:
     CRITICAL: program itself may be unable to continue running.
 """
 
-import logging
-import warnings
-logging.basicConfig(level=logging.WARN)
-del logging
+# import logging
+# import warnings
+# logging.basicConfig(level=logging.WARN)
+# del logging
 
-# silence tensorflow warnings.
-warnings.filterwarnings('ignore', category=DeprecationWarning, module='google')
-warnings.filterwarnings("ignore", message="numpy.dtype size changed")
-warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
-warnings.filterwarnings("ignore", message="DeprecationWarning")
+# # silence tensorflow warnings.
+# warnings.filterwarnings('ignore', category=DeprecationWarning, module='google')
+# warnings.filterwarnings("ignore", message="numpy.dtype size changed")
+# warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
+# warnings.filterwarnings("ignore", message="DeprecationWarning")
+
+from david.cosine import (CountVectorizer, TfidfVectorizer,
+                          build_feature_matrix, cosine_similarity,
+                          get_similar_docs)
+from david.lang import (DAVID_CONTRACTIONS, DAVID_STOP_WORDS,
+                        GENSIM_STOP_WORDS, SPACY_STOP_WORDS, SpellCorrect)
+from david.lda import build_topics
+from david.pipeline import Pipeline
+from david.server import CommentsSQL
+from david.text._prep_v1 import (get_emojis, get_sentiment_polarity,
+                                 get_sentiment_subjectivity, get_vocab_size,
+                                 lemmatizer, reduce_repeating_chars_v1,
+                                 regex_tokenizer, remove_duplicate_words)
+from david.text.nltk_textpipe import (encode_ascii, expand_contractions,
+                                      nltk_tokenizer, preprocess_doc,
+                                      preprocess_docs,
+                                      remove_repeated_characters,
+                                      remove_stopwords,
+                                      treebank_to_wordnet_postag,
+                                      wordnet_lemmatizer)
+from david.text.spacy_textpipe import sent_tokenizer
+from david.utils.io import as_jsonl_file, as_txt_file
+from david.utils.loaders import (GoogleDriveDownloader, current_path,
+                                 delete_files, pointer)
+from david.utils.main import get_data_home, is_cuda_enabled, remove_data_home
+from david.visualizers import build_wordcloud
+from david.youtube._scraper import scrape_comments as YTCommentScraper
 
 # seeds random states for sources.
 seed = 0
