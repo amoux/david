@@ -1,5 +1,4 @@
-"""Server Configuration variables
-"""
+"""Server Configuration variables."""
 import os
 
 

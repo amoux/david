@@ -4,7 +4,7 @@ en_core_web_lg = spacy.load('en_core_web_lg')
 
 
 def sent_tokenizer(docs: list, nlp_model: object = None):
-    """Spacy sentence tokenizer
+    """Spacy sentence tokenizer.
 
     NOTE: sentence tokenizer requires the large english model.
 

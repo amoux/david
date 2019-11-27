@@ -28,7 +28,7 @@ class CommentsDB(records.Database):
             self.table_name = self.get_table_names()[0]
 
     def search_comments(self, text_pattern: str):
-        """Query comments based on word patterns e.g., '%make a video%'"""
+        """Query comments based on word patterns e.g., '%make a video%'."""
         return self.query("select text from {} where text like '{}'".format(
             self.table_name, text_pattern))
 
@@ -37,7 +37,7 @@ class CommentsDB(records.Database):
 
 
 class CommentsSQL(object):
-    """ Comments database Connector. """
+    """Comments database Connector."""
     DAVID_HOME_SQLITE = os.environ.get('DAVID_COMMENTS_DB')
     LATEST_COMMENTS_DB = 'comments_v2.db'
 

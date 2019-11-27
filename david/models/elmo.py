@@ -9,8 +9,8 @@ ELMO2_MODULE_URL = 'https://tfhub.dev/google/elmo/2'
 
 
 def model_file(model: str = None, dirpath='models', override=False):
-    """Model file manager for .npy files, are platform-independent
-    and are compact and faster to load and save models.
+    """Model file manager for .npy files, are platform-independent and are
+    compact and faster to load and save models.
 
     Parameters:
     ----------

@@ -29,9 +29,8 @@ def get_data_home(data_home: str = None):
 
 
 def remove_data_home(data_home=None):
-    """Calling this method deletes the root directory david_data
-    including all the datasets.
-    """
+    """Calling this method deletes the root directory david_data including all
+    the datasets."""
     _clear_data_home(data_home=data_home)
 
 

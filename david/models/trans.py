@@ -14,8 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Conditional text generation with the auto-regressive models of the library (GPT/GPT-2/CTRL/Transformer-XL/XLNet)
-"""
+"""Conditional text generation with the auto-regressive models of the library
+(GPT/GPT-2/CTRL/Transformer-XL/XLNet)"""
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
@@ -79,8 +79,8 @@ def set_seed(seed, n_gpu):
 
 def top_k_top_p_filtering(logits, top_k=0, top_p=0.0,
                           filter_value=-float('Inf')):
-    """Filter a distribution of logits using top-k
-    and/or nucleus (top-p) filtering.
+    """Filter a distribution of logits using top-k and/or nucleus (top-p)
+    filtering.
 
     Parameters:
     ----------

@@ -1,7 +1,7 @@
-"""Spelling Corrector in Python 3; see http://norvig.com/spell-correct.html
+"""Spelling Corrector in Python 3; see http://norvig.com/spell-correct.html.
 
-Copyright (c) 2007-2016 Peter Norvig
-MIT license: www.opensource.org/licenses/mit-license.php
+Copyright (c) 2007-2016 Peter Norvig MIT license:
+www.opensource.org/licenses/mit-license.php
 """
 
 import collections
@@ -15,8 +15,8 @@ class SpellCorrect(object):
     WORD_COUNTS = None
 
     def __init__(self, corpus_path: str = None):
-        """SpellCorrect uses word frquencies for matching the _correct
-        grammar of a word.
+        """SpellCorrect uses word frquencies for matching the _correct grammar
+        of a word.
 
         corpus_path : (str)
             If the left as None, it imports big.txt file as
@@ -37,18 +37,18 @@ class SpellCorrect(object):
         return re.findall('[a-z]+', text.lower())
 
     def correct_text(self, text):
-        """Correct all the words within a text, returning the corrected text.
-        """
+        """Correct all the words within a text, returning the corrected
+        text."""
         return re.sub('[a-zA-Z]+', self.correct_match, text)
 
     def correct_match(self, match):
-        """Spell correct word in match, and preserve
-        proper upper/lower/title case.
-        """
+        """Spell correct word in match, and preserve proper upper/lower/title
+        case."""
         word = match.group()
 
         def case_of(text):
             """Return the case-function appropriate for text:
+
             upper, lower, title, or just str.
             """
             return (str.upper if text.isupper() else

@@ -59,9 +59,8 @@ def treebank_to_wordnet_postag(pos_tag: str):
 
 
 def wordnet_postag_annotator(text: str):
-    '''Annotates text tokens with pos tags, uses the wordnet
-    part-of-speech class from nltk.
-    '''
+    """Annotates text tokens with pos tags, uses the wordnet part-of-speech
+    class from nltk."""
     tagged_text = pattern_pos_tagger(text)
     tagged_lower_text = [
         (word.lower(), treebank_to_wordnet_postag(pos_tag))
@@ -99,11 +98,11 @@ def remove_stopwords(text: str, stop_words: list = None):
 
 
 def remove_repeated_characters(tokens: list):
-    '''Corrects repeating characters from tokens (WordNet).
+    """Corrects repeating characters from tokens (WordNet).
 
         >>> remove_repeated_characters(['finallllyyyy'])[0]
     'finally'
-    '''
+    """
     repeat_pattern = re.compile(r'(\w*)(\w)\2(\w*)')
     match_substitution = r'\1\2\3'
 
