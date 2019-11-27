@@ -3,7 +3,6 @@ import os
 import sqlite3
 
 import records
-from david.utils.io import as_jsonl_file as _as_jsonl_file
 
 COUNT_QUERIES = {
     'videos': 'SELECT DISTINCT video_id FROM comments;',
@@ -12,7 +11,6 @@ COUNT_QUERIES = {
 
 class CommentsDB(records.Database):
     """Comments Database Data Loader Component."""
-
     DAVID_HOME_SQLITE = os.environ.get('DAVID_COMMENTS_DB')
     DEFAULT_DB_FILE = 'comments_v2.db'
 
@@ -29,10 +27,6 @@ class CommentsDB(records.Database):
         if not self.table_name:
             self.table_name = self.get_table_names()[0]
 
-    def as_jsonl_file(self, texts, fname, output_dir='.'):
-        """Write an Iterable of sequences (texts) as a JSONL file."""
-        _as_jsonl_file(texts, fname, output_dir)
-
     def search_comments(self, text_pattern: str):
         """Query comments based on word patterns e.g., '%make a video%'"""
         return self.query("select text from {} where text like '{}'".format(
@@ -44,20 +38,19 @@ class CommentsDB(records.Database):
 
 class CommentsSQL(object):
     """ Comments database Connector. """
-    _DAVID_HOME_SQLITE = os.environ.get('DAVID_COMMENTS_DB')
-    _DEFAULT_DB_FILE = 'comments_v2.db'
+    DAVID_HOME_SQLITE = os.environ.get('DAVID_COMMENTS_DB')
+    LATEST_COMMENTS_DB = 'comments_v2.db'
 
-    def __init__(self, sql_path=None, db_fname=None, table_name=None):
+    def __init__(self, sql_path=None, db_file_name=None, table_name=None):
         self.sql_path = sql_path
-        self.db_fname = db_fname
+        self.db_file_name = db_file_name
         self.table_name = table_name
-        if not self.db_fname:
-            self.db_fname = self._DEFAULT_DB_FILE
+        if not self.db_file_name:
+            self.db_file_name = self.LATEST_COMMENTS_DB
         if not self.sql_path:
             self.sql_path = os.path.join(
-                self._DAVID_HOME_SQLITE, self.db_fname)
-        self.conn = sqlite3.connect(
-            self.sql_path, detect_types=sqlite3.PARSE_COLNAMES)
+                self.DAVID_HOME_SQLITE, self.db_file_name)
+        self.conn = sqlite3.connect(self.sql_path)
         if not self.table_name:
             cursor = self.conn.execute(
                 "select name from sqlite_master where type='table' or type='view'")
@@ -84,7 +77,3 @@ class CommentsSQL(object):
         c = self.conn.execute(
             f"select text from {self.table_name} where text like '{pattern}';")
         return [text[0] for text in c.fetchall()]
-
-    def to_jsonl_file(self, texts, fname, output_dir='.'):
-        """Write an Iterable of sequences (texts) as a JSONL file."""
-        _as_jsonl_file(texts, fname, output_dir)
