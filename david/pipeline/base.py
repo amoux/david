@@ -1,36 +1,38 @@
 from pandas import DataFrame, Series
 
+from ..io.text import as_jsonl_file, as_txt_file
 from ..lang import SPACY_STOP_WORDS
-from ..utils.io import as_jsonl_file as _as_jsonl_file
-from ..utils.io import as_txt_file as _as_txt_file
+from .metric import TextMetrics
+from .prep import TextPreprocess
 
 
 class DavidDataFrame(DataFrame):
-    STOP_WORDS = SPACY_STOP_WORDS
-
     def __init__(self, *args, **kwargs):
         super(DavidDataFrame, self).__init__(*args, **kwargs)
 
+
+class Pipeline(DavidDataFrame, TextMetrics, TextPreprocess):
+    STOP_WORDS = SPACY_STOP_WORDS
+
     @property
-    def obj_to_dict(self):
+    def to_dict_obj(self):
         return self.to_dict(orient='index')
 
     @property
     def missing_values(self):
         return self.isnull().sum()
 
-    def as_txt_file(self, fname: str, output_dir='.', text_col='text'):
+    def to_text_file(self, fname: str, output_dir='.', text_col='text'):
         texts = self[text_col].values.tolist()
-        _as_txt_file(texts, fname, output_dir)
+        as_txt_file(texts, fname, output_dir)
 
-    def as_jsonl_file(self, fname: str, output_dir='.', text_col='text'):
+    def to_jsonl_file(self, fname: str, output_dir='.', text_col='text'):
         texts = self[text_col].values.tolist()
-        _as_jsonl_file(texts, fname, output_dir)
+        as_jsonl_file(texts, fname, output_dir)
 
     def custom_stopwords_from_freq(self, text_col='text',
                                    top_n=10, stop_words=None):
-        """Construct a new custom stop-word set from the top most frequently
-        used words in the corpus.
+        """Construct a frequency stopword set from texts in the pipeline.
 
         Returns a new set of from the frequency of words in the corpus and
         the existing stop word collection.
@@ -87,8 +89,8 @@ class DavidDataFrame(DataFrame):
             >>> 'unique 151'
         """
         temp_df = self.copy(deep=as_copy)
-        if min_val > 0:
+        if min_val:
             temp_df = temp_df.loc[temp_df[ref_col] > int(min_val)]
-        if max_val > 0:
+        if max_val:
             temp_df = temp_df.loc[temp_df[ref_col] < int(max_val)]
-        return temp_df
+        return Pipeline(temp_df)

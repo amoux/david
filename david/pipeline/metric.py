@@ -14,13 +14,12 @@ TAG = r'(\#\w+)'
 
 class TextMetrics(MutableSequence, object):
     """Gathers Statistical Metrics from Texts."""
-
     SENTI_LABELS = ('positive', 'negative', 'neutral')
 
     def sentiment_labeler(self, score):
-        if (score > 0):
+        if score > 0:
             return self.SENTI_LABELS[0]
-        if (score < 0):
+        if score < 0:
             return self.SENTI_LABELS[1]
         else:
             return self.SENTI_LABELS[2]
@@ -76,7 +75,7 @@ class TextMetrics(MutableSequence, object):
             sentiment=False,
             tags=False,
             stop_words=None,
-            senti_labels=None) -> None:
+            senti_labels=None):
         """Single function call to extract information from text.
 
         Parameters:

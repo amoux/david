@@ -4,6 +4,7 @@ import sqlite3
 
 import records
 
+
 COUNT_QUERIES = {
     'videos': 'SELECT DISTINCT video_id FROM comments;',
     'comments': 'SELECT video_id, COUNT(*) c FROM comments GROUP BY video_id;'}

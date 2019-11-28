@@ -1,8 +1,4 @@
 
-from ._base import DavidDataFrame
-from ._metric import TextMetrics
-from ._prep import TextPreprocess
-
-
-class Pipeline(DavidDataFrame, TextMetrics, TextPreprocess):
-    pass
+from .base import Pipeline
+from .metric import TextMetrics
+from .prep import TextPreprocess
