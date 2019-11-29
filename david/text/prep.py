@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import collections
 import re
 import string
@@ -9,8 +11,34 @@ import nltk
 import pattern
 import spacy
 import textblob
+from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
+                                  _replace_html_entities, reduce_lengthening,
+                                  remove_handles)
 
 from ..lang import NLTK_STOP_WORDS
+
+
+class YTCommentTokenizer:
+    """Youtube comment tokenizer, adapted from NLTK's TweetTokenizer class."""
+
+    def __init__(self, preserve_case=True, reduce_len=False,
+                 strip_handles=False):
+        self.preserve_case = preserve_case
+        self.reduce_len = reduce_len
+        self.strip_handles = strip_handles
+
+    def tokenize(self, sequence):
+        sequence = _replace_html_entities(sequence)
+        if self.strip_handles:
+            sequence = remove_handles(sequence)
+        if self.reduce_len:
+            sequence = reduce_lengthening(sequence)
+        safe_seq = HANG_RE.sub(r"\1\1\1", sequence)
+        words = WORD_RE.findall(safe_seq)
+        if not self.preserve_case:
+            words = list(map((
+                lambda x: x if EMOTICON_RE.search(x) else x.lower()), words))
+        return words
 
 
 def expand_contractions_basic(sequence: str, contraction_mapping: dict):
@@ -105,8 +133,10 @@ def part_of_speech_lemmatizer(sequence: str):
                      for word, pos in tagged_seq])
 
 
-def remove_whitespaces(sequence: str):
-    return " ".join(tok for tok in sequence.split())
+def normalize_whitespace(sequence: str):
+    LINEBREAK = re.compile(r"(\r\n|[\n\v])+")
+    NONBREAKING_SPACE = re.compile(r"[^\S\n\v]+", flags=re.UNICODE)
+    return NONBREAKING_SPACE.sub(" ", LINEBREAK.sub(r"\n", sequence)).strip()
 
 
 def clean_tokens(doc: list, discard_punct="_", min_seqlen=1):
@@ -185,7 +215,7 @@ def preprocess_sequence(sequence: str,
                         stopwords=True,
                         tokenize=False):
     """NLTK text preprocessing for a sequence."""
-    sequence = encode_ascii(sequence)
+    sequence = normalize_whitespace(encode_ascii(sequence))
     if contractions:
         sequence = expand_contractions(sequence)
     if lemmatize:
