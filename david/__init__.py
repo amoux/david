@@ -30,19 +30,13 @@ from david.lang import (DAVID_CONTRACTIONS, DAVID_STOP_WORDS,
 from david.lda import build_topics
 from david.pipeline import Pipeline
 from david.server import CommentsSQL
-from david.text._prep_v1 import (get_emojis, get_sentiment_polarity,
-                                 get_sentiment_subjectivity, get_vocab_size,
-                                 lemmatizer, reduce_repeating_chars_v1,
-                                 regex_tokenizer, remove_duplicate_words)
-from david.text.nltk_textpipe import (encode_ascii, expand_contractions,
-                                      nltk_tokenizer, preprocess_doc,
-                                      preprocess_docs,
-                                      remove_repeated_characters,
-                                      remove_stopwords,
-                                      treebank_to_wordnet_postag,
-                                      wordnet_lemmatizer)
-from david.text.spacy_textpipe import sent_tokenizer
-from david.visualizers import build_wordcloud
+from david.text.prep import (clean_tokens, encode_ascii, expand_contractions,
+                             expand_contractions_basic, nltk_word_tokenizer,
+                             part_of_speech_annotator,
+                             part_of_speech_lemmatizer, preprocess_sequence,
+                             remove_punctuation, remove_repeating_characters,
+                             remove_repeating_words, remove_stopwords,
+                             remove_whitespaces, treebank_to_wordnet_pos)
 from david.youtube import (YTCommentScraper, YTRegexMatchers, YTSpecialKeys,
                            yt_query_search, yt_query_video_content,
                            yt_query_videoids)

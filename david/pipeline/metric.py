@@ -3,8 +3,8 @@ from collections import MutableSequence
 
 import numpy as np
 
-from ..text import (get_emojis, get_sentiment_polarity,
-                    get_sentiment_subjectivity, normalize_spaces)
+from ..text.prep import (extract_emojis, get_sentiment_polarity,
+                         get_sentiment_subjectivity, remove_whitespaces)
 
 # Regex patterns used. (replacing these soon)
 TIME = r'(\d{1,2}\:\d{1,2})'
@@ -28,7 +28,7 @@ class TextMetrics(MutableSequence, object):
         return [len(w) for w in words.split(' ') if w not in self.STOP_WORDS]
 
     def string_metric(self, text_col='text'):
-        self[text_col] = self[text_col].apply(normalize_spaces)
+        self[text_col] = self[text_col].apply(lambda x: remove_whitespaces(x))
         self['stringLength'] = self[text_col].str.len()
 
     def word_metrics(self, text_col='text'):
@@ -54,9 +54,9 @@ class TextMetrics(MutableSequence, object):
 
     def sentiment_metrics(self, text_col='text'):
         self['sentiPolarity'] = self[text_col].apply(
-            get_sentiment_polarity)
+            lambda x: get_sentiment_polarity(x))
         self['sentiSubjectivity'] = self[text_col].apply(
-            get_sentiment_subjectivity)
+            lambda x: get_sentiment_subjectivity(x))
         self['sentimentLabel'] = self['sentiPolarity'].apply(
             lambda x: self.sentiment_labeler(x))
 
@@ -64,7 +64,7 @@ class TextMetrics(MutableSequence, object):
         self['authorTimeTag'] = self[text_col].str.extract(TIME)
         self['authorUrlLink'] = self[text_col].str.extract(URL)
         self['authorHashTag'] = self[text_col].str.extract(TAG)
-        self['authorEmoji'] = self[text_col].apply(get_emojis)
+        self['authorEmoji'] = self[text_col].apply(lambda x: extract_emojis(x))
 
     def get_all_metrics(
             self,

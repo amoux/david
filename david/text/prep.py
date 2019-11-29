@@ -1,0 +1,221 @@
+import collections
+import re
+import string
+import unicodedata
+
+import contractions
+import emoji
+import nltk
+import pattern
+import spacy
+import textblob
+
+from ..lang import NLTK_STOP_WORDS
+
+
+def expand_contractions_basic(sequence: str, contraction_mapping: dict):
+    contractions_pattern = re.compile(
+        '({})'.format('|'.join(contraction_mapping.keys())),
+        flags=re.IGNORECASE | re.DOTALL)
+
+    def expand_match(contraction):
+        match = contraction.group(0)
+        first_char = match[0]
+        expanded_contraction = contraction_mapping.get(match)\
+            if contraction_mapping.get(match)\
+            else contraction_mapping.get(match.lower())
+        expanded_contraction = first_char+expanded_contraction[1:]
+        return expanded_contraction
+    expanded_sequence = contractions_pattern.sub(expand_match, sequence)
+    return expanded_sequence
+
+
+def expand_contractions(sequence: str, leftovers=True, slang=True):
+    return contractions.fix(sequence, leftovers=leftovers, slang=slang)
+
+
+def encode_ascii(sequence: str):
+    ascii_seq = unicodedata.normalize('NFKD', sequence)
+    return ascii_seq.encode('ascii', 'ignore').decode('utf-8', 'ignore')
+
+
+def extract_emojis(sequence: str):
+    """Extracts all emoji characters found in a sequence."""
+    return " ".join([char for char in sequence if char in emoji.UNICODE_EMOJI])
+
+
+def get_sentiment_polarity(sequence: str):
+    # NOTE: Replacing all Textblob methods with optimized sentiment models.
+    return textblob.TextBlob(sequence).sentiment.polarity
+
+
+def get_sentiment_subjectivity(sequence: str):
+    # NOTE: Replacing all Textblob methods with optimized sentiment models.
+    return textblob.TextBlob(sequence).sentiment.subjectivity
+
+
+def lemmatizer(doc: list):
+    Lemmatizer = nltk.stem.WordNetLemmatizer()
+    return " ".join([Lemmatizer.lemmatize(sent) for sent in doc])
+
+
+def spacy_sentence_tokenizer(doc: list, nlp_model='en_core_web_lg'):
+    """Spacy sentence tokenizer.
+
+    Args:
+        docs (list): An iterable list containing texts.
+        nlp_model (object): A spacy language model instance to use
+        with the sentence tokenizer.
+    """
+    nlp = spacy.load(nlp_model)
+    sentences = list()
+    for line in doc:
+        doc = nlp(line)
+        for sent in doc.sents:
+            sentences.append(sent.text)
+    return sentences
+
+
+def treebank_to_wordnet_pos(pos_tag: str):
+    """NLTK POS-tagger, converts penn treebank tags wordnet tags."""
+    if pos_tag.startswith('J'):
+        return nltk.corpus.wordnet.ADJ
+    elif pos_tag.startswith('V'):
+        return nltk.corpus.wordnet.VERB
+    elif pos_tag.startswith('N'):
+        return nltk.corpus.wordnet.NOUN
+    elif pos_tag.startswith('R'):
+        return nltk.corpus.wordnet.ADV
+    else:
+        return None
+
+
+def part_of_speech_annotator(sequence: str):
+    """Annotates text tokens with pos tags, uses NLTK's Wordnet POS."""
+    tagged_seq = pattern.text.en.tag(sequence)
+    return [(word.lower(), treebank_to_wordnet_pos(pos_tag))
+            for word, pos_tag in tagged_seq]
+
+
+def part_of_speech_lemmatizer(sequence: str):
+    """Lemmataze sequences based on part-of-speech tags."""
+    Lemmatizer = nltk.stem.WordNetLemmatizer()
+    tagged_seq = part_of_speech_annotator(sequence)
+    return " ".join([Lemmatizer.lemmatize(word, pos) if pos else word
+                     for word, pos in tagged_seq])
+
+
+def remove_whitespaces(sequence: str):
+    return " ".join(tok for tok in sequence.split())
+
+
+def clean_tokens(doc: list, discard_punct="_", min_seqlen=1):
+    """Remove tokens consisting of punctuation and/or by minimum N sequences.
+
+    Usage:
+        >>> clean_tokens(
+                [['x', 'Hello!', 'keep', 'this_punct', '#2020'],
+                 ['H', '', 'tokens', 'b***',  '[::[hidden]', '/,']])
+        ...
+        '[['Hello', 'keep', 'this_punct', '2020'], ['tokens', 'hidden']]'
+    """
+    # discarding punctuation can be further extended.
+    punctuation = set([p for p in string.punctuation])
+    punctuation.discard(discard_punct)
+    cleantokens = list()
+    for tokens in doc:
+        tokens = [
+            ''.join([seq for seq in token if seq not in punctuation])
+            for token in tokens]
+        tokens = list(filter(lambda seq: len(seq) > min_seqlen, tokens))
+        cleantokens.append(tokens)
+    return cleantokens
+
+
+def remove_repeating_words(sequence: str):
+    return " ".join(collections.Counter(
+        [tok for tok in sequence.split()]).keys())
+
+
+def remove_repeating_characters(sequence: str):
+    """Removes repeating characters from one/multiple words in a sequence."""
+
+    def normalize(sequence):
+        if nltk.corpus.wordnet.synsets(sequence):
+            return sequence
+        repeat_pattern = re.compile(r"(\w*)(\w)\2(\w*)")
+        sub_seq = repeat_pattern.sub(r"\1\2\3", sequence)
+        return normalize(sub_seq) if sub_seq != sequence else sub_seq
+
+    # if more than one word then normalize each word found in the sequence.
+    if len(sequence.split()) > 1:
+        return " ".join(normalize(word) for word in sequence.split())
+    return normalize(sequence)
+
+
+def remove_punctuation(sequence: str):
+    pattern = re.compile("[{}]".format(re.escape(string.punctuation)))
+    tokens = nltk_word_tokenizer(sequence)
+    return " ".join(filter(None, [pattern.sub("", tok) for tok in tokens]))
+
+
+def remove_stopwords(sequence: str, stop_words: list = None):
+    if not stop_words:
+        stop_words = NLTK_STOP_WORDS
+    tokens = nltk_word_tokenizer(sequence)
+    sequence = " ".join([tok for tok in tokens if tok not in stop_words])
+    return sequence.strip()
+
+
+def nltk_word_tokenizer(sequence: str):
+    """NLTK sequence and punctuation tokenizer.
+
+    Usage:
+        >>> nltk_word_tokenizer("Hello, how are you?")
+        '['Hello', ',', 'how', 'are', 'you', '?']'
+    """
+    tokens = nltk.word_tokenize(sequence)
+    return [tok.strip() for tok in tokens]
+
+
+def preprocess_sequence(sequence: str,
+                        contractions=True,
+                        lemmatize=False,
+                        special_chars=True,
+                        stopwords=True,
+                        tokenize=False):
+    """NLTK text preprocessing for a sequence."""
+    sequence = encode_ascii(sequence)
+    if contractions:
+        sequence = expand_contractions(sequence)
+    if lemmatize:
+        sequence = part_of_speech_lemmatizer(sequence)
+    if special_chars:
+        sequence = remove_punctuation(sequence)
+    if stopwords:
+        sequence = remove_stopwords(sequence)
+    if tokenize:
+        sequence = nltk_word_tokenizer(sequence)
+    return sequence
+
+
+def preprocess_doc(doc: list,
+                   contractions=True,
+                   lemmatize=False,
+                   special_chars=True,
+                   stopwords=True,
+                   tokenize=False):
+    """NLTK text preprocessing for a doc of sequences."""
+    normalized = list()
+    for sequence in doc:
+        normalized.append(
+            preprocess_sequence(
+                sequence=sequence,
+                contractions=contractions,
+                lemmatize=lemmatize,
+                special_chars=special_chars,
+                stopwords=stopwords,
+                tokenize=tokenize
+            )
+        )
+    return normalized
