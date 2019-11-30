@@ -4,12 +4,12 @@ from collections import MutableSequence
 import numpy as np
 
 from ..text.prep import (extract_emojis, get_sentiment_polarity,
-                         get_sentiment_subjectivity, remove_whitespaces)
+                         get_sentiment_subjectivity, normalize_whitespace)
 
 # Regex patterns used. (replacing these soon)
-TIME = r'(\d{1,2}\:\d{1,2})'
-URL = r'(http\S+)'
-TAG = r'(\#\w+)'
+TIME_RE = r"(\d{1,2}\:\d{1,2})"
+URL_RE = r"(http\S+)"
+TAG_RE = r"(\#\w+)"
 
 
 class TextMetrics(MutableSequence, object):
@@ -28,21 +28,21 @@ class TextMetrics(MutableSequence, object):
         return [len(w) for w in words.split(' ') if w not in self.STOP_WORDS]
 
     def string_metric(self, text_col='text'):
-        self[text_col] = self[text_col].apply(lambda x: remove_whitespaces(x))
+        self[text_col] = self[text_col].apply(
+            lambda x: normalize_whitespace(x))
         self['stringLength'] = self[text_col].str.len()
 
     def word_metrics(self, text_col='text'):
-
         self['avgWordLength'] = self[text_col].apply(
             lambda x: np.mean(self.avg_words(x))
             if len(self.avg_words(x)) > 0 else 0)
 
         self['isStopwordCount'] = self[text_col].apply(
-            lambda x: len(str(x).split()))
+            lambda x: len([w for w in x.split(" ") if w in self.STOP_WORDS]))
 
         self['noStopwordCount'] = self[text_col].apply(
-            lambda texts: len([w for w in texts.split(' ')
-                               if w not in self.STOP_WORDS]))
+            lambda x: len([w for w in x.split(" ") if w not in self.STOP_WORDS]
+                          ))
 
     def character_metrics(self, text_col='text'):
         self['charDigitCount'] = self[text_col].str.findall(
@@ -61,9 +61,9 @@ class TextMetrics(MutableSequence, object):
             lambda x: self.sentiment_labeler(x))
 
     def extract_authortags(self, text_col='text'):
-        self['authorTimeTag'] = self[text_col].str.extract(TIME)
-        self['authorUrlLink'] = self[text_col].str.extract(URL)
-        self['authorHashTag'] = self[text_col].str.extract(TAG)
+        self['authorTimeTag'] = self[text_col].str.extract(TIME_RE)
+        self['authorUrlLink'] = self[text_col].str.extract(URL_RE)
+        self['authorHashTag'] = self[text_col].str.extract(TAG_RE)
         self['authorEmoji'] = self[text_col].apply(lambda x: extract_emojis(x))
 
     def get_all_metrics(
