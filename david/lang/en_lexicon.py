@@ -165,6 +165,8 @@ DAVID_CONTRACTIONS = {
     "you'll've": 'you will have',
     "you're": 'you are',
     "you've": 'you have',
+    "plz": 'please',
+    "pls": 'please',
 }
 
 DAVID_STOP_WORDS = [
