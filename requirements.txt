@@ -1,6 +1,5 @@
 isodate==0.6.0
 pandas==0.25.2
-contractions==0.0.21
 numpy==1.17.2
 records==0.5.2
 requests==2.22.0

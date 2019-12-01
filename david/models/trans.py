@@ -26,8 +26,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from tqdm import trange
-from transformers import (CTRLConfig, CTRLLMHeadModel, CTRLTokenizer,
-                          GPT2Config, GPT2LMHeadModel, GPT2Tokenizer,
+# CTRLConfig, CTRLLMHeadModel, CTRLTokenizer : not longer available
+from transformers import (GPT2Config, GPT2LMHeadModel, GPT2Tokenizer,
                           OpenAIGPTConfig, OpenAIGPTLMHeadModel,
                           OpenAIGPTTokenizer, TransfoXLConfig,
                           TransfoXLLMHeadModel, TransfoXLTokenizer, XLMConfig,
@@ -43,10 +43,9 @@ logger = logging.getLogger(__name__)
 MAX_LENGTH = int(10000)  # Hardcoded max length to avoid infinite loop
 ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys())
                   for conf in (GPT2Config, OpenAIGPTConfig, XLNetConfig,
-                               TransfoXLConfig, XLMConfig, CTRLConfig)), ())
+                               TransfoXLConfig, XLMConfig)), ())
 MODEL_CLASSES = {
     'gpt2': (GPT2LMHeadModel, GPT2Tokenizer),
-    'ctrl': (CTRLLMHeadModel, CTRLTokenizer),
     'openai-gpt': (OpenAIGPTLMHeadModel, OpenAIGPTTokenizer),
     'xlnet': (XLNetLMHeadModel, XLNetTokenizer),
     'transfo-xl': (TransfoXLLMHeadModel, TransfoXLTokenizer),

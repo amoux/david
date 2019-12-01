@@ -5,7 +5,6 @@ import re
 import string
 import unicodedata
 
-import contractions
 import emoji
 import nltk
 import pattern
@@ -15,7 +14,7 @@ from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
                                   _replace_html_entities, reduce_lengthening,
                                   remove_handles)
 
-from ..lang import NLTK_STOP_WORDS
+from ..lang import NLTK_STOP_WORDS, TextSearchContractions
 
 
 class YTCommentTokenizer:
@@ -39,27 +38,6 @@ class YTCommentTokenizer:
             words = list(map((
                 lambda x: x if EMOTICON_RE.search(x) else x.lower()), words))
         return words
-
-
-def expand_contractions_basic(sequence: str, contraction_mapping: dict):
-    contractions_pattern = re.compile(
-        '({})'.format('|'.join(contraction_mapping.keys())),
-        flags=re.IGNORECASE | re.DOTALL)
-
-    def expand_match(contraction):
-        match = contraction.group(0)
-        first_char = match[0]
-        expanded_contraction = contraction_mapping.get(match)\
-            if contraction_mapping.get(match)\
-            else contraction_mapping.get(match.lower())
-        expanded_contraction = first_char+expanded_contraction[1:]
-        return expanded_contraction
-    expanded_sequence = contractions_pattern.sub(expand_match, sequence)
-    return expanded_sequence
-
-
-def expand_contractions(sequence: str, leftovers=True, slang=True):
-    return contractions.fix(sequence, leftovers=leftovers, slang=slang)
 
 
 def encode_ascii(sequence: str):
@@ -217,7 +195,7 @@ def preprocess_sequence(sequence: str,
     """NLTK text preprocessing for a sequence."""
     sequence = normalize_whitespace(encode_ascii(sequence))
     if contractions:
-        sequence = expand_contractions(sequence)
+        sequence = TextSearchContractions().fix(sequence)
     if lemmatize:
         sequence = part_of_speech_lemmatizer(sequence)
     if special_chars:
