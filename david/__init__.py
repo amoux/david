@@ -23,7 +23,7 @@ from david.cosine import (CountVectorizer, TfidfVectorizer,
                           build_feature_matrix, cosine_similarity,
                           get_similar_docs)
 from david.datasets import JsonlYTDatasets
-from david.io import (GoogleDriveDownloader, as_jsonl_file, as_txt_file,
+from david.io import (File, GoogleDriveDownloader, as_jsonl_file, as_txt_file,
                       delete_files, download_url_file)
 from david.lang import (DAVID_STOP_WORDS, GENSIM_STOP_WORDS, SPACY_STOP_WORDS,
                         SpellCorrect, TextSearchContractions)
@@ -42,6 +42,7 @@ from david.text.prep import (YTCommentTokenizer, clean_tokens, encode_ascii,
                              remove_punctuation, remove_repeating_characters,
                              remove_repeating_words, remove_stopwords,
                              treebank_to_wordnet_pos)
+from david.text.viz import build_wordcloud
 from david.youtube import (YTCommentScraper, YTRegexMatchers, YTSpecialKeys,
                            yt_query_search, yt_query_video_content,
                            yt_query_videoids)

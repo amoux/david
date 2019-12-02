@@ -14,7 +14,7 @@ from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
                                   _replace_html_entities, reduce_lengthening,
                                   remove_handles)
 
-from ..lang import NLTK_STOP_WORDS, TextSearchContractions
+from ..lang import SPACY_STOP_WORDS, TextSearchContractions
 
 
 class YTCommentTokenizer:
@@ -167,9 +167,9 @@ def remove_punctuation(sequence: str):
     return " ".join(filter(None, [pattern.sub("", tok) for tok in tokens]))
 
 
-def remove_stopwords(sequence: str, stop_words: list = None):
+def remove_stopwords(sequence: str, stop_words=None):
     if not stop_words:
-        stop_words = NLTK_STOP_WORDS
+        stop_words = SPACY_STOP_WORDS
     tokens = nltk_word_tokenizer(sequence)
     sequence = " ".join([tok for tok in tokens if tok not in stop_words])
     return sequence.strip()
@@ -187,43 +187,44 @@ def nltk_word_tokenizer(sequence: str):
 
 
 def preprocess_sequence(sequence: str,
-                        contractions=True,
+                        replace_contractions=True,
                         lemmatize=False,
-                        special_chars=True,
-                        stopwords=True,
+                        punctuation=True,
+                        rm_stopwords=True,
+                        stop_words=None,
                         tokenize=False):
-    """NLTK text preprocessing for a sequence."""
+    """Basic text preprocessing for a sequence."""
     sequence = normalize_whitespace(encode_ascii(sequence))
-    if contractions:
+    if replace_contractions:
         sequence = TextSearchContractions().fix(sequence)
     if lemmatize:
         sequence = part_of_speech_lemmatizer(sequence)
-    if special_chars:
+    if punctuation:
         sequence = remove_punctuation(sequence)
-    if stopwords:
-        sequence = remove_stopwords(sequence)
+    if rm_stopwords:
+        sequence = remove_stopwords(sequence, stop_words=stop_words)
     if tokenize:
         sequence = nltk_word_tokenizer(sequence)
     return sequence
 
 
 def preprocess_doc(doc: list,
-                   contractions=True,
+                   replace_contractions=True,
                    lemmatize=False,
-                   special_chars=True,
-                   stopwords=True,
+                   punctuation=True,
+                   rm_stopwords=True,
+                   stop_words=None,
                    tokenize=False):
-    """NLTK text preprocessing for a doc of sequences."""
+    """Basic text preprocessing for a doc (iterable) of sequences."""
     normalized = list()
     for sequence in doc:
         normalized.append(
             preprocess_sequence(
-                sequence=sequence,
-                contractions=contractions,
-                lemmatize=lemmatize,
-                special_chars=special_chars,
-                stopwords=stopwords,
-                tokenize=tokenize
-            )
+                replace_contractions,
+                lemmatize,
+                punctuation,
+                rm_stopwords,
+                stop_words,
+                tokenize)
         )
     return normalized

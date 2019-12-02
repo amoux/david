@@ -4,7 +4,7 @@ from wordcloud import WordCloud
 from ..lang import SPACY_STOP_WORDS
 
 
-def build_wordcloud(doc: [list, str],
+def build_wordcloud(doc: list,
                     img_name: str = 'wordcloud',
                     width: int = 1600,
                     height: int = 600,

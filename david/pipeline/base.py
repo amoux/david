@@ -29,13 +29,15 @@ class Pipeline(DataFrameBase, TextMetrics):
 
     def clean_all_text(self, text_col="text", contractions=True,
                        lemmatize=False, punctuation=True,
-                       stopwords=True, tokenize=False):
+                       stopwords=True, stop_words=None, tokenize=False):
         """Cleans all texts in a chained operation."""
+        if not stop_words:
+            stop_words = self.STOP_WORDS
 
         self[text_col] = self[text_col].apply(
             lambda sequence: preprocess_sequence(
                 sequence, contractions, lemmatize,
-                punctuation, stopwords, tokenize))
+                punctuation, stopwords, stop_words, tokenize))
 
     def custom_stopwords_from_freq(self, text_col='text',
                                    top_n=10, stop_words=None):

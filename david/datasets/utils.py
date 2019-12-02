@@ -127,7 +127,7 @@ class JsonlYTDatasets:
             david_data_path = get_data_home()
             self.files_dirpath = os.path.join(david_data_path, "jsonl")
 
-    def file_paths(self, category=None, load_content=False):
+    def load(self, category=None, load_content=False):
         if not category or category not in self.CATEGORIES.keys():
             raise Exception("Choose a category to load: {}".format(
                 self.CATEGORIES.keys()))
