@@ -5,7 +5,7 @@ import pandas as pd
 import tensorflow as tf
 import tensorflow_hub as hub
 
-ELMO2_MODULE_URL = 'https://tfhub.dev/google/elmo/2'
+ELMO2_MODULE_URL = 'https://tfhub.dev/google/elmo/3'
 
 
 def model_file(model: str = None, dirpath='models', override=False):

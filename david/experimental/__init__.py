@@ -1,19 +1,5 @@
-import collections
 import math
 import os
-import string
-import urllib
-import zipfile
-
-from ..text import encode_ascii, sent_tokenizer
-from . import tensor_w2v
-
-
-def transform_texts(texts):
-    encoded_texts = list()
-    for text in texts:
-        encoded_texts.append(encode_ascii(text))
-    return sent_tokenizer(encoded_texts)
 
 
 def norm_sequence_dist(samples: list,  max_seqlen: int, seqlen_std: float):
@@ -36,32 +22,3 @@ def norm_sequence_dist(samples: list,  max_seqlen: int, seqlen_std: float):
     )
     norm_samples = sort_seqs[right_dist:left_dist]
     return norm_samples
-
-
-def download_movielens_datasets(datasets,
-                                savepath='datasets',
-                                file_ext='.zip'):
-    """Downloads zip files from urls and loads them in the right format.
-
-    NOTE: This method can be improved to work with many datasets with
-    different file extensions. And not just `.zip` files. key areas:
-
-    feature_one : `filename = dataset[dataset.rfind('ml'):]`
-        str.rfind() returns the start idx value of a file from a string (url)
-        which I used to slice off the file extension: `file.ext` -> `file`.
-    """
-    extlen = len(file_ext)
-    if not os.path.exists(savepath):
-        os.makedirs(savepath)
-    dataset_fpaths = collections.defaultdict(list)
-    for dataset in datasets:
-        filename = dataset[dataset.rfind('ml'):]
-        filepath = os.path.join(savepath, filename)
-        if not os.path.exists(filepath[:-extlen]):
-            download = urllib.request.urlretrieve(dataset, filepath)
-            with zipfile.ZipFile(filepath, "r") as zf:
-                zf.extractall(savepath)
-        dataset_fpaths[filename[:-extlen]] = {
-            fn[:-extlen]: os.path.join(filepath[:-extlen], fn)
-            for fn in os.listdir(filepath[:-extlen])}
-    return dataset_fpaths

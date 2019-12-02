@@ -22,9 +22,9 @@ import warnings
 from david.cosine import (CountVectorizer, TfidfVectorizer,
                           build_feature_matrix, cosine_similarity,
                           get_similar_docs)
-from david.io.text import as_jsonl_file, as_txt_file
-from david.io.utils import (GoogleDriveDownloader, delete_files,
-                            download_url_file)
+from david.datasets import JsonlYTDatasets
+from david.io import (GoogleDriveDownloader, as_jsonl_file, as_txt_file,
+                      delete_files, download_url_file)
 from david.lang import (DAVID_STOP_WORDS, GENSIM_STOP_WORDS, SPACY_STOP_WORDS,
                         SpellCorrect, TextSearchContractions)
 from david.lda import build_topics
