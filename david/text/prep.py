@@ -187,7 +187,7 @@ def nltk_word_tokenizer(sequence: str):
 
 
 def preprocess_sequence(sequence: str,
-                        replace_contractions=True,
+                        contractions=True,
                         lemmatize=False,
                         punctuation=True,
                         rm_stopwords=True,
@@ -195,7 +195,7 @@ def preprocess_sequence(sequence: str,
                         tokenize=False):
     """Basic text preprocessing for a sequence."""
     sequence = normalize_whitespace(encode_ascii(sequence))
-    if replace_contractions:
+    if contractions:
         sequence = TextSearchContractions().fix(sequence)
     if lemmatize:
         sequence = part_of_speech_lemmatizer(sequence)
@@ -209,7 +209,7 @@ def preprocess_sequence(sequence: str,
 
 
 def preprocess_doc(doc: list,
-                   replace_contractions=True,
+                   contractions=True,
                    lemmatize=False,
                    punctuation=True,
                    rm_stopwords=True,
@@ -220,7 +220,7 @@ def preprocess_doc(doc: list,
     for sequence in doc:
         normalized.append(
             preprocess_sequence(
-                replace_contractions,
+                contractions,
                 lemmatize,
                 punctuation,
                 rm_stopwords,

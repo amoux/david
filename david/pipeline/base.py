@@ -31,25 +31,33 @@ class Pipeline(DataFrameBase, TextMetrics):
                        lemmatize=False, punctuation=True,
                        stopwords=True, stop_words=None, tokenize=False):
         """Cleans all texts in a chained operation."""
-        if not stop_words:
-            stop_words = self.STOP_WORDS
+        stop_words = stop_words if stop_words else self.STOP_WORDS
 
         self[text_col] = self[text_col].apply(
             lambda sequence: preprocess_sequence(
                 sequence, contractions, lemmatize,
                 punctuation, stopwords, stop_words, tokenize))
 
-    def custom_stopwords_from_freq(self, text_col='text',
-                                   top_n=10, stop_words=None):
-        """Construct a frequency stopword set."""
+    def load_most_frequent_words(self, text_col='text', top_num=10,
+                                 stop_words=None):
+        """Construct a frequency word collection from top negative and
+        positive words found across all texts.
 
+        Parameters:
+        ----------
+
+        stop_words (Type[set, list], default=Pipeline.STOP_WORDS):
+            The number of most frequent words found in all texts are added
+            to the default Pipeline.STOP_WORDS - if the argument is left as
+            None. If you want to only get the most most frequent words found,
+            then simply pass an empty dict object to the stop_word argument.
+
+        """
         common = Series(' '.join(
-            self[text_col]).lower().split()).value_counts()[:top_n]
+            self[text_col]).lower().split()).value_counts()[:top_num]
         uncommon = Series(' '.join(
-            self[text_col]).lower().split()).value_counts()[-top_n:]
-        if not stop_words:
-            stop_words = self.STOP_WORDS
-        stop_words = set(stop_words)
+            self[text_col]).lower().split()).value_counts()[-top_num:]
+        stop_words = set(stop_words if stop_words else self.STOP_WORDS)
         stop_words = stop_words.union(list(common.keys()))
         return stop_words.union(list(uncommon.keys()))
 
