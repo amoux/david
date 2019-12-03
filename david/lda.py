@@ -1,6 +1,5 @@
-
 import gensim
-import pandas as pd
+import pandas
 
 from .ngrams import sents_to_ngramTokens
 
@@ -27,7 +26,7 @@ def build_topics(lda_model, doc2bow, corpus, n_topics):
         sentences and the document's dominant (top) keywords.
 
     """
-    df = pd.DataFrame()
+    df = pandas.DataFrame()
     for _, doc in enumerate(lda_model[doc2bow]):
         doc = doc[0] if lda_model.per_word_topics else doc
         doc = sorted(doc, key=lambda x: (x[1]), reverse=True)
@@ -35,14 +34,14 @@ def build_topics(lda_model, doc2bow, corpus, n_topics):
             if i == 0:
                 topics = lda_model.show_topic(topic)
                 keywords = ", ".join([w for w, p in topics])
-                df = df.append(pd.Series([
+                df = df.append(pandas.Series([
                     int(topic), round(probability, n_topics), keywords
                 ]), ignore_index=True)
             else:
                 break
     df.columns = ["dominant_topic", "contribution(%)", "keywords"]
-    corpus = pd.Series(corpus)
-    return pd.concat([df, corpus], axis=1)
+    corpus = pandas.Series(corpus)
+    return pandas.concat([df, corpus], axis=1)
 
 
 def GensimLdaModel(
@@ -56,10 +55,14 @@ def GensimLdaModel(
     iterations=50,
     per_word_topics=True
 ):
-    """Train and use Online Latent Dirichlet Allocation.
+    """Trains the Latent Dirichlet Allocation model.
 
     Loads all the required components for a LDA session:
-    Returns: `lda_model, corpus, id2word`
+    Returns: `lda_model, corpus, id2word`.
+
+    For more information on the model refer to the documentaion
+    online: https://radimrehurek.com/gensim/models/ldamodel.html
+
     """
     ngram_tokens = sents_to_ngramTokens(doc)
     id2word = gensim.corpora.Dictionary(ngram_tokens)
