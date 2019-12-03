@@ -2,8 +2,12 @@ from pandas import DataFrame, Series
 
 from ..io.text import as_jsonl_file, as_txt_file
 from ..lang import SPACY_STOP_WORDS
-from ..text.prep import preprocess_sequence
+from ..text.prep import preprocess_sequence, normalize_wiggles
 from .metric import TextMetrics
+
+TIME_RE = r"(\d{1,2}\:\d{1,2})"
+URL_RE = r"(http\S+)"
+TAG_RE = r"(\#\w+)"
 
 
 class DataFrameBase(DataFrame):
@@ -12,7 +16,6 @@ class DataFrameBase(DataFrame):
 
 
 class Pipeline(DataFrameBase, TextMetrics):
-
     STOP_WORDS = SPACY_STOP_WORDS
 
     @property
@@ -27,19 +30,42 @@ class Pipeline(DataFrameBase, TextMetrics):
         texts = self[text_col].values.tolist()
         as_jsonl_file(texts, fname, output_dir)
 
-    def clean_all_text(self, text_col="text", contractions=True,
-                       lemmatize=False, punctuation=True,
-                       stopwords=True, stop_words=None, tokenize=False):
-        """Cleans all texts in a chained operation."""
-        stop_words = stop_words if stop_words else self.STOP_WORDS
+    def replace_authortags(self, text_col='text'):
+        self[text_col] = self[text_col].str.replace(TIME_RE, " ")
+        self[text_col] = self[text_col].str.replace(URL_RE, " ")
+        self[text_col] = self[text_col].str.replace(TAG_RE, " ")
 
+    def clean_sequences(
+        self,
+        contractions=True,
+        lemmatize=False,
+        punctuation=True,
+        stopwords=True,
+        stop_words=None,
+        tokenize=False,
+        tags=False,
+        wiggles=False,
+        text_col="text",
+    ):
+        """Cleans all texts in a chained operation."""
+        if tags:
+            self.replace_authortags(text_col=text_col)
+        if wiggles:
+            self[text_col] = self[text_col].apply(
+                lambda x: normalize_wiggles(x)
+            )
+        stop_words = stop_words if stop_words else self.STOP_WORDS
         self[text_col] = self[text_col].apply(
             lambda sequence: preprocess_sequence(
                 sequence, contractions, lemmatize,
                 punctuation, stopwords, stop_words, tokenize))
 
-    def load_most_frequent_words(self, text_col='text', top_num=10,
-                                 stop_words=None):
+    def get_most_frequent_words(
+        self,
+        text_col='text',
+        top_num=10,
+        stop_words=None,
+    ):
         """Construct a frequency word collection from top negative and
         positive words found across all texts.
 
@@ -61,11 +87,13 @@ class Pipeline(DataFrameBase, TextMetrics):
         stop_words = stop_words.union(list(common.keys()))
         return stop_words.union(list(uncommon.keys()))
 
-    def slice_shape(self,
-                    ref_col='stringLength',
-                    min_val: int = None,
-                    max_val: int = None,
-                    as_copy: bool = True):
+    def slice_shape(
+            self,
+            ref_col='stringLength',
+            min_val: int = None,
+            max_val: int = None,
+            as_copy=True,
+    ):
         """Use a reference metric table to reduce the size of the dataframe.
 
         Usage:

@@ -117,27 +117,22 @@ def normalize_whitespace(sequence: str):
     return NONBREAKING_SPACE.sub(" ", LINEBREAK.sub(r"\n", sequence)).strip()
 
 
-def clean_tokens(doc: list, discard_punct="_", min_seqlen=1):
-    """Remove tokens consisting of punctuation and/or by minimum N sequences.
+def normalize_wiggles(sequence):
+    """Normalizes wiggles from sequences.
 
-    Usage:
-        >>> clean_tokens(
-                [['x', 'Hello!', 'keep', 'this_punct', '#2020'],
-                 ['H', '', 'tokens', 'b***',  '[::[hidden]', '/,']])
-        ...
-        '[['Hello', 'keep', 'this_punct', '2020'], ['tokens', 'hidden']]'
+    What is a 'wiggle'? A wiggle is the name I came up because I could not
+    find a single word that could represent the functionality of this method.
+    A wiggle is one - two - tree words that are repeated over and over by
+    social media users e.g, ``hello hello hello hello` X 1000.` This method
+    properly normalizes sequences by using top most frequent word over the
+    whole sequence.
     """
-    # discarding punctuation can be further extended.
-    punctuation = set([p for p in string.punctuation])
-    punctuation.discard(discard_punct)
-    cleantokens = list()
-    for tokens in doc:
-        tokens = [
-            ''.join([seq for seq in token if seq not in punctuation])
-            for token in tokens]
-        tokens = list(filter(lambda seq: len(seq) > min_seqlen, tokens))
-        cleantokens.append(tokens)
-    return cleantokens
+    if len(sequence) < 1:
+        return sequence
+    tokens, _ = zip(*collections.Counter(sequence.split()).most_common())
+    if tokens[0] in sequence.split():
+        return " ".join(tokens)
+    return sequence
 
 
 def remove_repeating_words(sequence: str):

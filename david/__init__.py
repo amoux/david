@@ -35,9 +35,9 @@ from david.ngrams import (gensim_preprocess, sents_to_ngramTokens,
                           top_trigrams, top_unigrams)
 from david.pipeline import Pipeline
 from david.server import CommentsSQL
-from david.text.prep import (YTCommentTokenizer, clean_tokens, encode_ascii,
+from david.text.prep import (YTCommentTokenizer, encode_ascii,
                              nltk_word_tokenizer, normalize_whitespace,
-                             part_of_speech_annotator,
+                             part_of_speech_annotator, normalize_wiggles,
                              part_of_speech_lemmatizer, preprocess_sequence,
                              remove_punctuation, remove_repeating_characters,
                              remove_repeating_words, remove_stopwords,

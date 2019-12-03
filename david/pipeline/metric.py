@@ -36,10 +36,8 @@ class TextMetrics(MutableSequence, object):
         self['avgWordLength'] = self[text_col].apply(
             lambda x: np.mean(self.avg_words(x))
             if len(self.avg_words(x)) > 0 else 0)
-
         self['isStopwordCount'] = self[text_col].apply(
             lambda x: len([w for w in x.split(" ") if w in self.STOP_WORDS]))
-
         self['noStopwordCount'] = self[text_col].apply(
             lambda x: len([w for w in x.split(" ") if w not in self.STOP_WORDS]
                           ))
@@ -66,7 +64,7 @@ class TextMetrics(MutableSequence, object):
         self['authorHashTag'] = self[text_col].str.extract(TAG_RE)
         self['authorEmoji'] = self[text_col].apply(lambda x: extract_emojis(x))
 
-    def get_all_metrics(
+    def get_sequence_metrics(
             self,
             text_col='text',
             string=True,
@@ -75,8 +73,9 @@ class TextMetrics(MutableSequence, object):
             sentiment=False,
             tags=False,
             stop_words=None,
-            senti_labels=None):
-        """Single function call to extract information from text.
+            senti_labels=None,
+    ):
+        """Single function call to extract standard information from sequences.
 
         Parameters:
         -----------
