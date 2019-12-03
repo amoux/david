@@ -48,17 +48,21 @@ def GensimLdaModel(
     doc: list,
     num_topics=10,
     random_state=100,
-    upandasate_every=1,
+    update_every=1,
     chunksize=1000,
     passes=10,
     alpha='symmetric',
     iterations=50,
     per_word_topics=True
 ):
-    """Train and use Online Latent Dirichlet Allocation.
+    """Trains the Latent Dirichlet Allocation model.
 
     Loads all the required components for a LDA session:
-    Returns: `lda_model, corpus, id2word`
+    Returns: `lda_model, corpus, id2word`.
+
+    For more information on the model refer to the documentaion
+    online: https://radimrehurek.com/gensim/models/ldamodel.html
+
     """
     ngram_tokens = sents_to_ngramTokens(doc)
     id2word = gensim.corpora.Dictionary(ngram_tokens)
@@ -68,7 +72,7 @@ def GensimLdaModel(
         id2word=id2word,
         num_topics=num_topics,
         random_state=random_state,
-        upandasate_every=upandasate_every,
+        update_every=update_every,
         chunksize=chunksize,
         passes=passes,
         alpha=alpha,
