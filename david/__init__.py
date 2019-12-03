@@ -19,25 +19,23 @@ Logger-Modes:
 import logging
 import warnings
 
-from david.cosine import (CountVectorizer, TfidfVectorizer,
-                          build_feature_matrix, cosine_similarity,
+from david.cosine import (build_feature_matrix, cosine_similarity,
                           get_similar_docs)
 from david.datasets import JsonlYTDatasets
 from david.io import (File, GoogleDriveDownloader, as_jsonl_file, as_txt_file,
                       delete_files, download_url_file)
 from david.lang import (DAVID_STOP_WORDS, GENSIM_STOP_WORDS, SPACY_STOP_WORDS,
                         SpellCorrect, TextSearchContractions)
-from david.lda import build_topics
+from david.lda import GensimLdaModel, build_topics
 from david.models import elmo as ElmoModel
 from david.models import trans as TransformersModel
-from david.ngrams import (gensim_preprocess, sents_to_ngramTokens,
-                          spacy_preprocess, top_bigrams, top_quadgrams,
+from david.ngrams import (sents_to_ngramTokens, top_bigrams, top_quadgrams,
                           top_trigrams, top_unigrams)
 from david.pipeline import Pipeline
 from david.server import CommentsSQL
 from david.text.prep import (YTCommentTokenizer, encode_ascii,
                              nltk_word_tokenizer, normalize_whitespace,
-                             part_of_speech_annotator, normalize_wiggles,
+                             normalize_wiggles, part_of_speech_annotator,
                              part_of_speech_lemmatizer, preprocess_sequence,
                              remove_punctuation, remove_repeating_characters,
                              remove_repeating_words, remove_stopwords,
