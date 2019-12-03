@@ -187,6 +187,7 @@ def preprocess_sequence(sequence: str,
                         contractions=True,
                         lemmatize=False,
                         punctuation=True,
+                        norm_chars=True,
                         rm_stopwords=True,
                         stop_words=None,
                         tokenize=False):
@@ -198,6 +199,8 @@ def preprocess_sequence(sequence: str,
         sequence = part_of_speech_lemmatizer(sequence)
     if punctuation:
         sequence = remove_punctuation(sequence)
+    if norm_chars:
+        sequence = remove_repeating_characters(sequence)
     if rm_stopwords:
         sequence = remove_stopwords(sequence, stop_words=stop_words)
     if tokenize:
@@ -209,6 +212,7 @@ def preprocess_doc(doc: list,
                    contractions=True,
                    lemmatize=False,
                    punctuation=True,
+                   norm_chars=True,
                    rm_stopwords=True,
                    stop_words=None,
                    tokenize=False):
@@ -220,6 +224,7 @@ def preprocess_doc(doc: list,
                 contractions,
                 lemmatize,
                 punctuation,
+                norm_chars,
                 rm_stopwords,
                 stop_words,
                 tokenize)

@@ -40,6 +40,7 @@ class Pipeline(DataFrameBase, TextMetrics):
         contractions=True,
         lemmatize=False,
         punctuation=True,
+        norm_chars=True,
         stopwords=True,
         stop_words=None,
         tokenize=False,
@@ -47,17 +48,59 @@ class Pipeline(DataFrameBase, TextMetrics):
         wiggles=False,
         text_col="text",
     ):
-        """Cleans all texts in a chained operation."""
+        """Cleans all texts in a chained operation.
+
+        Parameters:
+        -----------
+
+        `contractions` (bool, default=True):
+            Optimized contraction method (Uses the TextSearch library)
+            over the replacing contractions with regex.
+
+        `lemmatize` (bool, default=False):
+            Lemmatizes words by part-of-speech tags using NLTK's wordnet and
+            pattern's treebank pos tagger.
+
+        `punctuation` (bool, default=True):
+            Removes standard punctuation by tokenizing the sequence, escaping
+            the filtered tokens with the pattern module.
+
+        `norm_chars` (bool, default=True):
+            Normalizes repeating characters from a sequence with the support of
+            NLTK's synsets module and minor REGEX's patterns.
+
+        `stopwords` (bool, default=True)
+            Remove stopwords, by default all methods where stopwords are
+            needed - use the SPACY_STOP_WORD set, but you can override it
+            with your own.
+
+        `tokenize` (bool, default=False):
+            At the moment by default it uses NLTK's word tokenizer.
+            tokenization is left as False and optional as the last step for
+            reasons that its not used right after preprocessing sequences. If
+            you have't done any preprocessing or for future reference. I
+            recommend using the `david.YTCommentTokenizer` as its desinged
+            to tokenize social media content (e.g, youtube comments).
+
+        """
         if tags:
             self.replace_authortags(text_col=text_col)
         if wiggles:
             self[text_col] = self[text_col].apply(normalize_wiggles)
-
         stop_words = stop_words if stop_words else self.STOP_WORDS
+
         self[text_col] = self[text_col].apply(
             lambda sequence: preprocess_sequence(
-                sequence, contractions, lemmatize,
-                punctuation, stopwords, stop_words, tokenize))
+                sequence,
+                contractions=contractions,
+                lemmatize=lemmatize,
+                punctuation=punctuation,
+                norm_chars=norm_chars,
+                stopwords=stopwords,
+                stop_words=stop_words,
+                tokenize=tokenize,
+            )
+        )
 
     def get_most_frequent_words(
         self,
