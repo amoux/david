@@ -51,9 +51,8 @@ class Pipeline(DataFrameBase, TextMetrics):
         if tags:
             self.replace_authortags(text_col=text_col)
         if wiggles:
-            self[text_col] = self[text_col].apply(
-                lambda x: normalize_wiggles(x)
-            )
+            self[text_col] = self[text_col].apply(normalize_wiggles)
+
         stop_words = stop_words if stop_words else self.STOP_WORDS
         self[text_col] = self[text_col].apply(
             lambda sequence: preprocess_sequence(

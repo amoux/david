@@ -117,17 +117,19 @@ def normalize_whitespace(sequence: str):
     return NONBREAKING_SPACE.sub(" ", LINEBREAK.sub(r"\n", sequence)).strip()
 
 
-def normalize_wiggles(sequence):
+def normalize_wiggles(sequence, min_words=10):
     """Normalizes wiggles from sequences.
 
-    What is a 'wiggle'? A wiggle is the name I came up because I could not
-    find a single word that could represent the functionality of this method.
-    A wiggle is one - two - tree words that are repeated over and over by
-    social media users e.g, ``hello hello hello hello` X 1000.` This method
-    properly normalizes sequences by using top most frequent word over the
-    whole sequence.
+    What is a 'wiggle'?  A wiggle is one - two - tree words that are repeated
+    over and over by social media users e.g, `hello hello hello hello X 1000.`
+    This method properly normalizes sequences by using top most frequent word
+    over the whole sequence. It uses the collections.Counter class for speed.
+
+    Why the name? A wiggle is the word a youtube user used to post a comment
+    repeating wiggle over 1000 times and its the reason why I came up for this
+    method - because I wanted to remove the damn wiggle wiggle from my dataset!
     """
-    if len(sequence) < 1:
+    if len(sequence.split()) < min_words:
         return sequence
     tokens, _ = zip(*collections.Counter(sequence.split()).most_common())
     if tokens[0] in sequence.split():
