@@ -7,6 +7,7 @@ from lxml.cssselect import CSSSelector
 
 
 class YTCommentScraper(object):
+    YOUTUBE_AJAX_URL = "https://www.youtube.com/comment_ajax"
     USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 \
         (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36"
 
@@ -49,12 +50,15 @@ class YTCommentScraper(object):
 
     def scrape_comments(self, video_id: str, sleep=1):
         """Scrapes Comments from a youtube video id."""
+
         session = requests.Session()
         session.headers['User-Agent'] = self.USER_AGENT
         response = session.get(
             "https://www.youtube.com/all_comments?v={}".format(video_id))
+
         html = response.text
         reply_cids = self._extract_from_comment_replies(html)
+
         ret_cids = list()
         for comment in self._extract_comment_content(html):
             ret_cids.append(comment['cid'])
@@ -63,8 +67,12 @@ class YTCommentScraper(object):
         page_token = self._from_html_keys(html, 'data-token')
         session_token = self._from_html_keys(html, 'XSRF_TOKEN', 4)
         first_iteration = True
+
         while page_token:
-            data = {'video_id': video_id, 'session_token': session_token}
+            data = {
+                'video_id': video_id,
+                'session_token': session_token
+            }
             params = {
                 'action_load_comments': 1,
                 'order_by_time': self.order_by_time,
@@ -74,8 +82,9 @@ class YTCommentScraper(object):
                 params['order_menu'] = True
             else:
                 data['page_token'] = page_token
-            response = self._ajax_request(
-                session, "https://www.youtube.com/comment_ajax", params, data)
+
+            response = self._ajax_request(session, self.YOUTUBE_AJAX_URL,
+                                          params, data)
             if not response:
                 break
 
@@ -90,13 +99,20 @@ class YTCommentScraper(object):
             time.sleep(sleep)
 
         for cid in reply_cids:
-            data = {'comment_id': cid, 'video_id': video_id,
-                    'can_reply': 1, 'session_token': session_token}
-            params = {'action_load_replies': 1, 'order_by_time': True,
-                      'filter': video_id, 'tab': 'inbox'}
-
-            response = self._ajax_request(
-                session, self.YOUTUBE_AJAX_URL, params, data)
+            data = {
+                'comment_id': cid,
+                'video_id': video_id,
+                'can_reply': 1,
+                'session_token': session_token
+            }
+            params = {
+                'action_load_replies': 1,
+                'order_by_time': True,
+                'filter': video_id,
+                'tab': 'inbox'
+            }
+            response = self._ajax_request(session, self.YOUTUBE_AJAX_URL,
+                                          params, data)
             if not response:
                 break
 
