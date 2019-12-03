@@ -41,7 +41,7 @@ class Pipeline(DataFrameBase, TextMetrics):
         lemmatize=False,
         punctuation=True,
         norm_chars=True,
-        stopwords=True,
+        rm_stopwords=True,
         stop_words=None,
         tokenize=False,
         tags=False,
@@ -69,10 +69,13 @@ class Pipeline(DataFrameBase, TextMetrics):
             Normalizes repeating characters from a sequence with the support of
             NLTK's synsets module and minor REGEX's patterns.
 
-        `stopwords` (bool, default=True)
+        `rm_stopwords` (bool, default=True)
             Remove stopwords, by default all methods where stopwords are
             needed - use the SPACY_STOP_WORD set, but you can override it
             with your own.
+
+        `stop_words` ([list, set], default=None):
+            The collection of stopwords to use in the pipeline.
 
         `tokenize` (bool, default=False):
             At the moment by default it uses NLTK's word tokenizer.
@@ -96,7 +99,7 @@ class Pipeline(DataFrameBase, TextMetrics):
                 lemmatize=lemmatize,
                 punctuation=punctuation,
                 norm_chars=norm_chars,
-                stopwords=stopwords,
+                rm_stopwords=rm_stopwords,
                 stop_words=stop_words,
                 tokenize=tokenize,
             )
