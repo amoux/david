@@ -4,7 +4,7 @@ The goal of this toolkit is to speed the time-consuming steps to obtain, store, 
 
 - 👨‍💻 In progress ( Web-App )
 
-  - Vuepoint is an analytics web-application that helps content creators by automating the tedious task of manually having to scroll and read through multiple pages of comments to understand what an audience wants. And extracts the vital information that is relevant to each content creator without the noise!
+  - Vuepoint is an analytics web-application that helps content creators by automating the tedious task of manually having to scroll and read through multiple pages of comments to understand what an audience wants. Extracting the vital information that is relevant to each content creator without the noise!
 
 - 📃 objectives:
   - Semantic analytics application for content creators.
