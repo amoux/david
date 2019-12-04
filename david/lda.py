@@ -4,44 +4,45 @@ import pandas
 from .ngrams import sents_to_ngramTokens
 
 
-def build_topics(lda_model, doc2bow, corpus, n_topics):
+def build_topics(doc: list, num_topics: int, lda_model: object, corpus: dict):
     """Latent Dirichlet Allocation (LDA) Topic Modeling.
 
     Parameters:
     ----------
 
+    `doc` (list): An iterable of sequences or tokens sequences.
+
+    `num_topics` (int):
+        Number of topics key words to assing to each sequence.
+
     `lda_model` (object): A trained LDA model.
 
-    `doc2bow` (Type[Dict]):
-        A gensim dictionary object from corpora.Dictionary module.
+    `corpus` (dict):
+        A gensim corpus dictionary from corpora.Dictionary.
 
-    `corpus` (Type[List]):
-        The column in a DataFrame containing the texts.
-
-    `n_topics` (Type[int]):
-        Number of topics keywords to assing to each text sentence in
-        the corpus.
-
-    Returns: A Dataframe containing tokenized topic text
-        sentences and the document's dominant (top) keywords.
+    Returns: A Dataframe with dominant topics, contribution
+        percentage and topic keywords.
 
     """
     df = pandas.DataFrame()
-    for _, doc in enumerate(lda_model[doc2bow]):
-        doc = doc[0] if lda_model.per_word_topics else doc
-        doc = sorted(doc, key=lambda x: (x[1]), reverse=True)
-        for i, (topic, probability) in enumerate(doc):
-            if i == 0:
-                topics = lda_model.show_topic(topic)
-                keywords = ", ".join([w for w, p in topics])
-                df = df.append(pandas.Series([
-                    int(topic), round(probability, n_topics), keywords
-                ]), ignore_index=True)
+    for i, main_topic in enumerate(lda_model[corpus]):
+        topics = main_topic[0] if lda_model.per_word_topics else main_topic
+        topics = sorted(topics, key=lambda x: (x[1]), reverse=True)
+
+        for j, (topic, probability) in enumerate(topics):
+            if j == 0:
+                keywords = ", ".join(
+                    [w for w, p in lda_model.show_topic(topic)]
+                )
+                contrib = round(probability, num_topics)
+                topics = pandas.Series([int(topic), contrib, keywords])
+                df = df.append(topics, ignore_index=True)
             else:
                 break
-    df.columns = ["dominant_topic", "contribution(%)", "keywords"]
-    corpus = pandas.Series(corpus)
-    return pandas.concat([df, corpus], axis=1)
+
+    df = pandas.concat([df, pandas.Series(doc)], axis=1)
+    df.columns = ["dominant_topic", "contribution", "keywords", "text"]
+    return df
 
 
 def GensimLdaModel(
