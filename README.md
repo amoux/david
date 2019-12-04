@@ -1,18 +1,26 @@
-# david nlp 💬
+# david nlp toolkit 💬
 
-* David is an NLP toolkit implemented with Gensim, Tensorflow, PyTorch, NLTK, and spaCy among other open-source libraries.
+The goal of this toolkit is to speed the time-consuming steps to obtain, store, and pre-process textual data from youtube, and implementing natural language processing techniques to extract highly specific information, such as the indications of product or service trends across enterprises. There's much potential in being able to get valuable information for analytics objectives.
 
-*The goal for David is to assist content creators to increase the exposure on YouTube and their videos in the presence of more viewers. From live/historical textual information.*
+- In development (Web-App)
+
+  - Vuepoint is an analytics web-application that helps content creators by automating the tedious task of manually having to scroll and read through multiple pages of comments to understand what an audience wants. And extracts the vital information that is relevant to each content creator without the noise!
+
+- Some objectives:
+  - Semantic analytics applications for content creators.
+  - Social marketing trends of interest.
+
+_The goal for David is to assist content creators to increase the exposure on YouTube and their videos in the presence of more viewers. From live/historical textual information._
 
 ## configuration
 
-* clone or download the repo. use `git pull` to have the latest release.
+- clone or download the repo. use `git pull` to have the latest release.
 
 ```bash
 git clone https://github.com/amoux/david
 ```
 
-Error installing `pattern`: ***OSError: mysql_config not found*** 
+Error installing `pattern`: **_OSError: mysql_config not found_**
 
 > **NOTE** before you install all the dependecies, the package `pattern` is known to have a common error due to the missing `libmysqlclient-dev` linux package. to fix this issue run the following command before installing the requirements.
 
@@ -23,10 +31,10 @@ conda activate < YOUR ENVIROMENT >
 (conda-env) python setup.py install
 ```
 
-* If you still get ` fatal error: mysql/udf_registration_types.h: No such file or directory #include <mysql/udf_registration_types.h>` when installing in a Ubuntu + Anaconda enviroment try:
+- If you still get `fatal error: mysql/udf_registration_types.h: No such file or directory #include <mysql/udf_registration_types.h>` when installing in a Ubuntu + Anaconda enviroment try:
 
- * tested on: Ubuntu 19.10
- * anaconda enviroment: python=3.6
+- tested on: Ubuntu 19.10
+- anaconda enviroment: python=3.6
 
 ```bash
 (conda-env) conda install gxx_linux-64
@@ -37,13 +45,13 @@ conda activate < YOUR ENVIROMENT >
 
 ### requirements
 
-* install the requirements:
+- install the requirements:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-* in the root directory then install the package:
+- in the root directory then install the package:
 
 ```bash
 pip install .
@@ -51,9 +59,9 @@ pip install .
 
 > **NOTE** download the required language models with one command (you don't need to be in the root project directory).
 
-* the following models will be downloaded.
-  * `en_core_web_sm`
-  * `en_core_web_lg`
+- the following models will be downloaded.
+  - `en_core_web_sm`
+  - `en_core_web_lg`
 
 ```bash
 $ download-spacy-models
@@ -67,7 +75,7 @@ You can now load the model via spacy.load('en_core_web_sm')
 
 ## server 📡
 
-* configure the database and build a dataset from a search query. default parameters `db_name='comments_v2.db', table='comments'`.
+- configure the database and build a dataset from a search query. default parameters `db_name='comments_v2.db', table='comments'`.
 
 ```python
 from david.server import CommentsDB
@@ -84,25 +92,25 @@ comments = db.get_all_comments()
  'I keep thinking the slinky on his head is going
  to fall off. But this stuff is too damn
  interesting so I subscribed anyways.']
- ```
+```
 
 ## pipeline 🛠
 
-* export a document to a df with the `export` attribute.
+- export a document to a df with the `export` attribute.
 
 ```python
 from david.pipeline import Pipeline
 pipe = Pipeline(comments.export('df'))
 ```
 
-* the following metrics are available one call away 🤖
+- the following metrics are available one call away 🤖
 
 ```python
 pipe.get_all_metrics(string=True, words=True, characters=True, tags=True)
 pipe.describe()
 ```
 
-* with `tags=True` the following attributes are available. (the amount of tags varies on the size of the dataset)
+- with `tags=True` the following attributes are available. (the amount of tags varies on the size of the dataset)
 
 ```ipython
 pipe.authorEmoji.unique()
@@ -113,7 +121,7 @@ dtype=object)
 
 ## preprocessing 🔬
 
-* text cleaning routines.
+- text cleaning routines.
 
 ### stop words
 
@@ -126,13 +134,13 @@ pipe_stop_words = pipe.custom_stopwords_from_freq(top_n=30, stop_words=SPACY_STO
 list(pipe_stop_words)[:5]
 ```
 
-* returns a set containing the most frequent words used in a dataset and adds them to any existing collection of stop-words (in this case we have top words from both our corpus and spaCy's set)
+- returns a set containing the most frequent words used in a dataset and adds them to any existing collection of stop-words (in this case we have top words from both our corpus and spaCy's set)
 
 ```ipython
 ['tides...cardinal', 'into', 'less', 'same', 'under']
 ```
 
-* a quick look at the results from the three possible preprocessing modes.
+- a quick look at the results from the three possible preprocessing modes.
 
 ```python
 from david.text import preprocess_docs
@@ -143,18 +151,18 @@ doc_d = preprocess_docs(docs, stopwords=True, tokenize=True, lemma=True)
 ```
 
 ```python
-doc_a[:3] # stopwords=False, tokenize=True 
+doc_a[:3] # stopwords=False, tokenize=True
 ...
 [['Love', 'it'],
  ['Put', 'the', 'solar', 'kit', 'on', 'top', 'during', 'the', 'day'],
  ['Police', 'car', 'runs', 'out', 'of', 'gas', 'during', 'chase']]
- 
+
 doc_b[:3] # stopwords=True, tokenize=True
 ...
  [['Love'],
  ['Put', 'solar', 'kit', 'top', 'day'],
  ['Police', 'car', 'runs', 'gas', 'chase']]
- 
+
 doc_c[:3] # stopwords=False, tokenize=False
 ...
  ['Love it',
@@ -162,7 +170,7 @@ doc_c[:3] # stopwords=False, tokenize=False
   'Police car runs out of gas during chase']
 ```
 
-* applying lemma vs not
+- applying lemma vs not
 
 ```python
 doc_b[5:6] # lemma not applied
