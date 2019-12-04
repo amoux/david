@@ -4,8 +4,13 @@ import pandas
 from .ngrams import sents_to_ngramTokens
 
 
-def build_topics(doc: list, num_topics: int, lda_model: object, corpus: dict):
-    """Latent Dirichlet Allocation (LDA) Topic Modeling.
+def get_lda_main_topics(
+    doc: list,
+    num_topics: int,
+    lda_model: object,
+    corpus: dict,
+):
+    """Get the main topic per sequence using the (LDA) topic model.
 
     Parameters:
     ----------
