@@ -5,21 +5,21 @@ import sklearn
 from .lang import SPACY_STOP_WORDS
 
 
-def gensim_preprocess(sentences, stopwords, deacc=False):
+def gensim_preprocess(doc, stopwords, deacc=False):
     return [[
-        word for word in gensim.utils.simple_preprocess(sent, deacc=deacc)
-        if word not in stopwords] for sent in sentences
+        tok for tok in gensim.utils.simple_preprocess(seq, deacc=deacc)
+        if tok not in stopwords] for seq in doc
     ]
 
 
-def spacy_preprocess(docs, spacy_model, pos_tags, disable_pipe_names):
+def spacy_lemmatizer(doc, spacy_model, pos_tags, disable_pipe_names):
     nlp = spacy.load(spacy_model, disable=disable_pipe_names)
-    prep_docs = []
-    for doc in docs:
-        doc = nlp(' '.join(doc))
-        prep_docs.append(
-            [token.lemma_ for token in doc if token.pos_ in pos_tags])
-    return prep_docs
+    lemma_doc = list()
+    for sequence in doc:
+        sequence = nlp(' '.join(sequence))
+        lemma_doc.append(
+            [token.lemma_ for token in sequence if token.pos_ in pos_tags])
+    return lemma_doc
 
 
 def sents_to_ngramTokens(
@@ -29,7 +29,7 @@ def sents_to_ngramTokens(
         stop_words=None,
         disable_pipe_names=None,
         min_count=5,
-        threshold=10.0,
+        threshold=100,
 ):
     """Convert texts to n-grams tokens with spaCy and Gensim.
 
@@ -41,7 +41,7 @@ def sents_to_ngramTokens(
 
     Default configurations if left as none:
 
-        * `spacy_model = 'en_core_web_lg'`
+        * `spacy_model = 'en_core_web_sm'`
         * `disable_pipe_names = ['parser', 'ner']`
         * `stop_words = SPACY_STOP_WORDS`
         * `pos_tags = ['NOUN', 'ADJ', 'VERB', 'ADV']`
@@ -69,7 +69,7 @@ def sents_to_ngramTokens(
 
     """
     if not spacy_model:
-        spacy_model = 'en_core_web_lg'
+        spacy_model = 'en_core_web_sm'
     if not disable_pipe_names:
         disable_pipe_names = ['parser', 'ner']
     if not pos_tags:
@@ -86,7 +86,7 @@ def sents_to_ngramTokens(
     tokens = gensim_preprocess(sentences, stop_words, deacc=True)
     tokens = [bigram_mod[tok] for tok in tokens]
     tokens = [trigram_mod[bigram_mod[tok]] for tok in tokens]
-    tokens = spacy_preprocess(tokens, spacy_model, pos_tags,
+    tokens = spacy_lemmatizer(tokens, spacy_model, pos_tags,
                               disable_pipe_names)
     return tokens
 

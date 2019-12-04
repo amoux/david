@@ -217,16 +217,19 @@ def preprocess_doc(doc: list,
                    stop_words=None,
                    tokenize=False):
     """Basic text preprocessing for a doc (iterable) of sequences."""
+
     normalized = list()
     for sequence in doc:
         normalized.append(
             preprocess_sequence(
-                contractions,
-                lemmatize,
-                punctuation,
-                norm_chars,
-                rm_stopwords,
-                stop_words,
-                tokenize)
+                sequence=sequence,
+                contractions=contractions,
+                lemmatize=lemmatize,
+                punctuation=punctuation,
+                norm_chars=norm_chars,
+                rm_stopwords=rm_stopwords,
+                stop_words=stop_words,
+                tokenize=tokenize,
+            )
         )
     return normalized
