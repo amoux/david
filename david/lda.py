@@ -54,7 +54,7 @@ def GensimLdaModel(
     doc: list,
     num_topics=10,
     random_state=100,
-    update_every=1,
+    update_every=0,
     chunksize=1000,
     passes=10,
     alpha='symmetric',
@@ -65,6 +65,9 @@ def GensimLdaModel(
 
     Loads all the required components for a LDA session:
     Returns: `lda_model, corpus, id2word`.
+
+    `update_every` (int):
+        Set to 0 for batch learning, 1 for online iterative learning.
 
     For more information on the model refer to the documentaion
     online: https://radimrehurek.com/gensim/models/ldamodel.html
