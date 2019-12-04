@@ -2,15 +2,13 @@
 
 The goal of this toolkit is to speed the time-consuming steps to obtain, store, and pre-process textual data from youtube, and implementing natural language processing techniques to extract highly specific information, such as the indications of product or service trends across enterprises. There's much potential in being able to get valuable information for analytics objectives.
 
-- In development (Web-App)
+- 👨‍💻 In progress ( Web-App )
 
   - Vuepoint is an analytics web-application that helps content creators by automating the tedious task of manually having to scroll and read through multiple pages of comments to understand what an audience wants. And extracts the vital information that is relevant to each content creator without the noise!
 
-- Some objectives:
-  - Semantic analytics applications for content creators.
+- 📃 objectives:
+  - Semantic analytics application for content creators.
   - Social marketing trends of interest.
-
-_The goal for David is to assist content creators to increase the exposure on YouTube and their videos in the presence of more viewers. From live/historical textual information._
 
 ## configuration
 
