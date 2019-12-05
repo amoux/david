@@ -1,9 +1,12 @@
 import json
+import logging
 import time
 
 import lxml.html
 import requests
 from lxml.cssselect import CSSSelector
+
+logger = logging.getLogger(__name__)
 
 
 class YTCommentScraper(object):
@@ -86,6 +89,7 @@ class YTCommentScraper(object):
             response = self._ajax_request(session, self.YOUTUBE_AJAX_URL,
                                           params, data)
             if not response:
+                logger.error("No session response %s", session)
                 break
 
             page_token, html = response
@@ -114,6 +118,7 @@ class YTCommentScraper(object):
             response = self._ajax_request(session, self.YOUTUBE_AJAX_URL,
                                           params, data)
             if not response:
+                logger.error("No session response %s", session)
                 break
 
             _, html = response

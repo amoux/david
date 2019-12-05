@@ -45,7 +45,7 @@ from david.youtube import (YTCommentScraper, YTRegexMatchers, YTSpecialKeys,
                            yt_query_search, yt_query_video_content,
                            yt_query_videoids)
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.INFO)
 del logging
 
 # silence tensorflow warnings.

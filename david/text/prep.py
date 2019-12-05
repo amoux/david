@@ -6,6 +6,7 @@ import string
 import unicodedata
 
 import emoji
+import gensim
 import nltk
 import pattern
 import spacy
@@ -65,21 +66,29 @@ def lemmatizer(doc: list):
     return " ".join([Lemmatizer.lemmatize(sent) for sent in doc])
 
 
-def spacy_sentence_tokenizer(doc: list, nlp_model='en_core_web_lg'):
-    """Spacy sentence tokenizer.
+def spacy_token_lemmatizer(tokens, postags=None):
+    """SpaCy's part-of-speech lemmatizer for tokens"""
+    if not postags:
+        postags = ["NOUN", "ADJ", "VERB", "ADV"]
 
-    Args:
-        docs (list): An iterable list containing texts.
-        nlp_model (object): A spacy language model instance to use
-        with the sentence tokenizer.
-    """
-    nlp = spacy.load(nlp_model)
-    sentences = list()
+    nlp = spacy.load("en_core_web_sm", disable=("parser", "ner"))
+    lemmas = list()
+    for sequence in tokens:
+        sequence = nlp(" ".join(sequence))
+        lemmas.append(
+            [tok.lemma_ for tok in sequence if tok.pos_ in postags])
+    return lemmas
+
+
+def spacy_sentence_tokenizer(doc: list):
+    """Spacy sentence tokenizer."""
+    nlp = spacy.load("en_core_web_lg")
+    sents = list()
     for line in doc:
         doc = nlp(line)
         for sent in doc.sents:
-            sentences.append(sent.text)
-    return sentences
+            sents.append(sent.text)
+    return sents
 
 
 def treebank_to_wordnet_pos(pos_tag: str):
@@ -233,3 +242,17 @@ def preprocess_doc(doc: list,
             )
         )
     return normalized
+
+
+def gensim_preprocess(doc: list, stop_words=None, deacc=False):
+    """Convert a document into a list of lowercase tokens.
+
+    Ignores tokens that are too short or too long. and removes
+    stop words from a set/list iterable. Uses ~gensim.utils.tokenize
+    internally.
+    """
+    stop_words = stop_words if stop_words else SPACY_STOP_WORDS
+    return [
+        [tok for tok in gensim.utils.simple_preprocess(seq, deacc=deacc)
+         if tok not in stop_words] for seq in doc
+    ]

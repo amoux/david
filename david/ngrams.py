@@ -1,35 +1,15 @@
 import gensim
-import spacy
 import sklearn
 
-from .lang import SPACY_STOP_WORDS
-
-
-def gensim_preprocess(doc, stopwords, deacc=False):
-    return [[
-        tok for tok in gensim.utils.simple_preprocess(seq, deacc=deacc)
-        if tok not in stopwords] for seq in doc
-    ]
-
-
-def spacy_lemmatizer(doc, spacy_model, pos_tags, disable_pipe_names):
-    nlp = spacy.load(spacy_model, disable=disable_pipe_names)
-    lemma_doc = list()
-    for sequence in doc:
-        sequence = nlp(' '.join(sequence))
-        lemma_doc.append(
-            [token.lemma_ for token in sequence if token.pos_ in pos_tags])
-    return lemma_doc
+from .text.prep import gensim_preprocess, spacy_token_lemmatizer
 
 
 def sents_to_ngramTokens(
         sentences: list,
-        spacy_model=None,
-        pos_tags=None,
-        stop_words=None,
-        disable_pipe_names=None,
         min_count=5,
         threshold=100,
+        stop_words=None,
+        spacy_pos_tags=None,
 ):
     """Convert texts to n-grams tokens with spaCy and Gensim.
 
@@ -39,21 +19,11 @@ def sents_to_ngramTokens(
     into a list of lowercase tokens, ignoring tokens that are too short
     or too long.
 
-    Default configurations if left as none:
-
-        * `spacy_model = 'en_core_web_sm'`
-        * `disable_pipe_names = ['parser', 'ner']`
-        * `stop_words = SPACY_STOP_WORDS`
-        * `pos_tags = ['NOUN', 'ADJ', 'VERB', 'ADV']`
-
     Parameters:
     ----------
 
     `sentences` (Iterable[str]):
         A processed text data with: data_ready = text2ngrams(sentences).
-
-    `spacy_model` (spacy language model, default='en_core_web_lg'):
-        Other spacy models are compatible with this function.
 
     `min_count` (Type[int|float], default=5):
         Ignore all words and bigrams with total collected count lower than
@@ -65,29 +35,26 @@ def sents_to_ngramTokens(
         the score of the phrase is greater than threshold. Heavily depends
         on concrete scoring-function, see the scoring parameter.
 
+    `stop_words` (Type[list|set]):
+        If None, spaCy's stop-word set will be used.
+
+    `spacy_pos_tags` (Type[list|set]):
+        spaCy's part of speech tags to use for lemmatizing word sequences.
+        If None, the default tags will be used: ['NOUN', 'ADJ', 'VERB', 'ADV'].
+
     Returns a list of preprocessed ngram-tokens.
 
     """
-    if not spacy_model:
-        spacy_model = 'en_core_web_sm'
-    if not disable_pipe_names:
-        disable_pipe_names = ['parser', 'ner']
-    if not pos_tags:
-        pos_tags = ['NOUN', 'ADJ', 'VERB', 'ADV']
-    if not stop_words:
-        stop_words = SPACY_STOP_WORDS
-
     # build biagrams and trigram models
     bigram = gensim.models.Phrases(sentences, min_count, threshold)
     trigram = gensim.models.Phrases(bigram[sentences], threshold=threshold)
     bigram_mod = gensim.models.phrases.Phraser(bigram)
     trigram_mod = gensim.models.phrases.Phraser(trigram)
 
-    tokens = gensim_preprocess(sentences, stop_words, deacc=True)
+    tokens = gensim_preprocess(sentences, stop_words)
     tokens = [bigram_mod[tok] for tok in tokens]
     tokens = [trigram_mod[bigram_mod[tok]] for tok in tokens]
-    tokens = spacy_lemmatizer(tokens, spacy_model, pos_tags,
-                              disable_pipe_names)
+    tokens = spacy_token_lemmatizer(tokens, spacy_pos_tags)
     return tokens
 
 
@@ -101,16 +68,12 @@ def n_grams(
     """N-gram Frequency with Sklearn CountVectorizer."""
     if not ngram_range:
         ngram_range = (1, 1)
-
     vec = sklearn.feature_extraction.text.CountVectorizer(
         ngram_range=ngram_range, max_features=max_features).fit(doc)
-
     bag_of_words = vec.transform(doc)
     wordsums = bag_of_words.sum(axis=0)
-    wordfreq = [(word, wordsums[0, idx])
-                for word, idx in vec.vocabulary_.items()]
+    wordfreq = [(w, wordsums[0, i]) for w, i in vec.vocabulary_.items()]
     wordfreq = sorted(wordfreq, key=lambda x: x[1], reverse=reverse)
-
     return wordfreq[:n]
 
 
