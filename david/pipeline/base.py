@@ -2,9 +2,8 @@ from pandas import DataFrame, Series
 
 from ..io.text import as_jsonl_file, as_txt_file
 from ..lang import SPACY_STOP_WORDS
-from ..text.prep import preprocess_sequence, normalize_wiggles
+from ..text.prep import normalize_wiggles, preprocess_sequence
 from .metric import TextMetrics
-import logging
 
 TIME_RE = r"(\d{1,2}\:\d{1,2})"
 URL_RE = r"(http\S+)"
