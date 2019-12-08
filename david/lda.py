@@ -2,6 +2,7 @@ import gensim
 import pandas
 
 from .ngrams import sents_to_ngramTokens
+from .pipeline import Pipeline
 
 
 def get_lda_main_topics(
@@ -29,7 +30,7 @@ def get_lda_main_topics(
         percentage and topic keywords.
 
     """
-    df = pandas.DataFrame()
+    df = Pipeline()
     for i, main_topic in enumerate(lda_model[corpus]):
         topics = main_topic[0] if lda_model.per_word_topics else main_topic
         topics = sorted(topics, key=lambda x: (x[1]), reverse=True)
@@ -47,7 +48,7 @@ def get_lda_main_topics(
 
     df = pandas.concat([df, pandas.Series(doc)], axis=1)
     df.columns = ["dominant_topic", "contribution", "keywords", "text"]
-    return df
+    return Pipeline(df)
 
 
 def GensimLdaModel(

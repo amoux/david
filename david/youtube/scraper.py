@@ -6,6 +6,8 @@ import lxml.html
 import requests
 from lxml.cssselect import CSSSelector
 
+from .utils import extract_videoid
+
 logger = logging.getLogger(__name__)
 
 
@@ -51,8 +53,30 @@ class YTCommentScraper(object):
             else:
                 time.sleep(self.sleep_per_retry)
 
-    def scrape_comments(self, video_id: str, sleep=1):
-        """Scrapes Comments from a youtube video id."""
+    def scrape_comments(
+            self,
+            video_id: str = None,
+            video_url: str = None,
+            sleep=1,
+    ):
+        """Scrapes Comments from a video id or a video url.
+
+        Parameters:
+        ----------
+
+        `video_id` (str, default=None):
+            The video id to use for extracting the comments:
+
+        `video_url` (str, default=None):
+            The the url containing the video id. It uses a method which can
+            handle multiple forms of an url or string with the id. For more
+            info check: `david.youtube.utils.extract_videoid`.
+
+        """
+        if video_url:
+            video_id = extract_videoid(video_url)
+        if not video_id:
+            raise Exception(f"You need to pass a valid id, not: {video_id}")
 
         session = requests.Session()
         session.headers['User-Agent'] = self.USER_AGENT

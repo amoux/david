@@ -36,14 +36,15 @@ from david.server import CommentsSQL
 from david.text.prep import (YTCommentTokenizer, encode_ascii,
                              nltk_word_tokenizer, normalize_whitespace,
                              normalize_wiggles, part_of_speech_annotator,
-                             part_of_speech_lemmatizer, preprocess_sequence,
-                             remove_punctuation, remove_repeating_characters,
+                             part_of_speech_lemmatizer, preprocess_doc,
+                             preprocess_sequence, remove_punctuation,
+                             remove_repeating_characters,
                              remove_repeating_words, remove_stopwords,
-                             treebank_to_wordnet_pos)
+                             spacy_token_lemmatizer, treebank_to_wordnet_pos)
 from david.text.viz import build_wordcloud
 from david.youtube import (YTCommentScraper, YTRegexMatchers, YTSpecialKeys,
-                           yt_query_search, yt_query_video_content,
-                           yt_query_videoids)
+                           extract_videoid, yt_query_search,
+                           yt_query_video_content, yt_query_videoids)
 
 logging.basicConfig(level=logging.INFO)
 del logging

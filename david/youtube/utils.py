@@ -1,4 +1,5 @@
 import os
+import re
 
 API = {
     'api_key': os.environ.get('YOUTUBE_API_KEY'),
@@ -95,3 +96,32 @@ class YTSpecialKeys:
     API = API
     CHANNEL_KEYS = CHANNEL_KEYS
     CATEGORY_IDS = CATEGORY_IDS
+
+
+def extract_videoid(url):
+    """Extracts the video id from urls and/or multiple combinations.
+
+    Return None, if no video id was found. Also note, there no way to check if
+    a video id is valid or not (possible with Youtube's API). This method uses
+    regex and minimal conditions to return the correct youtube video id.
+
+    Usage:
+        >>> extract_videoid("https://www.youtube.com/watch?v=bCtOFZoCvBE&t=165s")
+        >>> extract_videoid("watch?v=bCtOFZoCvBE")
+        >>> extract_videoid("=bCtOFZoCvBE")
+        >>> extract_videoid("= bCtOFZoCvBE &t")
+        >>> extract_videoid("bCtOFZoCvBE&t")
+        'bCtOFZoCvBE' # all the above get the same result.
+
+    """
+    VIDEOID_RE = YTRegexMatchers().URLS["videoId"]
+    try:
+        match = re.search(VIDEOID_RE, url).group()
+    except AttributeError:
+        match = re.search(VIDEOID_RE[2:-2], url).group()
+    if match.startswith("v="):
+        match = match.replace("v=", "")
+    if len(match) == 11:
+        return match
+    # last attempt, remove last character and check len with no spaces:
+    return match[:-1] if len(match[:-1].strip()) == 11 else None
