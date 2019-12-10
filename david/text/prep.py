@@ -4,6 +4,7 @@ import collections
 import re
 import string
 import unicodedata
+from typing import Generator, List
 
 import emoji
 import gensim
@@ -89,6 +90,15 @@ def spacy_sentence_tokenizer(doc: list):
         for sent in doc.sents:
             sents.append(sent.text)
     return sents
+
+
+def sentence_tokenizer(doc: List[str]) -> Generator:
+    """Replacing `spacy_sentence_tokenizer` with this generator."""
+    nlp = spacy.load("en_core_web_sm")
+    for line in doc:
+        line = nlp(normalize_whitespace(line))
+        for sent in line.sents:
+            yield sent.text
 
 
 def treebank_to_wordnet_pos(pos_tag: str):
