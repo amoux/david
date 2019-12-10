@@ -10,6 +10,12 @@ The goal of this toolkit is to speed the time-consuming steps to obtain, store, 
   - Semantic analytics application for content creators.
   - Social marketing trends of interest.
 
+- **TODO**
+  - Update Readme documentation on recently added/updated classes and methods.
+  - Improve text preprocessing methods (covert all to Generators).
+  - Improve pipeline customization (when switching from Pipeline to a custom recipe).
+  - Update toolkit with `PEP 484` - Support for type hints.
+
 ## configuration
 
 - clone or download the repo. use `git pull` to have the latest release.
@@ -20,19 +26,19 @@ git clone https://github.com/amoux/david
 
 Error installing `pattern`: **_OSError: mysql_config not found_**
 
-> **NOTE** before you install all the dependecies, the package `pattern` is known to have a common error due to the missing `libmysqlclient-dev` linux package. to fix this issue run the following command before installing the requirements.
+> **NOTE** before you install all the dependencies, the package `pattern` is known to have a common error due to the missing `libmysqlclient-dev` linux package. to fix this issue run the following command before installing the requirements.
 
 ```bash
 sudo apt install libmysqlclient-dev
-conda activate < YOUR ENVIROMENT >
+conda activate < YOUR ENVIRONMENT >
 (conda-env) cd pattern/
 (conda-env) python setup.py install
 ```
 
-- If you still get `fatal error: mysql/udf_registration_types.h: No such file or directory #include <mysql/udf_registration_types.h>` when installing in a Ubuntu + Anaconda enviroment try:
+- If you still get `fatal error: mysql/udf_registration_types.h: No such file or directory #include <mysql/udf_registration_types.h>` when installing in a Ubuntu + Anaconda environment try:
 
 - tested on: Ubuntu 19.10
-- anaconda enviroment: python=3.6
+- anaconda environment: python=3.6
 
 ```bash
 (conda-env) conda install gxx_linux-64

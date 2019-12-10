@@ -30,7 +30,7 @@ GDRIVE_SQLITE_DATABASES = {
 }
 
 
-def download_sqlite_databse(db_names: Tuple[str, ...],
+def download_sqlite_database(db_names: Tuple[str, ...],
                             david_home: str = None) -> IO:
     """Downloads the main datasets available from google drive into the
     david_home directory.
@@ -43,7 +43,7 @@ def download_sqlite_databse(db_names: Tuple[str, ...],
         files that are passed to db_name. Available keys ('v1', 'v2', 'unbox').
 
     `david_home` (str, default=DAVID_HOME):
-        A user's home direcory. If it doesnt exists it will create the one
+        A user's home direcory. If it doesn't exists it will create the one
         and then download the requested files from the server.
 
     """
