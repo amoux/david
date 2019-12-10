@@ -1,13 +1,15 @@
 import json
 import os
 import sqlite3
-from typing import Any, List, Optional
+from typing import Any, AnyStr, Iterable, List, Optional, Tuple
 
 from ..datasets import GDRIVE_SQLITE_DATABASES, download_sqlite_database
 
 COUNT_QUERIES = {
-    'videos': 'SELECT DISTINCT video_id FROM comments;',
-    'comments': 'SELECT video_id, COUNT(*) c FROM comments GROUP BY video_id;'}
+    'videos': "select distinct video_id from comments;",
+    # execute query for a given {table_name}
+    'comments': "select video_id, count(*) c from {} group by video_id;"
+}
 
 
 def check_file_exists(
@@ -101,15 +103,16 @@ class CommentsSQL(object):
             self.table_name = tuple(t[0] for t in cursor.fetchall())[0]
 
     @property
-    def column_names(self) -> List[str]:
+    def column_names(self) -> Iterable[List[str]]:
         c = self.conn.execute('select * from %s limit 1' % self.table_name)
         return [col_name[0] for col_name in c.description]
 
     @property
-    def unique_videoids(self) -> List[str]:
+    def unique_videoids(self) -> Iterable[List[Tuple[str, ...]]]:
         c = self.conn.execute(
-            "select distinct video_id from %s limit 1" % self.table_name)
-        return [vid_id[0] for vid_id in c.fetchall()]
+            "select video_id, count(*) c from {} group by video_id;".format(
+                self.table_name))
+        return [video_id_counts for video_id_counts in c.fetchall()]
 
     @property
     def num_rows(self) -> int:
@@ -117,7 +120,34 @@ class CommentsSQL(object):
             "select count(*) from %s limit 1" % self.table_name)
         return c.fetchone()[0]
 
-    def search_comments(self, pattern: str) -> List[str]:
+    def search_comments(
+            self, pattern: str,
+            columns: str = "id, video_id, text",
+            sort_col: Optional[str] = None,
+            reverse: bool = True,
+    ) -> Iterable[List[Tuple[AnyStr, ...]]]:
+        """Get a batch of of comments based on the key word patters:
+
+        Parameters:
+        -----------
+
+        `pattern` (str):
+            A pattern in the form %key key% or %<K>% %<K>%.
+
+        `column_names` (str, default="keys, keys, keys"):
+            Pass the name of the columns to you want to load separated by
+            `,` punctuation.
+
+        `sort_column` (str, default=Optional[str]):
+            Pass the name of the column to sort the returning Iterable.
+            It must be a single column name of string type.
+
+        """
         c = self.conn.execute(
-            f"select text from {self.table_name} where text like '{pattern}';")
-        return [text[0] for text in c.fetchall()]
+            "select {} from {} where text like '{}';".format(
+                columns, self.table_name, pattern))
+        queries = [q for q in c.fetchall()]
+        if sort_col and isinstance(sort_col, str):
+            index = columns.rstrip().split(", ").index(sort_col)
+            return sorted(queries, key=lambda k: k[index], reverse=reverse)
+        return queries
