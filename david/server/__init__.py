@@ -122,7 +122,7 @@ class CommentsSQL(object):
 
     def search_comments(
             self, pattern: str,
-            columns: str = "id, video_id, text",
+            columns: str = "text",
             sort_col: Optional[str] = None,
             reverse: bool = True,
     ) -> Iterable[List[Tuple[AnyStr, ...]]]:
@@ -134,9 +134,9 @@ class CommentsSQL(object):
         `pattern` (str):
             A pattern in the form %key key% or %<K>% %<K>%.
 
-        `column_names` (str, default="keys, keys, keys"):
+        `column_names` (str, default="text"):
             Pass the name of the columns to you want to load separated by
-            `,` punctuation.
+            `,` punctuation. For example,  columns="id, video_id, text".
 
         `sort_column` (str, default=Optional[str]):
             Pass the name of the column to sort the returning Iterable.
