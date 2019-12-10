@@ -19,11 +19,11 @@ GDRIVE_SQLITE_DATABASES = {
     ],
     'unbox': [
         {
-            'name': 'unbox_comments.db',
+            'name': 'lew_comments_unbox.db',
             'id': '1FDoLyeee1o8nFs-GjLiXEv--eb8oC3vF'
         },
         {
-            'name': 'unbox_videos.db',
+            'name': 'lew_video_unbox.db',
             'id': '118tWFthG8VcGAK0N1wIbFVU-q0ZLsC5K'
         }
     ]
@@ -31,7 +31,8 @@ GDRIVE_SQLITE_DATABASES = {
 
 
 def download_sqlite_database(db_names: Tuple[str, ...],
-                            david_home: str = None) -> IO:
+                             david_home: str = None,
+                             return_destination: bool = False) -> IO:
     """Downloads the main datasets available from google drive into the
     david_home directory.
 
@@ -44,7 +45,10 @@ def download_sqlite_database(db_names: Tuple[str, ...],
 
     `david_home` (str, default=DAVID_HOME):
         A user's home direcory. If it doesn't exists it will create the one
-        and then download the requested files from the server.
+        and then download the requested files from the server (optional).
+
+    `return_destination` (bool, default=False):
+        Return the destination path of the file downloaded (optional)
 
     """
     if not david_home:
@@ -61,3 +65,6 @@ def download_sqlite_database(db_names: Tuple[str, ...],
             gdrive.desc = f"Downloading {db_name} from server 📡"
             gdrive.filename = db_name
             gdrive.download(db_id)
+
+    if return_destination:
+        return gdrive._destination
