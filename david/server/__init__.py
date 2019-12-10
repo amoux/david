@@ -1,8 +1,7 @@
 import json
 import os
 import sqlite3
-from typing import List, Any, Optional
-import records
+from typing import Any, List, Optional
 
 from ..datasets import GDRIVE_SQLITE_DATABASES, download_sqlite_database
 
