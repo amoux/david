@@ -146,7 +146,11 @@ class CommentsSQL(object):
         c = self.conn.execute(
             "select {} from {} where text like '{}';".format(
                 columns, self.table_name, pattern))
-        queries = [q for q in c.fetchall()]
+        # Temporary fix. Data format => (Nested[(n,),(N.)]) makes it hard to
+        # work with most of the methods. The nested iterator is a wok around,
+        # and it can be loaded directly into pandas.DataFrame. I need to fix
+        # this format or find the best practice for this issue.
+        queries = [[q for q in fetch]for fetch in c.fetchall()]
         if sort_col and isinstance(sort_col, str):
             index = columns.rstrip().split(", ").index(sort_col)
             return sorted(queries, key=lambda k: k[index], reverse=reverse)
