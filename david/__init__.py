@@ -25,7 +25,7 @@ from david.datasets import JsonlYTDatasets
 from david.io import (File, GoogleDriveDownloader, as_jsonl_file, as_txt_file,
                       delete_files, download_url_file)
 from david.lang import (DAVID_STOP_WORDS, GENSIM_STOP_WORDS, SPACY_STOP_WORDS,
-                        SpellCorrect, TextSearchContractions)
+                        SpellCorrect, replace_contractions)
 from david.lda import GensimLdaModel, get_lda_main_topics
 from david.models import elmo as ElmoModel
 from david.models import trans as TransformersModel

@@ -16,7 +16,7 @@ from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
                                   _replace_html_entities, reduce_lengthening,
                                   remove_handles)
 
-from ..lang import SPACY_STOP_WORDS, TextSearchContractions
+from ..lang import SPACY_STOP_WORDS, replace_contractions
 
 
 class YTCommentTokenizer:
@@ -123,7 +123,7 @@ def part_of_speech_annotator(sequence: str):
 
 
 def part_of_speech_lemmatizer(sequence: str):
-    """Lemmataze sequences based on part-of-speech tags."""
+    """Lemmatize sequences based on part-of-speech tags."""
     Lemmatizer = nltk.stem.WordNetLemmatizer()
     tagged_seq = part_of_speech_annotator(sequence)
     return " ".join([Lemmatizer.lemmatize(word, pos) if pos else word
@@ -213,7 +213,7 @@ def preprocess_sequence(sequence: str,
     """Basic text preprocessing for a sequence."""
     sequence = normalize_whitespace(encode_ascii(sequence))
     if contractions:
-        sequence = TextSearchContractions().fix(sequence)
+        sequence = replace_contractions(sequence)
     if lemmatize:
         sequence = part_of_speech_lemmatizer(sequence)
     if punctuation:
