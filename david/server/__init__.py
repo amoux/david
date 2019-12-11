@@ -1,7 +1,9 @@
 import json
 import os
 import sqlite3
-from typing import Any, AnyStr, Iterable, List, Optional, Tuple
+from collections import namedtuple
+from typing import (KT, Any, AnyStr, Generator, Iterable, List, Mapping,
+                    Optional, Tuple)
 
 from ..datasets import GDRIVE_SQLITE_DATABASES, download_sqlite_database
 
@@ -125,7 +127,7 @@ class CommentsSQL(object):
             columns: str = "text",
             sort_col: Optional[str] = None,
             reverse: bool = True,
-    ) -> Iterable[List[Tuple[AnyStr, ...]]]:
+    ) -> Iterable[List[Mapping[Tuple[KT, ...], Generator]]]:
         """Get a batch of of comments based on the key word patters:
 
         Parameters:
@@ -142,16 +144,23 @@ class CommentsSQL(object):
             Pass the name of the column to sort the returning Iterable.
             It must be a single column name of string type.
 
+        Usage:
+            >>> pattern = "%make a new video about%"
+            >>> doc = search_comments_test(pattern, "id, text", sort_by="id")
+
+            # creates the attributes from the columns selected.
+            >>> doc[0].id,  doc[0].video_id, doc[0].text
+            '(792286, 126, 'Can you make a video about pixel 1 2!')'
+
         """
         c = self.conn.execute(
             "select {} from {} where text like '{}';".format(
                 columns, self.table_name, pattern))
-        # Temporary fix. Data format => (Nested[(n,),(N.)]) makes it hard to
-        # work with most of the methods. The nested iterator is a wok around,
-        # and it can be loaded directly into pandas.DataFrame. I need to fix
-        # this format or find the best practice for this issue.
-        queries = [[q for q in fetch]for fetch in c.fetchall()]
+        # This is an attempt to fix the Generator of lists of tuples. Example:
+        # for attr_ in mapped_batch: Comp(attr_.id, attr_.video_id, attr_.text)
+        mapped_attrs = namedtuple(self.table_name.capitalize(), columns)
+        mapped_batch = list(map(mapped_attrs._make, c.fetchall()))
         if sort_col and isinstance(sort_col, str):
-            index = columns.rstrip().split(", ").index(sort_col)
-            return sorted(queries, key=lambda k: k[index], reverse=reverse)
-        return queries
+            idx = columns.rstrip().split(", ").index(sort_col)
+            return sorted(mapped_batch, key=lambda k: k[idx], reverse=reverse)
+        return mapped_batch
