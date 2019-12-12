@@ -42,9 +42,7 @@ def is_file_in_dirpath(file: str, path: str) -> Any:
 
 
 class CommentsSQL(object):
-
     DAVID_HOME_SQLITE = os.environ.get('DAVID_COMMENTS_DB')
-    # create one/both directories if missing: david_home/sqlite.
     if not os.path.exists(DAVID_HOME_SQLITE):
         os.makedirs(DAVID_HOME_SQLITE)
     AVAILABLE_DATABASES = GDRIVE_SQLITE_DATABASES
@@ -73,23 +71,22 @@ class CommentsSQL(object):
         self.sql_path = sql_path
         self.table_name = table_name
 
-        # Downloads the database file if it doesn't exists.
         if self.sql_file and sql_path is None:
-            temp_sqlfile, sqlite_home = (
+            temp_sql_file, sqlite_home = (
                 self.sql_file, self.DAVID_HOME_SQLITE)
-            if temp_sqlfile in self.AVAILABLE_DATABASES.keys():
+            if temp_sql_file in self.AVAILABLE_DATABASES.keys():
                 try:
                     # If the file doesn't exists download the file:
-                    sql_file_path_exist = is_file_in_dirpath(
-                        temp_sqlfile, sqlite_home)
+                    sql_file_exist = is_file_in_dirpath(
+                        temp_sql_file, sqlite_home)
                 except TypeError:
                     # sql file does not exist, download the database.
-                    sql_file_path_exist = download_sqlite_database(
-                        temp_sqlfile, sqlite_home, return_destination=True)
+                    sql_file_exist = download_sqlite_database(
+                        temp_sql_file, sqlite_home, return_destination=True)
                 # sql file path loaded, connect to the database.
-                self.conn = sqlite3.connect(sql_file_path_exist)
+                self.conn = sqlite3.connect(sql_file_exist)
                 self.sql_file, self.sql_path = os.path.basename(
-                    sql_file_path_exist), sql_file_path_exist
+                    sql_file_exist), sql_file_exist
             else:
                 raise ValueError("{}, Error is not a valid file to load \
                 select one from: {}.".format(
@@ -100,8 +97,9 @@ class CommentsSQL(object):
                 self.sql_path), os.path.basename(self.sql_path)
 
         if self.table_name is None:
-            cursor = self.conn.execute("select name from sqlite_master \
-                where type='table' or type='view'")
+            cursor = self.conn.execute(
+                "select name from sqlite_master \
+                    where type='table' or type='view'")
             self.table_name = tuple(t[0] for t in cursor.fetchall())[0]
 
     @property
@@ -146,21 +144,18 @@ class CommentsSQL(object):
 
         Usage:
             >>> pattern = "%make a new video about%"
-            >>> doc = search_comments_test(pattern, "id, text", sort_by="id")
-
-            # creates the attributes from the columns selected.
-            >>> doc[0].id,  doc[0].video_id, doc[0].text
-            '(792286, 126, 'Can you make a video about pixel 1 2!')'
+            >>> doc = search_comments(pattern, "id, text", sort_by="id")
+            >>> print(doc[0].id, doc[0].text)
+            '(792286, 'Can you make a video about pixel 1 2!')'
 
         """
         c = self.conn.execute(
             "select {} from {} where text like '{}';".format(
                 columns, self.table_name, pattern))
-        # This is an attempt to fix the Generator of lists of tuples. Example:
-        # for attr_ in mapped_batch: Comp(attr_.id, attr_.video_id, attr_.text)
+        # assigns the column names selected as attributes (mapping).
         mapped_attrs = namedtuple(self.table_name.capitalize(), columns)
         mapped_batch = list(map(mapped_attrs._make, c.fetchall()))
         if sort_col and isinstance(sort_col, str):
-            idx = columns.rstrip().split(", ").index(sort_col)
+            idx = columns.replace(" ", "").split(",").index(sort_col)
             return sorted(mapped_batch, key=lambda k: k[idx], reverse=reverse)
         return mapped_batch
