@@ -11,8 +11,8 @@ def sents_to_ngramTokens(
         sentences: List[str],
         min_count: int = 5,
         threshold: int = 100,
-        stop_words: Optional[Iterable[str]] = None,
-        spacy_pos_tags: Optional[Iterable[str]] = None,
+        stop_words: Optional[Dict[str, List[str]]] = None,
+        spacy_pos_tags: Optional[Dict[str, List[str]]] = None,
 ) -> Iterable[List[str]]:
     """Convert texts to n-grams tokens with spaCy and Gensim.
 
