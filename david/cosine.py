@@ -61,14 +61,14 @@ def build_feature_matrix(
     else:
         raise ValueError(f"You entered {feature}, please \
             choose one: 'count' or 'tfidf'")
-    sparse_matrix = vectorizer.fit_transform(raw_doc).astype(float)
-    return (vectorizer, sparse_matrix)
+    feature_matrix = vectorizer.fit_transform(raw_doc).astype(float)
+    return (vectorizer, feature_matrix)
 
 
 def cosine_similarity(vectorizer: VectorizerMixin,
                       features: SparseRowMatrix,
                       num_results: int = 3,
-                      round_float: int = 3) -> List[Tuple[int, float]]:
+                      round_float: int = 4) -> List[Tuple[int, float]]:
     """Computes cosine similarity, as the normalized dot product of X and Y.
 
     TODO: Improve, finish add examples to the documentation.
@@ -81,12 +81,11 @@ def cosine_similarity(vectorizer: VectorizerMixin,
     return doc_scores
 
 
-def get_similar_docs(
-        queries: Dict[str, List[str]],
-        raw_doc: List[str],
-        num_results: int,
-        vectorizer: VectorizerMixin,
-        features: SparseRowMatrix) -> List[Dict[Any, str]]:
+def get_similar_docs(queries: Dict[str, List[str]],
+                     raw_doc: List[str],
+                     num_results: int,
+                     vectorizer: VectorizerMixin,
+                     features: SparseRowMatrix) -> List[Dict[Any, str]]:
     """Get the most similar documents from top occurrences of terms.
 
     Parameters:
@@ -98,18 +97,39 @@ def get_similar_docs(
 
     TODO: Improve, finish add examples to the documentation.
 
-    `raw_doc` : (List[str]):
-    `num_results` : (int):
-    `vectorizer` (TfidfVectorizer):
-    `features` (SparseRowMatrix):
     """
     doc_matrix = vectorizer.transform(queries)
     similarities = list()
     for i, query in enumerate(queries):
-        sparse_idx = doc_matrix[i]
-        doc_scores = cosine_similarity(sparse_idx, features, num_results)
-        for doc, score in doc_scores:
-            text = raw_doc[doc]
-            similarities.append({'doc_id': doc, 'text': text,
-                                 'similarity': score, 'q': query})
+        sparse_vec = doc_matrix[i]
+        doc_scores = cosine_similarity(sparse_vec, features, num_results)
+        for doc_id, score in doc_scores:
+            text = raw_doc[doc_id]
+            similarities.append({'doc_id': doc_id, 'sim': score, 'text': text})
+    return similarities
+
+
+def compute_similardocs(queries: Dict[str, List[str]],
+                        raw_doc: List[str],
+                        num_results: int,
+                        ngram: Tuple[int, int],
+                        min_freq: int,
+                        max_freq: int) -> List[Dict[float, str]]:
+    """Test all the methods above in one method. I was thinking of getting
+    rid of all methods and put them all in one call but then I found that
+    I could make multiple's like this one. And adapt them to whatever I feel
+    like. Maybe I need to add some preprocessing or web components between
+    the inputs and the outputs. This is an example method for how both cosine
+    methods in this module can be used to fit a specific environment.
+    """
+    vectorizer, features = build_feature_matrix(raw_doc, "tfidf", ngram,
+                                                min_freq, max_freq)
+    doc_matrix = vectorizer.transform(queries)
+    similarities = list()
+    for i, q in enumerate(queries):
+        sparse_vec = doc_matrix[i]
+        doc_scores = cosine_similarity(sparse_vec, features, num_results)
+        for doc_id, score in doc_scores:
+            text = raw_doc[doc_id]
+            similarities.append({"sim": score, "text": text})
     return similarities
