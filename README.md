@@ -10,13 +10,13 @@ The goal of this toolkit is to speed the time-consuming steps to obtain, store, 
   - Semantic analytics application for content creators.
   - Social marketing trends of interest.
 
-- **TODO**
+- 🤔 **TODO**
   - Update Readme documentation on recently added/updated classes and methods.
   - Improve text preprocessing methods (covert all to Generators).
   - Improve pipeline customization (when switching from Pipeline to a custom recipe).
   - Update toolkit with `PEP 484` - Support for type hints.
 
-## configuration
+## configuration 👻
 
 - clone or download the repo. use `git pull` to have the latest release.
 
