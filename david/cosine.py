@@ -113,8 +113,8 @@ def compute_similardocs(queries: Dict[str, List[str]],
                         raw_doc: List[str],
                         num_results: int,
                         ngram: Tuple[int, int],
-                        min_freq: int,
-                        max_freq: int) -> List[Dict[float, str]]:
+                        min_freq: int = 0.0,
+                        max_freq: int = 1.0) -> List[Dict[float, str]]:
     """Test all the methods above in one method. I was thinking of getting
     rid of all methods and put them all in one call but then I found that
     I could make multiple's like this one. And adapt them to whatever I feel

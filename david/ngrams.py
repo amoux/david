@@ -1,4 +1,4 @@
-from typing import Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import gensim
 import sklearn
