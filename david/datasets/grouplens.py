@@ -42,9 +42,9 @@ def download_movielens(dataset: str, savepath="data"):
         os.makedirs(savepath)
     dataset_fpaths = collections.defaultdict(list)
     for dataset in MOVIELENS_DATASETS[dataset]:
-        filename = dataset[dataset.rfind('ml'):]
+        filename = os.path.basename(dataset)
         filepath = os.path.join(savepath, filename)
-        if not os.path.exists(filepath[:-extlen]):
+        if not os.path.isfile(filepath):
             download = urllib.request.urlretrieve(dataset, filepath)
             with zipfile.ZipFile(filepath, "r") as zf:
                 zf.extractall(savepath)

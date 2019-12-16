@@ -13,6 +13,13 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
+def walkdir(folder: str) -> Generator:
+    """Walk through each files in a directory"""
+    for dirpath, dirs, files in os.walk(folder):
+        for fn in files:
+            yield os.path.abspath(os.path.join(dirpath, fn))
+
+
 def download_url_file(filename, url, expected_bytes):
     """Download a file if not present, and make sure it's the right size."""
     if not os.path.exists(filename):
