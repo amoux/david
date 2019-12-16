@@ -85,7 +85,7 @@ def load_bert(model: str,
     Returns:
     `Dict[str, str]`: A dictionary with keys mapped to the absolute path of
         each file unzipped in the model's directory. If the model's directory
-        exists - It returns the mapping of the existing files. Otherwise, it
+        exist - It returns the mapping of the existing files. Otherwise, it
         will create the directory, download the model, unzip the files, before
         returning the dictionary mapping.
 
@@ -112,18 +112,19 @@ def load_bert(model: str,
         filepath = os.path.join(save_path, filename)
 
         if not os.path.isfile(filepath):
-            logger.info("Directory for {} not found, downloading model's\
-                files...".format(model))
+            logger.info(
+                "Directory for {} not found. Downloading...".format(model))
             # Start downloading the compressed file and display progress.
             with TQDM(unit="B", unit_scale=True,
                       unit_divisor=1024, miniters=1, desc=filename) as t:
-                urllib.urlretrieve(bert_url, filepath,
-                                   reporthook=t.update_stream, data=None)
+                urllib.urlretrieve(
+                    bert_url, filepath, reporthook=t.update_stream, data=None)
             # Extract the files from the compressed file downloaded.
             _extract_compressed_file(filepath, save_path, extension=extension)
+
         # Build the dictionary from the model's files. Assing clean key names.
-        extlen = len(extension)
         key_names = ["meta", "index", "config", "vocab", "data"]
+        extlen = len(extension)
         model_file_paths = {
             k: os.path.abspath(os.path.join(filepath[:-extlen], f))
             for f, k in zip(os.listdir(filepath[:-extlen]), key_names)
