@@ -138,6 +138,35 @@ if GLUE_DIR is None:
     GLUE_DIR = "glue_data"
 
 
+def download_glue(tasks="all", data_dir=GLUE_DIR, path_to_mrpc=""):
+    """Helper function for downloading all GLUE data. This method has
+    the same functionality as the CLI version.
+
+    Parameters:
+    -----------
+
+    `tasks` (str, default="all"):
+        Tasks to download data for as a comma separated string.
+
+    `data_dir` (str, default="$GLUE_DIR" if available, else "glue_data"):
+        Direcotry to save data to.
+
+    `path_to_mrpc` (str, default=""):
+        Path to directory containing extracted MRPC data
+        msr_paraphrase_train.txt and msr_paraphrase_text.txt
+    """
+    if not os.path.isdir(data_dir):
+        os.makedirs(data_dir)
+    tasks = get_tasks(tasks)
+    for task in tasks:
+        if task == "MRPC":
+            format_mrpc(data_dir, path_to_mrpc)
+        elif task == "diagnostic":
+            download_diagnostic(data_dir)
+        else:
+            download_and_extract(task, data_dir)
+
+
 def main(arguments):
     parser = argparse.ArgumentParser()
     parser.add_argument(
