@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple, TypeVar
+from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 
 import numpy
 import sklearn
@@ -67,23 +67,23 @@ def build_feature_matrix(
 
 def cosine_similarity(vectorizer: VectorizerMixin,
                       features: SparseRowMatrix,
-                      num_results: int = 3,
+                      top_k: int = 3,
                       round_float: int = 4) -> List[Tuple[int, float]]:
     """Computes cosine similarity, as the normalized dot product of X and Y."""
     vectorizer = vectorizer.toarray()[0]
     features = features.toarray()  # 2 dimensional ndarray.
     similar = numpy.dot(vectorizer, features.T)
-    sim_matrix = similar.argsort()[::-1][:num_results]
+    sim_matrix = similar.argsort()[::-1][:top_k]
     doc_scores = [(i, round(similar[i], round_float)) for i in sim_matrix]
     return doc_scores
 
 
-class SimilarDocumentMatrix:
+class SimilarDocuments:
 
     def __init__(
         self,
         raw_doc: List[str] = None,
-        num_results: int = 3,
+        top_k: int = 3,
         ngram: Tuple[int, int] = (1, 1),
     ):
         """Get the most similar documents from top occurrences of terms.
@@ -95,43 +95,56 @@ class SimilarDocumentMatrix:
             The corpus is expected to be a sequence of strings or bytes items
             are expected to be analysed directly.
 
+        `top_k` (Optional[int], default=None):
+            Get the top k (number) of similar documents.
+
         `ngram` (Tuple[int, int], default=(1, 1)):
             Choose an ngram range for the document frequency.
 
-        TODO: Add examples to the documentation.
-
         """
         self.raw_doc = raw_doc
-        self.num_results = num_results
+        self.top_k = top_k
         self.ngram = ngram
         self.queries = []
         self.vectorizer = None
         self.features = None
 
-    def clear_queries(self, query_or_queries=None):
-        """Clear the queries accumulated in a session."""
-        if self.queries is not None:
-            self.queries.clear()
-        if query_or_queries is not None:
-            if isinstance(query_or_queries, list):
-                self.add_queries(query_or_queries)
-            elif isinstance(query_or_queries, str):
-                self.add_query(query_or_queries)
+    def add_query(self, Q: Union[str, List[str]],
+                  clear_first: bool = False) -> None:
+        """Extends or replaces the existing queries in an instance.
 
-    def add_query(self, query: str):
-        """Extend the existing query list from a single string."""
-        if isinstance(query, str):
-            self.queries.append(query)
+        Parameters:
+        ----------
 
-    def add_queries(self, queries: List[str]):
-        """Extend the existing query list from an iterable of strings."""
-        if isinstance(queries, list):
-            self.queries.extend(queries)
+        `Q` (Union[str, List[str]]):
+            Add queries from a single string or and iterable of sequences.
 
-    def fit_features(self, ngram: Tuple[int, int] = None,
-                     feature: str = "tfidf",
-                     min_freq: float = 0.0,
-                     max_freq: float = 1.0) -> None:
+        `clear_first` (bool, default=False):
+            If True, it clears the existing items in the instance attribute
+            `SimilarDocuments.queries`.
+
+        Usage:
+            >>> sd = SimilarDocuments(my_docs)
+            >>> sd.add_query('q1')
+            >>> sd.add_query(['q2', 'q3'])
+            ...
+            ['q1', 'q2', 'q3']
+
+        """
+        if clear_first:
+            self.clear_queries()
+        if Q is not None:
+            if isinstance(Q, str):
+                self.queries.append(Q)
+            elif isinstance(Q, list):
+                self.queries.extend(Q)
+
+    def clear_queries(self) -> None:
+        self.queries.clear()
+
+    def fit_features(
+            self, ngram: Tuple[int, int] = None, feature: str = "tfidf",
+            min_freq: float = 0.0, max_freq: float = 1.0) -> None:
         """Fit the vectorizer and feature matrix on the raw documents"""
         if ngram is None:
             ngram = self.ngram
@@ -139,20 +152,36 @@ class SimilarDocumentMatrix:
             self.raw_doc, feature=feature, ngram=ngram,
             min_freq=min_freq, max_freq=max_freq)
 
-    def iter_similar(self,
-                     num_results: int = None,
-                     queries: List[str] = None) -> Dict[str, str]:
-        """Yields an iterable of key value pairs."""
-        if queries is None:
-            queries = self.queries
-        if num_results is None:
-            num_results = self.num_results
+    def iter_similar(
+            self, top_k: Optional[int] = None,
+            Q: Optional[Union[str, List[str]]] = None,
+            clear_first: bool = False) -> Dict[str, str]:
+        """Iterate over all the queries returning the most similar document.
 
-        doc_matrix = self.vectorizer.transform(queries)
-        for i, q in enumerate(queries):
+        Parameters:
+        ----------
+
+        `top_k` (Optional[int], default=None):
+            Get the top k (number) of similar documents.
+
+        `Q` (Optional[Union[str, List[str]]]):
+            Add queries from a single string or and iterable of sequences.
+
+        Returns (Dict[str, str]): Yields a dictionary of key value pairs.
+
+        """
+        if top_k is None:
+            top_k = self.top_k
+
+        if Q is not None:
+            Q = self.add_query(Q, clear_first)
+        else:
+            Q = self.queries
+
+        doc_matrix = self.vectorizer.transform(Q)
+        for i, q in enumerate(Q):
             sparse_vec = doc_matrix[i]
-            doc_scores = cosine_similarity(sparse_vec, self.features,
-                                           num_results)
+            doc_scores = cosine_similarity(sparse_vec, self.features, top_k)
             for doc_id, score in doc_scores:
-                text = raw_doc[doc_id]
+                text = self.raw_doc[doc_id]
                 yield {"q_id": i, "doc_id": doc_id, "sim": score, "text": text}
