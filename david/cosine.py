@@ -81,55 +81,76 @@ def cosine_similarity(vectorizer: VectorizerMixin,
     return doc_scores
 
 
-def get_similar_docs(queries: Dict[str, List[str]],
-                     raw_doc: List[str],
-                     num_results: int,
-                     vectorizer: VectorizerMixin,
-                     features: SparseRowMatrix) -> List[Dict[Any, str]]:
-    """Get the most similar documents from top occurrences of terms.
+class SimilarDocumentMatrix:
 
-    Parameters:
-    ----------
+    def __init__(
+        self,
+        raw_doc: List[str] = None,
+        num_results: int = 3,
+        ngramTuple: Tuple[int, int] = (1, 1),
+    ):
+        """Get the most similar documents from top occurrences of terms.
 
-    `queries`: (Dict[str, List[str]]):
-        An iterable of sequences to query for similarities from the raw
-        documents used with `david.cosine.build_feature_matrix` method.
+        Parameters:
+        ----------
 
-    TODO: Improve, finish add examples to the documentation.
+        `queries`: (Dict[str, List[str]]):
+            An iterable of sequences to query for similarities from the raw
+            documents used with `david.cosine.build_feature_matrix` method.
 
-    """
-    doc_matrix = vectorizer.transform(queries)
-    similarities = list()
-    for i, query in enumerate(queries):
-        sparse_vec = doc_matrix[i]
-        doc_scores = cosine_similarity(sparse_vec, features, num_results)
-        for doc_id, score in doc_scores:
-            text = raw_doc[doc_id]
-            similarities.append({'doc_id': doc_id, 'sim': score, 'text': text})
-    return similarities
+        TODO: Improve, finish add examples to the documentation.
 
+        """
+        self.raw_doc = raw_doc
+        self.num_results = num_results
+        self.ngram = ngram
+        self.queries = []
+        self.vectorizer = None
+        self.features = None
 
-def compute_similardocs(queries: Dict[str, List[str]],
-                        raw_doc: List[str],
-                        num_results: int,
-                        ngram: Tuple[int, int],
-                        min_freq: int = 0.0,
-                        max_freq: int = 1.0) -> List[Dict[float, str]]:
-    """Test all the methods above in one method. I was thinking of getting
-    rid of all methods and put them all in one call but then I found that
-    I could make multiple's like this one. And adapt them to whatever I feel
-    like. Maybe I need to add some preprocessing or web components between
-    the inputs and the outputs. This is an example method for how both cosine
-    methods in this module can be used to fit a specific environment.
-    """
-    vectorizer, features = build_feature_matrix(raw_doc, "tfidf", ngram,
-                                                min_freq, max_freq)
-    doc_matrix = vectorizer.transform(queries)
-    similarities = list()
-    for i, q in enumerate(queries):
-        sparse_vec = doc_matrix[i]
-        doc_scores = cosine_similarity(sparse_vec, features, num_results)
-        for doc_id, score in doc_scores:
-            text = raw_doc[doc_id]
-            similarities.append({"sim": score, "text": text})
-    return similarities
+    def clear_queries(self, query_or_queries=None):
+        """Clear the queries accumulated in a session."""
+        if self.queries is not None:
+            self.queries.clear()
+        if query_or_queries is not None:
+            if isinstance(query_or_queries, list):
+                self.add_queries(query_or_queries)
+            elif isinstance(query_or_queries, str):
+                self.add_query(query_or_queries)
+
+    def add_query(self, query: str):
+        """Extend the existing query list from a single string."""
+        if isinstance(query, str):
+            self.queries.append(query)
+
+    def add_queries(self, queries: List[str]):
+        """Extend the existing query list from an iterable of strings."""
+        if isinstance(queries, list):
+            self.queries.extend(queries)
+
+    def fit_features(self, ngram: Tuple[int, int] = None,
+                     feature: str = "tfidf",
+                     min_freq: float = 0.0,
+                     max_freq: float = 1.0) -> Dict[str, ...]:
+        """Fit the vectorizer and feature matrix on the raw documents"""
+        if ngram is None:
+            ngram = self.ngram
+        self.vectorizer, self.features = build_feature_matrix(
+            self.raw_doc, feature=feature, ngram=ngram,
+            min_freq=min_freq, max_freq=max_freq)
+
+    def iter_similar(self, num_results: int = None, queries: List[str] = None):
+        """Yields an iterable of item keys of the similar document found."""
+        if queries is None:
+            queries = self.queries
+        if num_results is None:
+            num_results = self.num_results
+
+        doc_matrix = self.vectorizer.transform(queries)
+        for i, q in enumerate(queries):
+            sparse_vec = doc_matrix[i]
+            doc_scores = cosine_similarity(sparse_vec, self.features,
+                                           num_results)
+            for doc_id, score in doc_scores:
+                text = raw_doc[doc_id]
+                yield {"q_id": i, "doc_id": doc_id, "sim": score, "text": text}

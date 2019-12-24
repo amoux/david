@@ -19,8 +19,8 @@ Logger-Modes:
 import logging
 import warnings
 
-from david.cosine import (build_feature_matrix, cosine_similarity,
-                          get_similar_docs)
+from david.cosine import (SimilarDocumentMatrix, build_feature_matrix,
+                          cosine_similarity)
 from david.datasets import JsonlYTDatasets
 from david.io import (File, GoogleDriveDownloader, as_jsonl_file, as_txt_file,
                       delete_files, download_url_file)
