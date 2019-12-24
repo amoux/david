@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 
 import numpy
 import sklearn
+from david.text.prep import preprocess_doc
 from scipy.sparse.csr import csr_matrix
 from sklearn.feature_extraction.text import (CountVectorizer, TfidfVectorizer,
                                              VectorizerMixin)
@@ -142,14 +143,22 @@ class SimilarDocuments:
     def clear_queries(self) -> None:
         self.queries.clear()
 
-    def fit_features(
+    def learn_vocab(
             self, ngram: Tuple[int, int] = None, feature: str = "tfidf",
             min_freq: float = 0.0, max_freq: float = 1.0) -> None:
-        """Fit the vectorizer and feature matrix on the raw documents"""
+        """Learn vocabulary equivalent to fit followed by transform."""
         if ngram is None:
             ngram = self.ngram
+
+        raw_doc = self.raw_doc
+        # preprocess the sequences if the largest sequence is > 100.
+        max_seq_len = len(min(sorted(self.raw_doc, key=len)))
+        if max_seq_len > 100:
+            # the preprocessing function returns an generator.
+            raw_doc = preprocess_doc(self.raw_doc)
+
         self.vectorizer, self.features = build_feature_matrix(
-            self.raw_doc, feature=feature, ngram=ngram,
+            raw_doc=raw_doc, feature=feature, ngram=ngram,
             min_freq=min_freq, max_freq=max_freq)
 
     def iter_similar(

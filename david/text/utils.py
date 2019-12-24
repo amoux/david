@@ -1,13 +1,43 @@
 import collections
+import random
 import string
-from typing import List
+from typing import List, Optional, Tuple
 from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
 
 
-def get_vocab_size(text: str):
-    word_map = collections.Counter(text.split())
+def split_train_test(
+        doc: List[str],
+        n: Optional[int] = None) -> Tuple[List[str], List[str]]:
+    """Randomly split a doc into train and test iterables.
+
+    Parameters:
+    ----------
+
+    `doc` (list[str]):
+        A doc of iterable strings that will be split.
+
+    `n` (Optional[int], default=None):
+        The number of items in the doc to consider to subset.
+        e.g, If you want to use 100 samples from 1000 samples then,
+        < Train[80], Test[20] > will be the output.
+
+    Returns (List[str], List[str]): Two iterables - train_doc is 8/10
+        of the total while the test_doc is 2/10 of the total.
+
+    """
+    random.seed(12345)
+    random.shuffle(doc)
+    if not n or n > len(doc):
+        n = len(doc)
+    train_doc = doc[: int(0.8 * n)]
+    test_doc = doc[int(0.8 * n): n]
+    return train_doc, test_doc
+
+
+def get_vocab_size(doc: List[str]) -> int:
+    word_map = collections.Counter(doc)
     unique_words = len(word_map.keys())
     vocab_size = int(unique_words)
     return vocab_size

@@ -11,7 +11,7 @@ def split_youtube_audiences(
 
     Usage:
         >>> db = CommentsSQL("v2")
-        >>> batch = db.search_comments("%how to code%")
+        >>> batch = db.fetch_comments("%how to code%")
         >>> replies, no_replies = split_youtube_audiences(batch)
         >>> print(len(replies), len(no_replies))
         >>> (8, 43)

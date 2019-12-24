@@ -42,9 +42,10 @@ class YTCommentTokenizer:
         return words
 
 
-def encode_ascii(sequence: str):
-    ascii_seq = unicodedata.normalize('NFKD', sequence)
-    return ascii_seq.encode('ascii', 'ignore').decode('utf-8', 'ignore')
+def unicode_to_ascii(sequence: str) -> str:
+    """Convert the unicode to ASCII."""
+    return "".join(char for char in unicodedata.normalize("NFD", sequence)
+                   if unicodedata.category(char) != "Mn")
 
 
 def extract_emojis(sequence: str):
@@ -211,7 +212,7 @@ def preprocess_sequence(sequence: str,
                         stop_words=None,
                         tokenize=False):
     """Basic text preprocessing for a sequence."""
-    sequence = normalize_whitespace(encode_ascii(sequence))
+    sequence = normalize_whitespace(unicode_to_ascii(sequence))
     if contractions:
         sequence = replace_contractions(sequence)
     if lemmatize:
@@ -236,22 +237,17 @@ def preprocess_doc(doc: list,
                    stop_words=None,
                    tokenize=False):
     """Basic text preprocessing for a doc (iterable) of sequences."""
-
-    normalized = list()
     for sequence in doc:
-        normalized.append(
-            preprocess_sequence(
-                sequence=sequence,
-                contractions=contractions,
-                lemmatize=lemmatize,
-                punctuation=punctuation,
-                norm_chars=norm_chars,
-                rm_stopwords=rm_stopwords,
-                stop_words=stop_words,
-                tokenize=tokenize,
-            )
+        yield preprocess_sequence(
+            sequence=sequence,
+            contractions=contractions,
+            lemmatize=lemmatize,
+            punctuation=punctuation,
+            norm_chars=norm_chars,
+            rm_stopwords=rm_stopwords,
+            stop_words=stop_words,
+            tokenize=tokenize,
         )
-    return normalized
 
 
 def gensim_preprocess(doc: list, stop_words=None, deacc=False):

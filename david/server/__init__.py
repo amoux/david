@@ -120,7 +120,7 @@ class CommentsSQL(object):
             "select count(*) from %s limit 1" % self.table_name)
         return c.fetchone()[0]
 
-    def search_comments(
+    def fetch_comments(
             self, pattern: str,
             columns: str = "text",
             sort_col: Optional[str] = None,
@@ -144,7 +144,7 @@ class CommentsSQL(object):
 
         Usage:
             >>> pattern = "%make a new video about%"
-            >>> doc = search_comments(pattern, "id, text", sort_by="id")
+            >>> doc = fetch_comments(pattern, "id, text", sort_by="id")
             >>> print(doc[0].id, doc[0].text)
             '(792286, 'Can you make a video about pixel 1 2!')'
 

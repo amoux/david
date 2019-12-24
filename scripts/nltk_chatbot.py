@@ -26,7 +26,7 @@ GREET_RESPONSES = ['hi', 'hey', '*nods*', 'hi there', 'hello',
                    'I am glad you are talking to me!']
 
 
-def encode_ascii(tokens: list):
+def unicode_to_ascii(tokens: list):
     ascii_tokens = []
     for token in tokens:
         ascii_ = unicodedata.normalize('NFKD', token).encode(
@@ -41,7 +41,7 @@ def get_textdocs(fp: str, errors='ignore'):
         for text in text_file:
             if len(text) > 1:
                 tokens = [s for s in text.strip().split()]
-                string = ' '.join(encode_ascii(tokens))
+                string = ' '.join(unicode_to_ascii(tokens))
                 text_docs.append(string)
         return text_docs
 
