@@ -131,7 +131,7 @@ class SimilarDocumentMatrix:
     def fit_features(self, ngram: Tuple[int, int] = None,
                      feature: str = "tfidf",
                      min_freq: float = 0.0,
-                     max_freq: float = 1.0) -> Dict[str, str]:
+                     max_freq: float = 1.0) -> None:
         """Fit the vectorizer and feature matrix on the raw documents"""
         if ngram is None:
             ngram = self.ngram
@@ -139,7 +139,9 @@ class SimilarDocumentMatrix:
             self.raw_doc, feature=feature, ngram=ngram,
             min_freq=min_freq, max_freq=max_freq)
 
-    def iter_similar(self, num_results: int = None, queries: List[str] = None):
+    def iter_similar(self,
+                     num_results: int = None,
+                     queries: List[str] = None) -> Dict[str, str]:
         """Yields an iterable of key value pairs."""
         if queries is None:
             queries = self.queries
