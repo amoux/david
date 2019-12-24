@@ -131,7 +131,7 @@ class SimilarDocumentMatrix:
     def fit_features(self, ngram: Tuple[int, int] = None,
                      feature: str = "tfidf",
                      min_freq: float = 0.0,
-                     max_freq: float = 1.0) -> Dict[str, ...]:
+                     max_freq: float = 1.0) -> Dict[str, str]:
         """Fit the vectorizer and feature matrix on the raw documents"""
         if ngram is None:
             ngram = self.ngram
