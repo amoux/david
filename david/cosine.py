@@ -69,10 +69,7 @@ def cosine_similarity(vectorizer: VectorizerMixin,
                       features: SparseRowMatrix,
                       num_results: int = 3,
                       round_float: int = 4) -> List[Tuple[int, float]]:
-    """Computes cosine similarity, as the normalized dot product of X and Y.
-
-    TODO: Improve, finish add examples to the documentation.
-    """
+    """Computes cosine similarity, as the normalized dot product of X and Y."""
     vectorizer = vectorizer.toarray()[0]
     features = features.toarray()  # 2 dimensional ndarray.
     similar = numpy.dot(vectorizer, features.T)
@@ -87,18 +84,21 @@ class SimilarDocumentMatrix:
         self,
         raw_doc: List[str] = None,
         num_results: int = 3,
-        ngramTuple: Tuple[int, int] = (1, 1),
+        ngram: Tuple[int, int] = (1, 1),
     ):
         """Get the most similar documents from top occurrences of terms.
 
         Parameters:
         ----------
 
-        `queries`: (Dict[str, List[str]]):
-            An iterable of sequences to query for similarities from the raw
-            documents used with `david.cosine.build_feature_matrix` method.
+        `raw_doc` (List[str], default=None):
+            The corpus is expected to be a sequence of strings or bytes items
+            are expected to be analysed directly.
 
-        TODO: Improve, finish add examples to the documentation.
+        `ngram` (Tuple[int, int], default=(1, 1)):
+            Choose an ngram range for the document frequency.
+
+        TODO: Add examples to the documentation.
 
         """
         self.raw_doc = raw_doc
@@ -140,7 +140,7 @@ class SimilarDocumentMatrix:
             min_freq=min_freq, max_freq=max_freq)
 
     def iter_similar(self, num_results: int = None, queries: List[str] = None):
-        """Yields an iterable of item keys of the similar document found."""
+        """Yields an iterable of key value pairs."""
         if queries is None:
             queries = self.queries
         if num_results is None:
