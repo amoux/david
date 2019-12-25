@@ -32,7 +32,7 @@ from david.models import trans as TransformersModel
 from david.ngrams import (sents_to_ngramTokens, top_bigrams, top_quadgrams,
                           top_trigrams, top_unigrams)
 from david.pipeline import Pipeline
-from david.server import CommentsSQL
+from david.server import CommentsSql
 from david.text import summarization
 from david.text.prep import (YTCommentTokenizer, unicode_to_ascii,
                              nltk_word_tokenizer, normalize_whitespace,

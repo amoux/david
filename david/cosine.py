@@ -86,6 +86,7 @@ class SimilarDocuments:
         raw_doc: List[str] = None,
         top_k: int = 3,
         ngram: Tuple[int, int] = (1, 1),
+        feature: str = "tfidf",
     ):
         """Get the most similar documents from top occurrences of terms.
 
@@ -106,9 +107,13 @@ class SimilarDocuments:
         self.raw_doc = raw_doc
         self.top_k = top_k
         self.ngram = ngram
+        self.feature = feature
         self.queries = []
         self.vectorizer = None
         self.features = None
+
+    def clear_queries(self) -> None:
+        self.queries.clear()
 
     def add_query(self, Q: Union[str, List[str]],
                   clear_first: bool = False) -> None:
@@ -123,14 +128,6 @@ class SimilarDocuments:
         `clear_first` (bool, default=False):
             If True, it clears the existing items in the instance attribute
             `SimilarDocuments.queries`.
-
-        Usage:
-            >>> sd = SimilarDocuments(my_docs)
-            >>> sd.add_query('q1')
-            >>> sd.add_query(['q2', 'q3'])
-            ...
-            ['q1', 'q2', 'q3']
-
         """
         if clear_first:
             self.clear_queries()
@@ -140,31 +137,24 @@ class SimilarDocuments:
             elif isinstance(Q, list):
                 self.queries.extend(Q)
 
-    def clear_queries(self) -> None:
-        self.queries.clear()
-
-    def learn_vocab(
-            self, ngram: Tuple[int, int] = None, feature: str = "tfidf",
-            min_freq: float = 0.0, max_freq: float = 1.0) -> None:
+    def learn_vocab(self, min_freq: float = 0.0, max_freq: float = 1.0):
         """Learn vocabulary equivalent to fit followed by transform."""
-        if ngram is None:
-            ngram = self.ngram
-
         raw_doc = self.raw_doc
-        # preprocess the sequences if the largest sequence is > 100.
+        # TODO: This needs to take into account the number of samples
+        # in the document to determine if there's enough samples to preprocess
+        # the sequences.
         max_seq_len = len(min(sorted(self.raw_doc, key=len)))
         if max_seq_len > 100:
-            # the preprocessing function returns an generator.
             raw_doc = preprocess_doc(self.raw_doc)
-
         self.vectorizer, self.features = build_feature_matrix(
-            raw_doc=raw_doc, feature=feature, ngram=ngram,
+            raw_doc=raw_doc, feature=self.feature, ngram=self.ngram,
             min_freq=min_freq, max_freq=max_freq)
 
     def iter_similar(
             self, top_k: Optional[int] = None,
             Q: Optional[Union[str, List[str]]] = None,
-            clear_first: bool = False) -> Dict[str, str]:
+            clear_first: bool = False,
+    ) -> Dict[str, str]:
         """Iterate over all the queries returning the most similar document.
 
         Parameters:
@@ -181,7 +171,6 @@ class SimilarDocuments:
         """
         if top_k is None:
             top_k = self.top_k
-
         if Q is not None:
             Q = self.add_query(Q, clear_first)
         else:

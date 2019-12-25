@@ -10,7 +10,7 @@ def split_youtube_audiences(
     """Splits Youtube audiences from a batch of comments.
 
     Usage:
-        >>> db = CommentsSQL("v2")
+        >>> db = CommentsSql("v2")
         >>> batch = db.fetch_comments("%how to code%")
         >>> replies, no_replies = split_youtube_audiences(batch)
         >>> print(len(replies), len(no_replies))
@@ -26,7 +26,7 @@ def split_youtube_audiences(
 
 
 def simple_database_preprocess(db_batch: List[Any]) -> List[str]:
-    """Simple text preprocessing pipeline for CommentsSQL instace batches.
+    """Simple text preprocessing pipeline for CommentsSql instace batches.
 
     Normalizes whitespaces, removes repeated characters/words, removes empty
     lines, filters out repeated strings (comments) and transforms all texts to

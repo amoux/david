@@ -41,7 +41,7 @@ def is_file_in_dirpath(file: str, path: str) -> Any:
     return file_path
 
 
-class CommentsSQL(object):
+class CommentsSql(object):
     DAVID_HOME_SQLITE = os.environ.get('DAVID_COMMENTS_DB')
     if not os.path.exists(DAVID_HOME_SQLITE):
         os.makedirs(DAVID_HOME_SQLITE)
