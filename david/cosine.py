@@ -140,15 +140,8 @@ class SimilarDocuments:
 
     def learn_vocab(self, min_freq: float = 0.0, max_freq: float = 1.0):
         """Learn vocabulary equivalent to fit followed by transform."""
-        raw_doc = self.raw_doc
-        # TODO: This needs to take into account the number of samples
-        # in the document to determine if there's enough samples to preprocess
-        # the sequences.
-        max_seq_len = len(min(sorted(self.raw_doc, key=len)))
-        if max_seq_len > 100:
-            raw_doc = preprocess_doc(self.raw_doc)
         self.vectorizer, self.features = build_feature_matrix(
-            raw_doc=raw_doc, feature=self.feature, ngram=self.ngram,
+            raw_doc=self.raw_doc, feature=self.feature, ngram=self.ngram,
             min_freq=min_freq, max_freq=max_freq)
 
     def iter_similar(self,
