@@ -115,14 +115,15 @@ class SimilarDocuments:
     def clear_queries(self) -> None:
         self.queries.clear()
 
-    def add_query(self, Q: Union[str, List[str]],
+    def add_query(self,
+                  query: Union[str, List[str]] = None,
                   clear_first: bool = False) -> None:
         """Extends or replaces the existing queries in an instance.
 
         Parameters:
         ----------
 
-        `Q` (Union[str, List[str]]):
+        `query` (Union[str, List[str]]):
             Add queries from a single string or and iterable of sequences.
 
         `clear_first` (bool, default=False):
@@ -131,11 +132,11 @@ class SimilarDocuments:
         """
         if clear_first:
             self.clear_queries()
-        if Q is not None:
-            if isinstance(Q, str):
-                self.queries.append(Q)
-            elif isinstance(Q, list):
-                self.queries.extend(Q)
+        if query:
+            if isinstance(query, str):
+                self.queries.append(query)
+            elif isinstance(query, list):
+                self.queries.extend(query)
 
     def learn_vocab(self, min_freq: float = 0.0, max_freq: float = 1.0):
         """Learn vocabulary equivalent to fit followed by transform."""
@@ -150,11 +151,10 @@ class SimilarDocuments:
             raw_doc=raw_doc, feature=self.feature, ngram=self.ngram,
             min_freq=min_freq, max_freq=max_freq)
 
-    def iter_similar(
-            self, top_k: Optional[int] = None,
-            Q: Optional[Union[str, List[str]]] = None,
-            clear_first: bool = False,
-    ) -> Dict[str, str]:
+    def iter_similar(self,
+                     top_k: Optional[int] = None,
+                     query: Optional[Union[str, List[str]]] = None,
+                     clear_first: bool = False) -> Dict[str, str]:
         """Iterate over all the queries returning the most similar document.
 
         Parameters:
@@ -163,21 +163,18 @@ class SimilarDocuments:
         `top_k` (Optional[int], default=None):
             Get the top k (number) of similar documents.
 
-        `Q` (Optional[Union[str, List[str]]]):
+        `query` (Optional[Union[str, List[str]]]):
             Add queries from a single string or and iterable of sequences.
 
         Returns (Dict[str, str]): Yields a dictionary of key value pairs.
 
         """
-        if top_k is None:
-            top_k = self.top_k
-        if Q is not None:
-            Q = self.add_query(Q, clear_first)
-        else:
-            Q = self.queries
+        top_k = self.top_k if not top_k else top_k
+        if query:
+            self.add_query(query=query, clear_first=clear_first)
 
-        doc_matrix = self.vectorizer.transform(Q)
-        for i, q in enumerate(Q):
+        doc_matrix = self.vectorizer.transform(self.queries)
+        for i, q in enumerate(self.queries):
             sparse_vec = doc_matrix[i]
             doc_scores = cosine_similarity(sparse_vec, self.features, top_k)
             for doc_id, score in doc_scores:
