@@ -1,8 +1,8 @@
 import collections
 import random
 import string
-from typing import List, Optional, Tuple
-from urllib.request import urlopen
+from typing import Dict, List, Optional, Tuple
+from urllib.request import URLError, urlopen, Request
 
 from bs4 import BeautifulSoup
 
@@ -59,18 +59,29 @@ def is_tokenized_doc(obj):
         return False
 
 
-def extract_text_from_url(url: str) -> str:
+def extract_text_from_url(url: str, headers: Dict[str, str] = None) -> str:
     """Extracts all text found in the webpage.
 
+    Note: Returns an empty string if the connection to the URL failed.
+
     Usage:
-        >>> extract_text_from_url("https://docs.python.org/3/faq/general.html")
+        >>> url = "https://docs.python.org/3/faq/general.html"
+        >>> extract_text_from_url(url)
+        ...
         'Contents General Python FAQ General Information What is Python?...'
 
     """
-    page = urlopen(url)
-    soup = BeautifulSoup(page, features="lxml")
-    text = ' '.join(map(lambda p: p.text, soup.find_all('p')))
-    return text
+    if not headers:
+        headers = {'User-Agent': 'Mozilla/5.0'}
+    try:
+        reqs = Request(url, headers=headers)
+        page = urlopen(reqs)
+        soup = BeautifulSoup(page, features="lxml")
+        text = " ".join(map(lambda p: p.text, soup.find_all("p")))
+    except URLError:
+        return ""
+    else:
+        return text
 
 
 def clean_tokens(doc: list, discard_punct="_", min_seqlen=1):
