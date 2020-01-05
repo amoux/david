@@ -9,32 +9,27 @@ from ..datasets import GDRIVE_SQLITE_DATABASES, download_sqlite_database
 
 COUNT_QUERIES = {
     'videos': "select distinct video_id from comments;",
-    # execute query for a given {table_name}
     'comments': "select video_id, count(*) c from {} group by video_id;"
 }
 
 
-def check_file_exists(
-        file_name: str,
-        file_path: str,
-        file_ext: str = ".db") -> Any:
+def check_file_exists(file_name: str, file_path: str,
+                      file_ext: str = ".db") -> Any:
     """Validates if the file exists in the directory.
-
+    Returns the file name if exists. Otherwise it returns None.
     Usage:
         >>> check_file_exists('unbox', david_home_path)
         'lew_comments_unbox.db'
-
-    Returns the file name if exists. Otherwise it returns None.
     """
     file_found = None
     for file in os.listdir(file_path):
-        if file.endswith(file_ext) and file.replace(
-                file_ext, "").endswith(file_name):
+        if file.endswith(file_ext) \
+                and file.replace(file_ext, "").endswith(file_name):
             file_found = file  # get the first occurrence for now:
     return file_found
 
 
-def is_file_in_dirpath(file: str, path: str) -> Any:
+def db_file_exist(file: str, path: str) -> Any:
     file_path = os.path.join(path, check_file_exists(file, path))
     if not os.path.isfile(file_path):
         return None
@@ -42,17 +37,12 @@ def is_file_in_dirpath(file: str, path: str) -> Any:
 
 
 class CommentsSql(object):
-    DAVID_HOME_SQLITE = os.environ.get('DAVID_COMMENTS_DB')
-    if not os.path.exists(DAVID_HOME_SQLITE):
-        os.makedirs(DAVID_HOME_SQLITE)
-    AVAILABLE_DATABASES = GDRIVE_SQLITE_DATABASES
+    DAVID_SQLITE = os.path.join(os.environ.get('DAVID_DATA'), "sqlite")
 
-    def __init__(
-            self,
-            sql_file: Optional[str] = None,
-            sql_path: Optional[str] = None,
-            table_name: Optional[str] = None,
-    ):
+    def __init__(self,
+                 sql_file: Optional[str] = None,
+                 sql_path: Optional[str] = None,
+                 table_name: Optional[str] = None):
         """Database connector for collections of YouTube comments.
 
         Parameters:
@@ -72,25 +62,26 @@ class CommentsSql(object):
         self.table_name = table_name
 
         if self.sql_file and sql_path is None:
-            temp_sql_file, sqlite_home = (
-                self.sql_file, self.DAVID_HOME_SQLITE)
-            if temp_sql_file in self.AVAILABLE_DATABASES.keys():
+            if not os.path.isdir(self.DAVID_SQLITE):
+                os.makedirs(self.DAVID_SQLITE, exist_ok=True)
+            temp_sqlfile, sqlite_home = (self.sql_file, self.DAVID_SQLITE)
+            if temp_sqlfile in GDRIVE_SQLITE_DATABASES.keys():
                 try:
-                    # If the file doesn't exists download the file:
-                    sql_file_exist = is_file_in_dirpath(
-                        temp_sql_file, sqlite_home)
+                    sql_filepath = db_file_exist(temp_sqlfile, sqlite_home)
                 except TypeError:
-                    # sql file does not exist, download the database.
-                    sql_file_exist = download_sqlite_database(
-                        temp_sql_file, sqlite_home, return_destination=True)
-                # sql file path loaded, connect to the database.
-                self.conn = sqlite3.connect(sql_file_exist)
-                self.sql_file, self.sql_path = os.path.basename(
-                    sql_file_exist), sql_file_exist
+                    sql_filepath = download_sqlite_database(
+                        temp_sqlfile, sqlite_home, return_destination=True)
+                # update the evaluated path to the db file and connect.
+                self.conn = sqlite3.connect(sql_filepath)
+                self.sql_path = sql_filepath
+                self.sql_file = os.path.basename(sql_filepath)
+                del sql_filepath
+                del temp_sqlfile
+
             else:
                 raise ValueError("{}, Error is not a valid file to load \
-                select one from: {}.".format(
-                    self.sql_file, self.AVAILABLE_DATABASES.keys()))
+                select one from: {}.".format(self.sql_file,
+                                             GDRIVE_SQLITE_DATABASES.keys()))
 
         if self.sql_path and self.sql_file is None:
             self.conn, self.sql_file = sqlite3.connect(
