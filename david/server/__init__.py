@@ -12,6 +12,8 @@ COUNT_QUERIES = {
     'comments': "select video_id, count(*) c from {} group by video_id;"
 }
 
+DAVID_SQLITE = os.path.join(os.environ.get('DAVID_DATA'), "sqlite")
+
 
 def check_file_exists(file_name: str, file_path: str,
                       file_ext: str = ".db") -> Any:
@@ -37,7 +39,6 @@ def db_file_exist(file: str, path: str) -> Any:
 
 
 class CommentsSql(object):
-    DAVID_SQLITE = os.path.join(os.environ.get('DAVID_DATA'), "sqlite")
 
     def __init__(self,
                  sql_file: Optional[str] = None,
@@ -62,9 +63,9 @@ class CommentsSql(object):
         self.table_name = table_name
 
         if self.sql_file and sql_path is None:
-            if not os.path.isdir(self.DAVID_SQLITE):
-                os.makedirs(self.DAVID_SQLITE, exist_ok=True)
-            temp_sqlfile, sqlite_home = (self.sql_file, self.DAVID_SQLITE)
+            if not os.path.isdir(DAVID_SQLITE):
+                os.makedirs(DAVID_SQLITE, exist_ok=True)
+            temp_sqlfile, sqlite_home = (self.sql_file, DAVID_SQLITE)
             if temp_sqlfile in GDRIVE_SQLITE_DATABASES.keys():
                 try:
                     sql_filepath = db_file_exist(temp_sqlfile, sqlite_home)
