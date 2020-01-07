@@ -79,23 +79,43 @@ You can now load the model via spacy.load('en_core_web_sm')
 
 ## server 📡
 
-- configure the database and build a dataset from a search query. default parameters `db_name='comments_v2.db', table='comments'`.
+- Configure the database and build a dataset from a search query. Using an existing database of youtube comments - here we are use the `unbox` database (The database will be dowloaded automatically if it doesn't exist in the `david_data` directory).
 
 ```python
-from david.server import CommentsDB
+from david import CommentsSql
+db = CommentsSql('unbox')
 
-db = CommentsDB()
-comments = db.get_all_comments()
-[c.text for c in comments][:5]
+# Fetch a batch based on a query.
+query = "%make a video%"
+columns = "id, cid, text"
+batch = db.fetch_comments(query, columns, sort_by='id')
+
+# Acess the batch columns by simply passing the index of the batch:
+idx, cid, text = batch[10]
+print(text)
 ...
-['Video was hilarious, subscribed!',
- 'Hamazingly educational; Subscribed for more :)',
- 'Great vid....SUBSCRIBED with the Bell👍',
- 'Clicked for the learning, stayed for the hair,
- subscribed for the humor. Keep it up fam.',
- 'I keep thinking the slinky on his head is going
- to fall off. But this stuff is too damn
- interesting so I subscribed anyways.']
+'Hey dude quick question when are u gonna make a video with the best phone of 2018?'
+```
+
+> Building a simple classification dataset from youtube comments.
+
+```python
+# labels
+question = 1
+statement = 0
+# dataset with 100 samples.
+dataset = []
+for i in range(100):
+    text = batch[i].text.strip()
+    if text is not None:
+      label = question if text.endswith('?') else statement
+      dataset.append((text, label))
+
+dataset[:10]
+...
+ [('Try the samsung a9 and make a video like "the smartphone with 4 cameras"', 0),
+ ("Yo you're going to make a video on the pixel Slate bro?", 1),
+ ('Would you please make a video on Funcl W1 and Funcl AI earphones.', 0), ...]
 ```
 
 ## pipeline 🛠
@@ -103,11 +123,21 @@ comments = db.get_all_comments()
 - export a document to a df with the `export` attribute.
 
 ```python
-from david.pipeline import Pipeline
-pipe = Pipeline(comments.export('df'))
+from david import Pipeline
+pipe = Pipeline(dataset, columns=['text', 'label'])
+pipe.head()
+```
+```
+...
+                                                text  label
+0  Can you make a video about pixel 1 2 and 3 sma...      1
+1  the meme is not because you change your phone,...      1
+2                   Plzz us note 9 and  make a video      1
+3  Lewis Please Make A Video On S10 5G Model I Th...      1
+4  Hey lew\nCan you please make a video on huawei...      1
 ```
 
-- the following metrics are available one call away 🤖
+> The following metrics are available one call away 🤖
 
 ```python
 pipe.get_all_metrics(string=True, words=True, characters=True, tags=True)
