@@ -141,3 +141,15 @@ def complete_sentences(raw_doc: List[str]) -> List[str]:
     doc = " ".join(doc).split("<sos>")
     doc = [f"{sent.strip()}." for sent in doc]
     return doc
+
+
+def change_case(string: str) -> str:
+    """Change case from camel case to snake case."""
+    case = [string[0].lower()]
+    for char in string[1:]:
+        if char in ("ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
+            case.append("_")
+            case.append(char.lower())
+        else:
+            case.append(char)
+    return "".join(case)
