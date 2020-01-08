@@ -178,10 +178,19 @@ def remove_repeating_characters(sequence: str):
     return normalize(sequence)
 
 
-def remove_punctuation(sequence: str):
-    pattern = re.compile("[{}]".format(re.escape(string.punctuation)))
-    tokens = nltk_word_tokenizer(sequence)
-    return " ".join(filter(None, [pattern.sub("", tok) for tok in tokens]))
+def remove_punctuation(sequence: str, contractions: bool = False) -> str:
+    punctuation = re.escape(string.punctuation)
+    punctuation = re.compile("[{}]".format(punctuation))
+    # Removing contractions improves removing punctuation without
+    # hurting the meaning of a word e.g, "y'all" => "you are all"
+    # should be done before actually removing all punctuation.
+    # NOTE that punctuations "-" and "_" are not removed.
+    if contractions:
+        sequence = replace_contractions(sequence)
+    sequence = nltk_word_tokenizer(sequence)
+    sequence = " ".join(filter(lambda tok: punctuation.sub("", tok), sequence))
+    sequence = normalize_whitespace(sequence)
+    return sequence
 
 
 def remove_stopwords(sequence: str, stop_words=None):
