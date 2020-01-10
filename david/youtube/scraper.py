@@ -53,12 +53,7 @@ class YTCommentScraper(object):
             else:
                 time.sleep(self.sleep_per_retry)
 
-    def scrape_comments(
-            self,
-            video_id: str = None,
-            video_url: str = None,
-            sleep=1,
-    ):
+    def scrape_comments(self, video_id: str = None, video_url: str = None, sleep=1):
         """Scrapes Comments from a video id or a video url.
 
         Parameters:
@@ -151,3 +146,5 @@ class YTCommentScraper(object):
                     ret_cids.append(page['cid'])
                     yield page
             time.sleep(sleep)
+
+    __call__ = scrape_comments

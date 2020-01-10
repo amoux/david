@@ -40,6 +40,8 @@ class YTCommentTokenizer:
             words = list(map((
                 lambda x: x if EMOTICON_RE.search(x) else x.lower()), words))
         return words
+    
+    __call__ = tokenize
 
 
 def unicode_to_ascii(sequence: str) -> str:

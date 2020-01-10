@@ -114,100 +114,58 @@ class GoogleDriveDownloader:
         logger.info("File saved in path, %s", self._destination)
 
 
-class File:
-    """File writer and reader for text and jsonl files.
-
-    Parameters:
-    -----------
-    `path` (str, default="data"):
-        The default path directory to use in a session.
-
-    Usage:
-        >>> file = File("data")
-        >>> file.write_jsonl(Iterable, "file_name.jsonl")
-        # this also works:
-        >>> File.write_jsonl(Iterable, "file_name.jsonl", path='downloads')
-
-    """
-    _path = None
-
-    def __init__(self, path: str = "data") -> IO:
-        self.path = path
-        if self.path:
-            File._path = self.path
+class File(object):
+    basepath = "data"
+    
+    @staticmethod
+    def directory(basepath: str = "data"):
+        File.basepath = basepath
 
     @classmethod
-    def _make_dirs(cls, path: str) -> None:
-        if not os.path.exists(path):
-            os.makedirs(path)
+    def _loadpath(cls, file_name: str):
+        if not os.path.isdir(cls.basepath):
+            os.makedirs(cls.basepath, exist_ok=True)
+        return os.path.join(cls.basepath, file_name)
 
     @classmethod
-    def write_text(cls, doc: List[str], name: str, path: str = None) -> TextIO:
-        path = path if path else File._path
-        cls._make_dirs(path)
-        with open(os.path.join(path, name), "w", encoding="utf-8") as f:
+    def write_text(cls, doc: List[str], name: str) -> TextIO:
+        file_path = cls._loadpath(name)
+        with open(file_path, "w", encoding="utf-8") as file:
             for line in doc:
                 if len(line.strip()) > 0:
-                    f.write("%s\n" % line)
+                    file.write("%s\n" % line)
 
     @classmethod
-    def read_text(cls, path: str, lines: bool = True) -> Generator:
-        """Reads TEXT files (recommend leaving lines as True for large files).
-
-        Parameters:
-        -----------
-        `lines` (bool, default=True):
-            If False, all data is read in at once; otherwise, data is read in
-            one line at a time.
-        """
-        with open(path, "r", encoding="utf-8") as f:
+    def read_text(cls, name: str, lines=True) -> Generator:
+        file_path = cls._loadpath(name)
+        with open(file_path, "r", encoding="utf-8") as file:
             if lines is False:
-                yield f.read()
+                yield file.read()
             else:
-                for line in f:
+                for line in file:
                     yield line
 
     @classmethod
-    def write_jsonl(
-            cls,
-            doc: List[Text],
-            name: str,
-            path: str = None,
-            text_only: bool = True,
-    ) -> IO:
-        """Write to a jsonl file
-
-        Parameters:
-        ----------
-
-        `text_only` (bool, default=True):
-            If true only one dict key is present. If more than one key
-            set text_only to false.
-
-        """
-        path = path if path else File._path
-        cls._make_dirs(path)
-        with io.open(os.path.join(path, name), "w", encoding="utf-8") as f:
+    def write_jsonl(cls, doc: List[Text], name: str, text_only=True) -> IO:
+        file_path = cls._loadpath(name)
+        with io.open(file_path, "w", encoding="utf-8") as file:
             for line in doc:
                 if text_only:
-                    print(json.dumps(
-                        {"text": line}, ensure_ascii=False), file=f)
+                    print(json.dumps({"text": line}, ensure_ascii=False), file=file)
                 else:
-                    print(json.dumps(line, ensure_ascii=False), file=f)
+                    print(json.dumps(line, ensure_ascii=False), file=file)
 
     @classmethod
-    def read_jsonl(cls, path: str, lines: bool = True) -> Generator:
-        """Reads JSONL files (recommend leaving lines as True for large files).
-
-        Parameters:
-        -----------
-        `lines` (bool, default=True):
-            If False, all data is read in at once; otherwise, data is read in
-            one line at a time.
-        """
-        with open(path, mode="r", encoding="utf-8") as f:
+    def read_jsonl(cls, name: str, lines: bool = True) -> Generator:
+        file_path = cls._loadpath(name)
+        with open(file_path, mode="r", encoding="utf-8") as file:
             if lines is False:
-                yield json.loads(f)
+                yield json.loads(file)
             else:
-                for line in f:
+                for line in file:
                     yield json.loads(line)
+                   
+    def __repr__(cls):
+        return f"File< {os.listdir(File.basepath)} >"
+    
+    __call__ = directory
