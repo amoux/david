@@ -35,11 +35,11 @@ def columns_to_snakecase(cols: Dict[str, List[str]]) -> Dict[str, List[str]]:
 
 
 class TextMetrics(MutableSequence, object):
-    _DEFAULT_COLS: Dict[str, List[str]] = None
+    _DEFAULT_COLS: Dict[str, List[str]] = DEFAULT_COLUMNS
     COLUMNS = {'string': [], 'word': [], 'char': [], 'senti': [], 'author': []}
     SENTI_LABELS = ['positive', 'negative', 'neutral']
 
-    def _columns_case_type(self, to_snake: bool = False):
+    def _load_metric_columns(self, to_snake: bool = False):
         if to_snake:
             self._DEFAULT_COLS = columns_to_snakecase(DEFAULT_COLUMNS)
         else:
@@ -143,7 +143,7 @@ class TextMetrics(MutableSequence, object):
             column names.
 
         """
-        self._columns_case_type(snakecased)
+        self._load_metric_columns(snakecased)
         if stop_words is not None:
             self.STOP_WORDS = stop_words
         if sentilabels is not None:
