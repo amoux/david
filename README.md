@@ -7,6 +7,7 @@
   - Vuepoint is an analytics web-application that helps content creators by automating the tedious task of manually having to scroll and read through multiple pages of comments to understand what an audience wants. Extracting the vital information that is relevant to each content creator without the noise!
 
 - 📃 objectives:
+
   - Semantic analytics application for content creators.
   - Social marketing trends of interest.
 
@@ -18,19 +19,30 @@
 
 ## configuration 👻
 
-- clone or download the repo. use `git pull` to have the latest release.
+- First clone or download the repo. use `git pull` to have the latest release.
 
 ```bash
 git clone https://github.com/amoux/david
 ```
 
-Error installing `pattern`: **_OSError: mysql_config not found_**
+### requirements
 
-> **NOTE** before you install all the dependencies, the package `pattern` is known to have a common error due to the missing `libmysqlclient-dev` linux package. to fix this issue run the following command before installing the requirements.
+- Install the requirements and install the package:
+
+```bash
+pip install -r requirements.txt
+pip install
+```
+
+### Common Issues
+
+> **NOTE** Before you install all the dependencies, the package `pattern` is known to have a common error due to the missing `libmysqlclient-dev` linux package. to fix this issue run the following command before installing the requirements.
 
 ```bash
 sudo apt install libmysqlclient-dev
-conda activate < YOUR ENVIRONMENT >
+conda activate <YOUR_ENVIRONMENT>
+# clone the package
+(conda-env) git clone https://github.com/clips/pattern
 (conda-env) cd pattern/
 (conda-env) python setup.py install
 ```
@@ -43,27 +55,16 @@ conda activate < YOUR ENVIRONMENT >
 ```bash
 (conda-env) conda install gxx_linux-64
 (conda-env) conda install mysqlclient
+# try installing pattern again.
 (conda-env) cd pattern/
 (conda-env) python setup.py install
 ```
 
-### requirements
+### spaCy language models
 
-- install the requirements:
+> Download the required language models with one command (you don't need to be in the root project directory).
 
-```bash
-pip install -r requirements.txt
-```
-
-- in the root directory then install the package:
-
-```bash
-pip install .
-```
-
-> **NOTE** download the required language models with one command (you don't need to be in the root project directory).
-
-- the following models will be downloaded.
+- The following models will be downloaded.
   - `en_core_web_sm`
   - `en_core_web_lg`
 
@@ -79,7 +80,7 @@ You can now load the model via spacy.load('en_core_web_sm')
 
 ## server 📡
 
-- Configure the database and build a dataset from a search query. Using an existing database of youtube comments - here we are use the `unbox` database (The database will be dowloaded automatically if it doesn't exist in the `david_data` directory).
+- Configure the database and build a dataset from a search query. Using an existing database of youtube comments - here we are use the `unbox` database (The database will be downloaded automatically if it doesn't exist in the `david_data` directory).
 
 ```python
 from david import CommentsSql
@@ -88,9 +89,9 @@ db = CommentsSql('unbox')
 # Fetch a batch based on a query.
 query = "%make a video%"
 columns = "id, cid, text"
-batch = db.fetch_comments(query, columns, sort_by='id')
+batch = db.fetch_comments(query, columns, sort_col='id')
 
-# Acess the batch columns by simply passing the index of the batch:
+# Access the batch columns by simply passing the index of the batch:
 idx, cid, text = batch[10]
 print(text)
 ...
@@ -100,9 +101,9 @@ print(text)
 > Building a simple classification dataset from youtube comments.
 
 ```python
-# labels
 question = 1
 statement = 0
+
 # dataset with 100 samples.
 dataset = []
 for i in range(100):
@@ -110,7 +111,6 @@ for i in range(100):
     if text is not None:
       label = question if text.endswith('?') else statement
       dataset.append((text, label))
-
 dataset[:10]
 ...
  [('Try the samsung a9 and make a video like "the smartphone with 4 cameras"', 0),
@@ -126,8 +126,6 @@ dataset[:10]
 from david import Pipeline
 pipe = Pipeline(dataset, columns=['text', 'label'])
 pipe.head()
-```
-```
 ...
                                                 text  label
 0  Can you make a video about pixel 1 2 and 3 sma...      1
@@ -140,11 +138,16 @@ pipe.head()
 > The following metrics are available one call away 🤖
 
 ```python
-pipe.get_all_metrics(string=True, words=True, characters=True, tags=True)
+pipe.get_all_metrics(
+  string=True,
+  words=True,
+  characters=True,
+  tags=True,
+)
 pipe.describe()
 ```
 
-- with `tags=True` the following attributes are available. (the amount of tags varies on the size of the dataset)
+- With `tags=True` the following attributes are available. (the amount of tags varies on the size of the dataset)
 
 ```ipython
 pipe.authorEmoji.unique()
@@ -155,11 +158,11 @@ dtype=object)
 
 ## preprocessing 🔬
 
-- text cleaning routines.
+- Text cleaning routines.
 
 ### stop words
 
-> you can access multiple collections of stop words from the lang module. all the following are available: `DAVID_STOP_WORDS, GENSIM_STOP_WORDS, NLTK_STOP_WORDS, SPACY_STOP_WORDS`
+> You can access multiple collections of stop words from the lang module. all the following are available: `DAVID_STOP_WORDS, GENSIM_STOP_WORDS, NLTK_STOP_WORDS, SPACY_STOP_WORDS`
 
 ```python
 from david.lang import SPACY_STOP_WORDS
@@ -168,13 +171,13 @@ pipe_stop_words = pipe.custom_stopwords_from_freq(top_n=30, stop_words=SPACY_STO
 list(pipe_stop_words)[:5]
 ```
 
-- returns a set containing the most frequent words used in a dataset and adds them to any existing collection of stop-words (in this case we have top words from both our corpus and spaCy's set)
+- Returns a set containing the most frequent words used in a dataset and adds them to any existing collection of stop-words (in this case we have top words from both our corpus and spaCy's set)
 
 ```ipython
-['tides...cardinal', 'into', 'less', 'same', 'under']
+['tidees...cardinal', 'into', 'less', 'same', 'under']
 ```
 
-- a quick look at the results from the three possible preprocessing modes.
+- A quick look at the results from the three possible preprocessing modes.
 
 ```python
 from david.text import preprocess_docs
@@ -204,7 +207,7 @@ doc_c[:3] # stopwords=False, tokenize=False
   'Police car runs out of gas during chase']
 ```
 
-- applying lemma vs not
+- Applying lemma vs not
 
 ```python
 doc_b[5:6] # lemma not applied
@@ -216,4 +219,16 @@ doc_d[5:6] # lemma applied
 ...
 [['except', 'fill', 'gas', 'take', 'like', '10', 'minute',
 'charge', 'tesla', 'take', 'several', 'hour']]
+```
+
+### general info
+
+- Default linter style settings:
+
+```code
+{
+  "python.linting.pycodestyleEnabled": true,
+  "python.linting.enabled": true,
+  "python.linting.pycodestyleArgs": ["--ignore=E402"],
+}
 ```

@@ -19,6 +19,10 @@ Logger-Modes:
 import logging
 import warnings
 
+logging.basicConfig(level=logging.CRITICAL)
+del logging
+
+
 from david.cosine import (SimilarDocuments, build_feature_matrix,
                           cosine_similarity)
 from david.datasets import JsonlYTDatasets
@@ -49,14 +53,10 @@ from david.youtube import (YTCommentScraper, YTRegexMatchers, YTSpecialKeys,
                            extract_videoid, yt_query_search,
                            yt_query_video_content, yt_query_videoids)
 
-logging.basicConfig(level=logging.INFO)
-del logging
-
 # silence tensorflow warnings.
-warnings.filterwarnings('ignore', category=DeprecationWarning, module='google')
-warnings.filterwarnings("ignore", message="numpy.dtype size changed")
-warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
-warnings.filterwarnings("ignore", message="DeprecationWarning")
+# warnings.filterwarnings("ignore", message="numpy.dtype size changed")
+# warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
+# warnings.filterwarnings("ignore", message="DeprecationWarning")
 
 
 # seeds random states for sources.
