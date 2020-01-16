@@ -118,6 +118,51 @@ dataset[:10]
  ('Would you please make a video on Funcl W1 and Funcl AI earphones.', 0), ...]
 ```
 
+## tokenizers
+
+> New tokenizers added in the text module. While the are functional the module is still in progress. The both the `CharacterTokenizer` and `SentenceTokenizer` classes inherent the `VocabularyBase` class.
+
+TODO: Add documentation and more examples for using these classes.
+
+```python
+from david.text.tokenizers import (SocialMediaTokenizer,
+                                   CharacterTokenizer, SentenceTokenizer)
+
+sm_tokenizer = SocialMediaTokenizer()  # word level tokenizer.
+char_tokenizer = CharacterTokenizer()  # character level tokenizer.
+sent_tokenizer = SentenceTokenizer()  # sentence level tokenizer.
+
+# Perfect for tokenizing social media text.
+sm_tokenizer.tokenize("This is a 👻 emoji #character, and @david is getting new updates!")
+...
+['This', 'is', 'a', '👻', 'emoji', '#character', ',',
+'and', '@david', 'is', 'getting', 'new', 'updates', '!']
+
+# This is another functionality that will be included in all tokenizers
+# In the meantime, only the character tokenizer has this feature. Here we
+# embed (torch.TensorType) one single character.
+char_embeddings = char_tokenizer.character_to_tensor("A")
+...
+tensor([[0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+         0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+         0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+         0., 0., 0.]])
+
+# Finally lets tokenize a document of sequences:
+sentences = ("There are the new tokenizers available with david! "
+    "The SocialMediaTokenizer properly handles all your emoji's ect. "
+    "The CharacterTokenizer works with a single character (for word embeddings)"
+    "The SentenceTokenizer properly converts chunks of texts into sentences!")
+
+# Tokenized sentences.
+tokenized_sents = sent_tokenizer.tokenize(sentences)
+...
+['<start> there are the new tokenizers available with david ! <end>',
+'<start> the socialmediatokeizer properly handles all your emoji s ect . <end>',
+'<start> the charactertokenizer works with a single character for word embeddings'
+'the sentencetokenizer properly converts chunks of texts into sentences ! <end>']
+```
+
 ## pipeline 🛠
 
 - export a document to a df with the `export` attribute.
