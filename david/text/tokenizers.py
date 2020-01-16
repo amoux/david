@@ -7,28 +7,22 @@ depend on each other. I Need to refactor a lot of files before
 adding more files.
 """
 from __future__ import print_function, unicode_literals
-from typing import List, Dict, Set, Tuple, Iterator, Pattern, NewType
 
 import os
 import re
 import string
 import unicodedata
+from typing import Dict, Iterator, List, NewType, Pattern, Tuple, Union
 
 import spacy
 import tensorflow as tf
 import torch
-from nltk.tokenize.casual import (
-    EMOTICON_RE,
-    HANG_RE,
-    WORD_RE,
-    _replace_html_entities,
-    reduce_lengthening,
-    remove_handles,
-)
+from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
+                                  _replace_html_entities, reduce_lengthening,
+                                  remove_handles)
 
 from ..lang import SPACY_STOP_WORDS, replace_contractions
 from .prep import unicode_to_ascii
-
 
 SpacyNlp = NewType("SpacyNlp", spacy.lang)
 
