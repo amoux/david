@@ -1,4 +1,3 @@
-
 from typing import List, Optional, Set, Union
 
 import spacy
@@ -6,11 +5,13 @@ import spacy
 from ..lang.stopwords import SPACY_STOP_WORDS
 
 
-def summarizer(document: Union[List[str], str],
-               nlargest: int = 7,
-               min_sent_toks: int = 30,
-               lang_model: str = "en_core_web_sm",
-               stop_words: Optional[Union[List[str], Set[str]]] = None) -> str:
+def summarizer(
+    document: Union[List[str], str],
+    nlargest: int = 7,
+    min_sent_toks: int = 30,
+    lang_model: str = "en_core_web_sm",
+    stop_words: Optional[Union[List[str], Set[str]]] = None,
+) -> str:
     """Text summarizer built on top of spaCy.
 
     Parameters:
@@ -28,8 +29,8 @@ def summarizer(document: Union[List[str], str],
     Notes: For improving results from the summarizer, e.g,. summarizing
         texts extracted from the web - it's recommended to encode unicode
         strings to ascii and normalizing whitespaces. Methods available in
-        david's API that achieve this: `david.text.prep.unicode_to_ascii` and 
-        `david.text.prep.normalize_whitespace`.
+        david's API that achieve this: `david.text.prep.unicode_to_ascii`
+        and `david.text.prep.normalize_whitespace`.
 
     """
     nlp = spacy.load(lang_model)
@@ -54,7 +55,7 @@ def summarizer(document: Union[List[str], str],
 
     # Normalize word frequency distribution (val:int => float)
     for word in frequency:
-        frequency[word] = (frequency[word]/max(frequency.values()))
+        frequency[word] = frequency[word] / max(frequency.values())
 
     scores = dict()  # Sentence level scores.
     for sentence in [sent for sent in spacydoc.sents]:

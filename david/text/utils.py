@@ -2,14 +2,14 @@ import collections
 import random
 import string
 from typing import Dict, List, Optional, Tuple
-from urllib.request import URLError, urlopen, Request
+from urllib.request import Request, URLError, urlopen
 
 from bs4 import BeautifulSoup
 
 
 def split_train_test(
-        doc: List[str],
-        n: Optional[int] = None) -> Tuple[List[str], List[str]]:
+    doc: List[str], n: Optional[int] = None
+) -> Tuple[List[str], List[str]]:
     """Randomly split a doc into train and test iterables.
 
     Parameters:
@@ -72,7 +72,7 @@ def extract_text_from_url(url: str, headers: Dict[str, str] = None) -> str:
 
     """
     if not headers:
-        headers = {'User-Agent': 'Mozilla/5.0'}
+        headers = {"User-Agent": "Mozilla/5.0"}
     try:
         reqs = Request(url, headers=headers)
         page = urlopen(reqs)
@@ -100,8 +100,9 @@ def clean_tokens(doc: list, discard_punct="_", min_seqlen=1):
     cleantokens = list()
     for tokens in doc:
         tokens = [
-            ''.join([seq for seq in token if seq not in punctuation])
-            for token in tokens]
+            "".join([seq for seq in token if seq not in punctuation])
+            for token in tokens
+        ]
         tokens = list(filter(lambda seq: len(seq) > min_seqlen, tokens))
         cleantokens.append(tokens)
     return cleantokens

@@ -12,9 +12,14 @@ import nltk
 import pattern
 import spacy
 import textblob
-from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
-                                  _replace_html_entities, reduce_lengthening,
-                                  remove_handles)
+from nltk.tokenize.casual import (
+    EMOTICON_RE,
+    HANG_RE,
+    WORD_RE,
+    _replace_html_entities,
+    reduce_lengthening,
+    remove_handles,
+)
 
 from ..lang import SPACY_STOP_WORDS, replace_contractions
 
@@ -22,8 +27,8 @@ from ..lang import SPACY_STOP_WORDS, replace_contractions
 class YTCommentTokenizer:
     """Youtube comment tokenizer, adapted from NLTK's TweetTokenizer class."""
 
-    def __init__(self, preserve_case=True, reduce_len=False,
-                 strip_handles=False):
+    def __init__(
+            self, preserve_case=True, reduce_len=False, strip_handles=False):
         self.preserve_case = preserve_case
         self.reduce_len = reduce_len
         self.strip_handles = strip_handles
@@ -37,17 +42,22 @@ class YTCommentTokenizer:
         safe_seq = HANG_RE.sub(r"\1\1\1", sequence)
         words = WORD_RE.findall(safe_seq)
         if not self.preserve_case:
-            words = list(map((
-                lambda x: x if EMOTICON_RE.search(x) else x.lower()), words))
+            words = list(
+                map((lambda x: x if EMOTICON_RE.search(x)
+                    else x.lower()), words)
+            )
         return words
-    
+
     __call__ = tokenize
 
 
 def unicode_to_ascii(sequence: str) -> str:
     """Convert the unicode to ASCII."""
-    return "".join(char for char in unicodedata.normalize("NFD", sequence)
-                   if unicodedata.category(char) != "Mn")
+    return "".join(
+        char
+        for char in unicodedata.normalize("NFD", sequence)
+        if unicodedata.category(char) != "Mn"
+    )
 
 
 def extract_emojis(sequence: str):
@@ -79,8 +89,7 @@ def spacy_token_lemmatizer(tokens, postags=None):
     lemmas = list()
     for sequence in tokens:
         sequence = nlp(" ".join(sequence))
-        lemmas.append(
-            [tok.lemma_ for tok in sequence if tok.pos_ in postags])
+        lemmas.append([tok.lemma_ for tok in sequence if tok.pos_ in postags])
     return lemmas
 
 
@@ -106,13 +115,13 @@ def sentence_tokenizer(doc: List[str]) -> Generator:
 
 def treebank_to_wordnet_pos(pos_tag: str):
     """NLTK POS-tagger, converts penn treebank tags wordnet tags."""
-    if pos_tag.startswith('J'):
+    if pos_tag.startswith("J"):
         return nltk.corpus.wordnet.ADJ
-    elif pos_tag.startswith('V'):
+    elif pos_tag.startswith("V"):
         return nltk.corpus.wordnet.VERB
-    elif pos_tag.startswith('N'):
+    elif pos_tag.startswith("N"):
         return nltk.corpus.wordnet.NOUN
-    elif pos_tag.startswith('R'):
+    elif pos_tag.startswith("R"):
         return nltk.corpus.wordnet.ADV
     else:
         return None
@@ -121,16 +130,20 @@ def treebank_to_wordnet_pos(pos_tag: str):
 def part_of_speech_annotator(sequence: str):
     """Annotates text tokens with pos tags, uses NLTK's Wordnet POS."""
     tagged_seq = pattern.text.en.tag(sequence)
-    return [(word.lower(), treebank_to_wordnet_pos(pos_tag))
-            for word, pos_tag in tagged_seq]
+    return [
+        (word.lower(), treebank_to_wordnet_pos(pos_tag))
+        for word, pos_tag in tagged_seq
+    ]
 
 
 def part_of_speech_lemmatizer(sequence: str):
     """Lemmatize sequences based on part-of-speech tags."""
     Lemmatizer = nltk.stem.WordNetLemmatizer()
     tagged_seq = part_of_speech_annotator(sequence)
-    return " ".join([Lemmatizer.lemmatize(word, pos) if pos else word
-                     for word, pos in tagged_seq])
+    return " ".join(
+        [Lemmatizer.lemmatize(word, pos) if pos else word
+            for word, pos in tagged_seq]
+    )
 
 
 def normalize_whitespace(sequence: str):
@@ -214,14 +227,16 @@ def nltk_word_tokenizer(sequence: str):
     return [tok.strip() for tok in tokens]
 
 
-def preprocess_sequence(sequence: str,
-                        contractions=True,
-                        lemmatize=False,
-                        punctuation=True,
-                        norm_chars=True,
-                        rm_stopwords=True,
-                        stop_words=None,
-                        tokenize=False):
+def preprocess_sequence(
+    sequence: str,
+    contractions=True,
+    lemmatize=False,
+    punctuation=True,
+    norm_chars=True,
+    rm_stopwords=True,
+    stop_words=None,
+    tokenize=False,
+):
     """Basic text preprocessing for a sequence."""
     sequence = normalize_whitespace(unicode_to_ascii(sequence))
     if contractions:
@@ -239,14 +254,16 @@ def preprocess_sequence(sequence: str,
     return sequence
 
 
-def preprocess_doc(doc: list,
-                   contractions=True,
-                   lemmatize=False,
-                   punctuation=True,
-                   norm_chars=True,
-                   rm_stopwords=True,
-                   stop_words=None,
-                   tokenize=False):
+def preprocess_doc(
+    doc: list,
+    contractions=True,
+    lemmatize=False,
+    punctuation=True,
+    norm_chars=True,
+    rm_stopwords=True,
+    stop_words=None,
+    tokenize=False,
+):
     """Basic text preprocessing for a doc (iterable) of sequences."""
     for sequence in doc:
         yield preprocess_sequence(
@@ -270,6 +287,10 @@ def gensim_preprocess(doc: list, stop_words=None, deacc=False):
     """
     stop_words = stop_words if stop_words else SPACY_STOP_WORDS
     return [
-        [tok for tok in gensim.utils.simple_preprocess(seq, deacc=deacc)
-         if tok not in stop_words] for seq in doc
+        [
+            tok
+            for tok in gensim.utils.simple_preprocess(seq, deacc=deacc)
+            if tok not in stop_words
+        ]
+        for seq in doc
     ]

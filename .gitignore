@@ -2,3 +2,5 @@
 *.pyc
 david/__init__.pyc
 *.pyc
+.vscode/settings.json
+.vscode/*
