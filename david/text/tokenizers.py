@@ -27,37 +27,6 @@ from .prep import unicode_to_ascii
 SpacyNlp = NewType("SpacyNlp", spacy.lang)
 
 
-class SocialMediaTokenizer:
-    """Social media text tokenizer.
-    Adapted from NLTK's TweetTokenizer class.
-    """
-
-    def __init__(
-        self,
-        preserve_case: bool = True,
-        reduce_len: bool = False,
-        strip_handles: bool = False,
-    ):
-        self.preserve_case = preserve_case
-        self.reduce_len = reduce_len
-        self.strip_handles = strip_handles
-
-    def tokenize(self, sequence: str) -> List[str]:
-        sequence: str = _replace_html_entities(sequence)
-        if self.strip_handles:
-            sequence = remove_handles(sequence)
-        if self.reduce_len:
-            sequence = reduce_lengthening(sequence)
-        safe_seq = HANG_RE.sub(r"\1\1\1", sequence)
-        words = WORD_RE.findall(safe_seq)
-        if not self.preserve_case:
-            words = list(
-                map((lambda x: x if EMOTICON_RE.search(x)
-                    else x.lower()), words)
-            )
-        return words
-
-
 class VocabularyBase(object):
     sos_special_token: int = 0
     eos_special_token: int = 1
@@ -88,7 +57,7 @@ class VocabularyBase(object):
             self.word2count[word] += 1
 
 
-class CharacterTokenenizer(VocabularyBase):
+class CharacterTokenizer(VocabularyBase):
     STRING_CHARACTERS: str = string.ascii_letters + " .,;'"
 
     def __init__(self):
@@ -109,7 +78,7 @@ class CharacterTokenenizer(VocabularyBase):
         tensor[0][self.get_character_id(character)] = char_size
         return tensor
 
-    def sequence_to_tensor(self, sequence: str) -> torch.TensorType:
+    def word_to_tensor(self, sequence: str) -> torch.TensorType:
         """Turn a string sequence into an array of one-hot char vectors."""
         char_size = 1
         sequence_size = len(sequence)
@@ -118,6 +87,33 @@ class CharacterTokenenizer(VocabularyBase):
         for i, char in enumerate(sequence):
             tensor[i][0][self.get_character_id(char)] = char_size
         return tensor
+
+
+class WordTokenizer(CharacterTokenizer):
+
+    def __init__(self,
+                 preserve_case: bool = True,
+                 reduce_len: bool = False,
+                 strip_handles: bool = False):
+        super()
+        self.preserve_case = preserve_case
+        self.reduce_len = reduce_len
+        self.strip_handles = strip_handles
+
+    def tokenize(self, sequence: str) -> List[str]:
+        sequence: str = _replace_html_entities(sequence)
+        if self.strip_handles:
+            sequence = remove_handles(sequence)
+        if self.reduce_len:
+            sequence = reduce_lengthening(sequence)
+        safe_seq = HANG_RE.sub(r"\1\1\1", sequence)
+        words = WORD_RE.findall(safe_seq)
+        if not self.preserve_case:
+            words = list(
+                map((lambda x: x if EMOTICON_RE.search(x)
+                     else x.lower()), words)
+            )
+        return words
 
 
 class SentenceTokenizer(VocabularyBase):
