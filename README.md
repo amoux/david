@@ -34,32 +34,6 @@ pip install -r requirements.txt
 pip install
 ```
 
-### Common Issues
-
-> **NOTE** Before you install all the dependencies, the package `pattern` is known to have a common error due to the missing `libmysqlclient-dev` linux package. to fix this issue run the following command before installing the requirements.
-
-```bash
-sudo apt install libmysqlclient-dev
-conda activate <YOUR_ENVIRONMENT>
-# clone the package
-(conda-env) git clone https://github.com/clips/pattern
-(conda-env) cd pattern/
-(conda-env) python setup.py install
-```
-
-- If you still get `fatal error: mysql/udf_registration_types.h: No such file or directory #include <mysql/udf_registration_types.h>` when installing in a Ubuntu + Anaconda environment try:
-
-- tested on: Ubuntu 19.10
-- anaconda environment: python=3.6
-
-```bash
-(conda-env) conda install gxx_linux-64
-(conda-env) conda install mysqlclient
-# try installing pattern again.
-(conda-env) cd pattern/
-(conda-env) python setup.py install
-```
-
 ### spaCy language models
 
 > Download the required language models with one command (you don't need to be in the root project directory).
