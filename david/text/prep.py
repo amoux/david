@@ -4,51 +4,15 @@ import collections
 import re
 import string
 import unicodedata
-from typing import Generator, List
+from typing import Generator, List, Tuple
 
 import emoji
 import gensim
 import nltk
-import pattern
 import spacy
 import textblob
-from nltk.tokenize.casual import (
-    EMOTICON_RE,
-    HANG_RE,
-    WORD_RE,
-    _replace_html_entities,
-    reduce_lengthening,
-    remove_handles,
-)
 
 from ..lang import SPACY_STOP_WORDS, replace_contractions
-
-
-class YTCommentTokenizer:
-    """Youtube comment tokenizer, adapted from NLTK's TweetTokenizer class."""
-
-    def __init__(
-            self, preserve_case=True, reduce_len=False, strip_handles=False):
-        self.preserve_case = preserve_case
-        self.reduce_len = reduce_len
-        self.strip_handles = strip_handles
-
-    def tokenize(self, sequence):
-        sequence = _replace_html_entities(sequence)
-        if self.strip_handles:
-            sequence = remove_handles(sequence)
-        if self.reduce_len:
-            sequence = reduce_lengthening(sequence)
-        safe_seq = HANG_RE.sub(r"\1\1\1", sequence)
-        words = WORD_RE.findall(safe_seq)
-        if not self.preserve_case:
-            words = list(
-                map((lambda x: x if EMOTICON_RE.search(x)
-                    else x.lower()), words)
-            )
-        return words
-
-    __call__ = tokenize
 
 
 def unicode_to_ascii(sequence: str) -> str:
@@ -93,7 +57,7 @@ def spacy_token_lemmatizer(tokens, postags=None):
     return lemmas
 
 
-def spacy_sentence_tokenizer(doc: list):
+def spacy_sentence_tokenizer(doc: List[str]) -> List[str]:
     """Spacy sentence tokenizer."""
     nlp = spacy.load("en_core_web_lg")
     sents = list()
@@ -113,7 +77,7 @@ def sentence_tokenizer(doc: List[str]) -> Generator:
             yield sent.text
 
 
-def treebank_to_wordnet_pos(pos_tag: str):
+def treebank_to_wordnet_pos(pos_tag: str) -> str:
     """NLTK POS-tagger, converts penn treebank tags wordnet tags."""
     if pos_tag.startswith("J"):
         return nltk.corpus.wordnet.ADJ
@@ -127,23 +91,26 @@ def treebank_to_wordnet_pos(pos_tag: str):
         return None
 
 
-def part_of_speech_annotator(sequence: str):
+def part_of_speech_annotator(sequence: str) -> List[Tuple[str, str]]:
     """Annotates text tokens with pos tags, uses NLTK's Wordnet POS."""
-    tagged_seq = pattern.text.en.tag(sequence)
-    return [
-        (word.lower(), treebank_to_wordnet_pos(pos_tag))
-        for word, pos_tag in tagged_seq
-    ]
+
+    # This is a temporary patch for eliminating the need for the pattern
+    # library. I will be using spacy's pos tagging for now but this method
+    # of lemmatizing text is not efficient (I will work on a better solution).
+    # In the meantime this will work for apps that are using these methods.
+
+    nlp = spacy.load("en_core_web_sm")
+    sequence = nlp(sequence)
+    return [(token.text, treebank_to_wordnet_pos(token.pos_))
+            for token in sequence]
 
 
 def part_of_speech_lemmatizer(sequence: str):
     """Lemmatize sequences based on part-of-speech tags."""
     Lemmatizer = nltk.stem.WordNetLemmatizer()
-    tagged_seq = part_of_speech_annotator(sequence)
-    return " ".join(
-        [Lemmatizer.lemmatize(word, pos) if pos else word
-            for word, pos in tagged_seq]
-    )
+    tagged = part_of_speech_annotator(sequence)
+    return " ".join([Lemmatizer.lemmatize(word, tag) if tag else word
+                    for word, tag in tagged])
 
 
 def normalize_whitespace(sequence: str):
@@ -174,7 +141,7 @@ def normalize_wiggles(sequence, min_words=10):
 
 def remove_repeating_words(sequence: str):
     return " ".join(collections.Counter(
-        [tok for tok in sequence.split()]).keys())
+                    [tok for tok in sequence.split()]).keys())
 
 
 def remove_repeating_characters(sequence: str):
@@ -200,6 +167,7 @@ def remove_punctuation(sequence: str, contractions: bool = False) -> str:
     # hurting the meaning of a word e.g, "y'all" => "you are all"
     # should be done before actually removing all punctuation.
     # NOTE that punctuations "-" and "_" are not removed.
+
     if contractions:
         sequence = replace_contractions(sequence)
     sequence = nltk_word_tokenizer(sequence)
