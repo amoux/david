@@ -57,7 +57,7 @@ You can now load the model via spacy.load('en_core_web_sm')
 - Configure the database and build a dataset from a search query. Using an existing database of youtube comments - here we are use the `unbox` database (The database will be downloaded automatically if it doesn't exist in the `david_data` directory).
 
 ```python
-from david import CommentsSql
+from david.server import CommentsSql
 db = CommentsSql('unbox')
 
 # Fetch a batch based on a query.
@@ -99,11 +99,10 @@ dataset[:10]
 TODO: Add documentation and more examples for using these classes.
 
 ```python
-from david.text.tokenizers import (SocialMediaTokenizer,
-                                   CharacterTokenizer, SentenceTokenizer)
-
-sm_tokenizer = SocialMediaTokenizer()  # word level tokenizer.
+from david.text.tokenizers import (CharacterTokenizer,
+                                   WordTokenizer, SentenceTokenizer)
 char_tokenizer = CharacterTokenizer()  # character level tokenizer.
+sm_tokenizer = WordTokenizer()  # word level tokenizer.
 sent_tokenizer = SentenceTokenizer()  # sentence level tokenizer.
 
 # Perfect for tokenizing social media text.
@@ -142,7 +141,7 @@ tokenized_sents = sent_tokenizer.tokenize(sentences)
 - export a document to a df with the `export` attribute.
 
 ```python
-from david import Pipeline
+from david.pipeline import Pipeline
 pipe = Pipeline(dataset, columns=['text', 'label'])
 pipe.head()
 ...
