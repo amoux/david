@@ -43,18 +43,18 @@ def count_word_tokens(doc: object) -> int:
 def count_upper_chars(doc: object) -> int:
     count = 0
     for token in doc:
-        is_upper_char = re.findall(r"[A-Z]", token.text)
-        if is_upper_char:
-            count += len(is_upper_char)
+        upper_chars = re.findall(r"[A-Z]", token.text)
+        if upper_chars:
+            count += len(upper_chars)
     return count
 
 
 def count_lower_chars(doc: object) -> int:
     count = 0
     for token in doc:
-        is_lower_char = re.findall(r"[a-z]", token.text)
-        if is_lower_char:
-            count += len(is_lower_char)
+        lower_chars = re.findall(r"[a-z]", token.text)
+        if lower_chars:
+            count += len(lower_chars)
     return count
 
 
