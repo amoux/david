@@ -2,10 +2,5 @@
   "python.linting.pycodestyleEnabled": true,
   "python.linting.enabled": true,
   "python.linting.pycodestyleArgs": ["--ignore=E402"],
-  "python.jediEnabled": false,
   "python.pythonPath": "/home/ego/anaconda3/envs/david37/bin/python",
-  "restructuredtext.confPath": "",
-  "python.linting.pylintEnabled": false,
-  "eslint.enable": false,
-  "jshint.enable": false
 }
