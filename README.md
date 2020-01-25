@@ -123,7 +123,7 @@ tensor([[0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
 
 # Finally lets tokenize a document of sequences:
 sentences = ("There are the new tokenizers available with david! "
-    "The SocialMediaTokenizer properly handles all your emoji's ect. "
+    "The WordTokenizer properly handles all your emoji's ect. "
     "The CharacterTokenizer works with a single character (for word embeddings)"
     "The SentenceTokenizer properly converts chunks of texts into sentences!")
 
@@ -131,7 +131,7 @@ sentences = ("There are the new tokenizers available with david! "
 tokenized_sents = sent_tokenizer.tokenize(sentences)
 ...
 ['<start> there are the new tokenizers available with david ! <end>',
-'<start> the socialmediatokeizer properly handles all your emoji s ect . <end>',
+'<start> the wordtokenizer properly handles all your emoji s ect . <end>',
 '<start> the charactertokenizer works with a single character for word embeddings'
 'the sentencetokenizer properly converts chunks of texts into sentences ! <end>']
 ```

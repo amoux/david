@@ -1,5 +1,5 @@
-
 import copy
+import re
 from collections import MutableSequence
 from typing import (Any, Dict, Iterable, List, NoReturn, Optional, Set, Tuple,
                     Union)
@@ -18,12 +18,46 @@ TAG_RE = r"(\#\w+)"
 
 
 DEFAULT_COLUMNS = {
-    'string': ['stringLength'],
-    'word': ['avgWordLength', 'stopWordCount', 'wordCount'],
-    'char': ['charDigitCount', 'charUpperCount', 'charLowerCount'],
-    'senti': ['polarityScore', 'subjectivityScore', 'sentiLabel'],
-    'author': ['authorTimeTag', 'authorUrl', 'authorHashTag', 'authorEmoji']
+    "string": ["stringLength"],
+    "word": ["avgWordLength", "stopWordCount", "wordCount"],
+    "char": ["charDigitCount", "charUpperCount", "charLowerCount"],
+    "senti": ["polarityScore", "subjectivityScore", "sentiLabel"],
+    "author": ["authorTimeTag", "authorUrl", "authorHashTag", "authorEmoji"],
 }
+
+
+def avg_word_length(
+        sequence: str, stop_words: Union[List[str], Set[str]]) -> float:
+    word_lengths = [len(w) for w in sequence.split() if w not in stop_words]
+    if len(word_lengths) == 0:
+        return 0.0
+    return np.mean(word_lengths)
+
+
+def count_stop_words(
+        sequence: str, stop_words: Union[List[str], Set[str]]) -> int:
+    return len([w for w in sequence.split() if w in stop_words])
+
+
+def count_true_words(
+        sequence: str, stop_words: Union[List[str], Set[str]]) -> int:
+    return len([w for w in sequence.split() if w not in stop_words])
+
+
+def count_upper_chars(sequence: str) -> int:
+    return len(re.findall(r"[A-Z]", sequence))
+
+
+def count_lower_chars(sequence: str) -> int:
+    return len(re.findall(r"[a-z]", sequence))
+
+
+def count_digit_chars(sequence: str) -> int:
+    return len(re.findall(r"[0-9]", sequence))
+
+
+def count_words(sequence: str) -> int:
+    return len(sequence)
 
 
 def columns_to_snakecase(cols: Dict[str, List[str]]) -> Dict[str, List[str]]:
@@ -37,16 +71,16 @@ def columns_to_snakecase(cols: Dict[str, List[str]]) -> Dict[str, List[str]]:
 
 class TextMetrics(MutableSequence, object):
     _DEFAULT_COLS: Dict[str, List[str]] = DEFAULT_COLUMNS
-    COLUMNS = {'string': [], 'word': [], 'char': [], 'senti': [], 'author': []}
-    SENTI_LABELS = ['positive', 'negative', 'neutral']
+    COLUMNS = {"string": [], "word": [], "char": [], "senti": [], "author": []}
+    SENTI_LABELS = ["positive", "negative", "neutral"]
 
-    def _load_metric_columns(self, to_snake: bool = False) -> NoReturn:
+    def _load_metric_columns(self, to_snake: bool = False) -> None:
         if to_snake:
             self._DEFAULT_COLS = columns_to_snakecase(DEFAULT_COLUMNS)
         else:
             self._DEFAULT_COLS = DEFAULT_COLUMNS
 
-    def _update_columns(self, key: str) -> NoReturn:
+    def _update_columns(self, key: str) -> None:
         self.COLUMNS[key].clear()
         self.COLUMNS[key].extend(self._DEFAULT_COLS[key])
 
@@ -58,69 +92,72 @@ class TextMetrics(MutableSequence, object):
         else:
             return self.SENTI_LABELS[2]
 
-    def avg_words(self, sequence: str) -> List[float]:
-        return [len(word) for word in sequence.split(' ')
-                if word not in self.STOP_WORDS]
-
-    def string_metric(self, text_col: str = 'text') -> NoReturn:
-        STRING_COLS = self._DEFAULT_COLS['string']
+    def string_metric(self, text_col: str = "text") -> None:
+        strcol = self._DEFAULT_COLS["string"]
         self[text_col] = self[text_col].apply(
-            lambda x: normalize_whitespace(x))
-        self[STRING_COLS[0]] = self[text_col].str.len()
-        self._update_columns('string')
+            lambda w: normalize_whitespace(w)
+        )
+        self[strcol[0]] = self[text_col].apply(lambda w: count_words(w))
+        self._update_columns("string")
 
-    def word_metric(self, text_col: str = 'text') -> NoReturn:
-        WORD_COLS = self._DEFAULT_COLS['word']
-        self[WORD_COLS[0]] = self[text_col].apply(
-            lambda x: np.mean(
-                self.avg_words(x)) if len(self.avg_words(x)) > 0 else 0)
-        self[WORD_COLS[1]] = self[text_col].apply(
-            lambda x: len(
-                [w for w in x.split(" ") if w in self.STOP_WORDS]))
-        self[WORD_COLS[2]] = self[text_col].apply(
-            lambda x: len(
-                [w for w in x.split(" ") if w not in self.STOP_WORDS]))
-        self._update_columns('word')
+    def word_metric(self, text_col: str = "text") -> None:
+        wordcol = self._DEFAULT_COLS["word"]
+        self[wordcol[0]] = self[text_col].apply(
+            lambda w: avg_word_length(w, self.STOP_WORDS)
+        )
+        self[wordcol[1]] = self[text_col].apply(
+            lambda w: count_stop_words(w, self.STOP_WORDS)
+        )
+        self[wordcol[2]] = self[text_col].apply(
+            lambda w: count_true_words(w, self.STOP_WORDS)
+        )
+        self._update_columns("word")
 
-    def char_metric(self, text_col: str = 'text') -> NoReturn:
-        CHAR_COLS = self._DEFAULT_COLS['char']
-        self[CHAR_COLS[0]] = self[text_col].str.findall(r'[0-9]').str.len()
-        self[CHAR_COLS[1]] = self[text_col].str.findall(r'[A-Z]').str.len()
-        self[CHAR_COLS[2]] = self[text_col].str.findall(r'[a-z]').str.len()
-        self._update_columns('char')
+    def char_metric(self, text_col: str = "text") -> None:
+        chars = self._DEFAULT_COLS["char"]
+        self[chars[0]] = self[text_col].apply(lambda w: count_digit_chars(w))
+        self[chars[1]] = self[text_col].apply(lambda w: count_upper_chars(w))
+        self[chars[2]] = self[text_col].apply(lambda w: count_lower_chars(w))
+        self._update_columns("char")
 
-    def senti_metric(self, text_col: str = 'text') -> NoReturn:
-        SENTI_COLS = self._DEFAULT_COLS['senti']
-        self[SENTI_COLS[0]] = self[text_col].apply(
-            lambda x: get_sentiment_polarity(x))
-        self[SENTI_COLS[1]] = self[text_col].apply(
-            lambda x: get_sentiment_subjectivity(x))
+    def senti_metric(self, text_col: str = "text") -> None:
+        senti_cols = self._DEFAULT_COLS["senti"]
+        self[senti_cols[0]] = self[text_col].apply(
+            lambda w: get_sentiment_polarity(w)
+        )
+        self[senti_cols[1]] = self[text_col].apply(
+            lambda w: get_sentiment_subjectivity(w)
+        )
         # Assing sentiment labels as a categorical data type.
         cat_dtype = CategoricalDtype(self.SENTI_LABELS, ordered=False)
-        self[SENTI_COLS[2]] = self[SENTI_COLS[0]].apply(
-            lambda x: self.sentiment_label(x)).astype(cat_dtype)
-        self._update_columns('senti')
+        self[senti[2]] = (
+            self[senti_cols[0]]
+            .apply(lambda w: self.sentiment_label(w))
+            .astype(cat_dtype)
+        )
+        self._update_columns("senti")
 
-    def author_metric(self, text_col: str = 'text') -> NoReturn:
-        AUTHOR_COLS = self._DEFAULT_COLS['author']
+    def author_metric(self, text_col: str = "text") -> None:
+        AUTHOR_COLS = self._DEFAULT_COLS["author"]
         self[AUTHOR_COLS[0]] = self[text_col].str.extract(TIME_RE)
         self[AUTHOR_COLS[1]] = self[text_col].str.extract(URL_RE)
         self[AUTHOR_COLS[2]] = self[text_col].str.extract(TAG_RE)
         self[AUTHOR_COLS[3]] = self[text_col].apply(
-            lambda x: extract_emojis(x))
-        self._update_columns('author')
+            lambda x: extract_emojis(x)
+        )
+        self._update_columns("author")
 
     def load_text_metrics(
-            self,
-            text_col: str = 'text',
-            string: bool = True,
-            words: bool = True,
-            chars: bool = True,
-            senti: bool = False,
-            author: bool = False,
-            snakecased: bool = False,
-            stop_words: Optional[Union[List[str], Set[str]]] = None,
-            sentilabels: Optional[Union[List[str], Tuple[str]]] = None,
+        self,
+        text_col: str = "text",
+        string: bool = True,
+        words: bool = True,
+        chars: bool = True,
+        senti: bool = False,
+        author: bool = False,
+        snakecased: bool = False,
+        stop_words: Optional[Union[List[str], Set[str]]] = None,
+        sentilabels: Optional[Union[List[str], Tuple[str]]] = None,
     ) -> NoReturn:
         """Single function call to extract standard information from sequences.
 
@@ -162,4 +199,4 @@ class TextMetrics(MutableSequence, object):
             self.author_metric(text_col)
 
     def __repr__(self):
-        return f'{self.info()}'
+        return f"{self.info()}"
