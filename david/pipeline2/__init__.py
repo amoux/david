@@ -78,14 +78,15 @@ class SpacyDocMetric(object):
 class DavidPipeline(SpacyDocMetric):
     def __init__(self, nlp, force=True):
         super().__init__(nlp=nlp, force=force)
+        self._nlp = nlp
 
     def __call__(self, batch: List[str], batch_size: int = 50) -> Generator:
-        for doc in nlp.pipe(batch, batch_size=batch_size):
+        for doc in self._nlp.pipe(batch, batch_size=batch_size):
             yield doc
 
     def update_stop_words(
             self, stop_words: Union[List[str], Set[str]]) -> None:
-        nlp.Defaults.stop_words.update(stop_words)
+        self._nlp.Defaults.stop_words.update(stop_words)
         for word in stop_words:
-            lexemme = nlp.vocab[word]
+            lexemme = self._nlp.vocab[word]
             lexemme.is_stop = True
