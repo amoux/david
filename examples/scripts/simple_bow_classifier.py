@@ -12,10 +12,8 @@ Expected Results:
     Prediction(label=other, weight=-0.019214811313018675)
 """
 
-
-from typing import Any, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple
 from nptyping import Array
-import random
 
 import numpy as np
 from david.text import normalize_whitespaces, unicode_to_ascii
@@ -55,7 +53,8 @@ class Dataset(WordTokenizer):
             self.bow[word] = self.ln_step_func(count, k=size)
 
     def ln_step_func(self, n: int, k: int) -> float:
-        """Step function (Activation).
+        """LN step-function.
+
         Computes the logarithm of N (Eulers number).
         """
         weight = np.log((n + 1) / k)
@@ -92,20 +91,24 @@ def predict(sequence: str, x: Dataset, y: Dataset) -> Tuple[float, str]:
 
 
 def main():
+    # Load both datasets of tweets (app vs not-app) for this demo.
     X_data = Dataset("app_tweets.txt")
     X_data.build_vocab()
     y_data = Dataset("other_tweets.txt")
     y_data.build_vocab()
-    # display one sentence embedding as example:
+
+    # Display one sentence embedding:
     xsent0_string = X_data.sentences[0]
     xsent0_embedd = encode(X_data.tokenize(xsent0_string), bow=X_data.bow)
     print("embedding sentence_id(0): {}".format(xsent0_embedd))
-    # test model with x and y tweets:
+
+    # Test model with x and y tweets:
     tweet_app = (
         "[blog] using nullmailer and mandrill for your ubuntu "
         "linux server outboud mail http://bit.ly/zjhok7 #plone"
     )
     tweet_other = "¿En donde esta su remontada Mandrill?"
+
     # Display the predictions from both tweet examples.
     for sequence in [tweet_app, tweet_other]:
         score, label = predict(sequence, X_data, y_data)
