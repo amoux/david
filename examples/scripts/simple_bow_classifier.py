@@ -14,9 +14,10 @@ Expected Results:
 
 from typing import Dict, List, Tuple
 from nptyping import Array
+import os
 
 import numpy as np
-from david.text import normalize_whitespaces, unicode_to_ascii
+from david.text import normalize_whitespace, unicode_to_ascii
 from david.text.tokenizers import WordTokenizer
 
 
@@ -30,7 +31,7 @@ class Dataset(WordTokenizer):
     ):
         super().__init__(preserve_case, reduce_len, strip_handles)
         self.sentences: List[str] = self._load_dataset(data_path)
-        self.bow = Dict[str, float] = {}
+        self.bow: Dict[str, float] = {}
         self.num_words: int = 0
         # vocabulary instance attributes:
         self.word2count: Dict[str, int] = {}
@@ -42,7 +43,7 @@ class Dataset(WordTokenizer):
         with open(dataset_path, "r") as text_file:
             for line in text_file:
                 text = unicode_to_ascii(line.strip())
-                text = normalize_whitespaces(text)
+                text = normalize_whitespace(text)
                 sents.append(text)
         return sents
 
@@ -92,15 +93,16 @@ def predict(sequence: str, x: Dataset, y: Dataset) -> Tuple[float, str]:
 
 def main():
     # Load both datasets of tweets (app vs not-app) for this demo.
-    X_data = Dataset("app_tweets.txt")
+    X_data = Dataset(os.path.join("data", "tweets_about_app.txt"))
     X_data.build_vocab()
-    y_data = Dataset("other_tweets.txt")
+    y_data = Dataset(os.path.join("data", "tweets_about_other.txt"))
     y_data.build_vocab()
 
     # Display one sentence embedding:
     xsent0_string = X_data.sentences[0]
     xsent0_embedd = encode(X_data.tokenize(xsent0_string), bow=X_data.bow)
-    print("embedding sentence_id(0): {}".format(xsent0_embedd))
+    print(f"\ntweet[0]: '{xsent0_string}'")
+    print("* embedding([{}])\n".format(xsent0_embedd))
 
     # Test model with x and y tweets:
     tweet_app = (
