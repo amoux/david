@@ -24,8 +24,6 @@ from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
 from ..lang import SPACY_STOP_WORDS, replace_contractions
 from .prep import unicode_to_ascii
 
-SpacyNlp = NewType("SpacyNlp", spacy.lang)
-
 
 class VocabularyBase(object):
     sos_special_token: int = 0
@@ -33,9 +31,9 @@ class VocabularyBase(object):
 
     def __init__(self, name: str = None):
         self.name = name
-        self.word2index: Dict[int] = {}
+        self.word2index: Dict[str, int] = {}
         self.word2count: Dict[str, int] = {}
-        self.index2word: {
+        self.index2word: Dict[int, str] = {
             self.sos_special_token: "SOS",
             self.eos_special_token: "EOS",
         }
@@ -63,11 +61,11 @@ class CharacterTokenizer(VocabularyBase):
     def __init__(self):
         super().__init__("CharTokenizerVocab")
 
-    def get_character_id(self, character: str) -> Pattern:
+    def get_character_id(self, character: str) -> int:
         """Finds character index from STRING_LETTERS, e.g. "a" = 0"""
         return self.STRING_CHARACTERS.find(character)
 
-    def character_to_tensor(self, character: str) -> torch.TensorType:
+    def character_to_tensor(self, character: str):
         """Turn a single character into a <1 x n_characters> Tensor"""
         char_size = 1
         if len(character) != char_size:
@@ -78,7 +76,7 @@ class CharacterTokenizer(VocabularyBase):
         tensor[0][self.get_character_id(character)] = char_size
         return tensor
 
-    def word_to_tensor(self, sequence: str) -> torch.TensorType:
+    def word_to_tensor(self, sequence: str):
         """Turn a string sequence into an array of one-hot char vectors."""
         char_size = 1
         sequence_size = len(sequence)
@@ -101,7 +99,7 @@ class WordTokenizer(CharacterTokenizer):
         self.strip_handles = strip_handles
 
     def tokenize(self, sequence: str) -> List[str]:
-        sequence: str = _replace_html_entities(sequence)
+        sequence = _replace_html_entities(sequence)
         if self.strip_handles:
             sequence = remove_handles(sequence)
         if self.reduce_len:
@@ -134,7 +132,7 @@ class SentenceTokenizer(VocabularyBase):
         super().__init__("SentTokenizerVocab")
 
     def pad_punctuation(
-            self, sequence: str, special_tokens: bool = False) -> Pattern:
+            self, sequence: str, special_tokens: bool = False):
         """Padding punctuation with white spaces keeping the punctuation."""
         s = unicode_to_ascii(sequence.lower().strip())
         s = re.sub(r"([?.!,¿])", r" \1 ", s)
@@ -156,7 +154,7 @@ class SentenceTokenizer(VocabularyBase):
         start and stop predicting."""
         if isinstance(sequence, str):
             sequence = [sequence]
-        nlp: SpacyNlp = spacy.load(lang)
+        nlp = spacy.load(lang)
         for doc in nlp.pipe(sequence):
             for sent in doc.sents:
                 sent = sent.text.strip()
