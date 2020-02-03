@@ -8,11 +8,11 @@ adding more files.
 """
 from __future__ import print_function, unicode_literals
 
+import os
 import re
 from collections import Counter
 from string import ascii_letters
-from typing import (IO, Callable, Dict, Generator, Iterator, List, Optional,
-                    Union)
+from typing import IO, Dict, Iterator, List, Optional, Union
 
 import spacy
 import torch
@@ -20,7 +20,23 @@ from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
                                   _replace_html_entities, reduce_lengthening,
                                   remove_handles)
 
+from ..utils import get_data_home
 from .prep import normalize_whitespace, unicode_to_ascii
+
+
+class YTCommentsConfig:
+    """Temporary tokenizer `config` (PROTOTYPE)"""
+    VOCAB_FILE = None
+    if not os.environ["DAVID_TOKENIZERS_SRC"]:
+        vocab_path = os.path.join(get_data_home(), "tokenizers_vocab_files")
+        vocab_file = os.path.join(vocab_path, "yt_comments_md/vocab.txt")
+        if os.path.isfile(vocab_file):
+            VOCAB_FILE = vocab_file
+    else:
+        vocab_path = os.environ["DAVID_TOKENIZERS_SRC"]
+        vocab_file = os.path.join(vocab_path, "yt_comments_md/vocab.txt")
+        if os.path.isfile(vocab_file):
+            VOCAB_FILE = vocab_file
 
 
 class VocabularyBase(object):
@@ -106,9 +122,8 @@ class WordTokenizer(CharacterTokenizer):
         safe_seq = HANG_RE.sub(r"\1\1\1", sequence)
         words = WORD_RE.findall(safe_seq)
         if not self.preserve_case:
-            emoji_search = EMOTICON_RE.search
-            words = list(map((
-                lambda w: w if emoji_search(w) else w.lower()), words))
+            emoji = EMOTICON_RE.search
+            words = list(map((lambda w: w if emoji(w) else w.lower()), words))
         return words
 
 
@@ -170,8 +185,6 @@ class BaseTokenizer(object):
         self,
         vocab_file: Optional["vocab.txt"] = None,
         document: Optional[List[str]] = None,
-        preprocess: bool = False,
-        tokenizer: Optional[Callable] = None,
     ):
         """
         vocab_file: Either load an existing vocabulary of tokens.
@@ -179,26 +192,22 @@ class BaseTokenizer(object):
         preprocess: Normalize whitespace and enforce ASCII.
         tokenizer: Callable method. If None, WordTokenizer is used.
         """
-        self.tokenizer = tokenizer
-        if not self.tokenizer:
-            self.tokenize = WordTokenizer().tokenize
         self.tokens_to_ids: Dict[str, int] = {}
         self.token_counter: Dict[str, int] = Counter()
         self._num_tokens: int = 0
+        self._string_normalizer: object = None
 
-        if vocab_file and not document:
+        if vocab_file and document is None:
             self.from_file(vocab_file)
-        if document and not vocab_file:
-            self.from_doc(document, preprocess)
+        elif document and vocab_file is None:
+            self.from_doc(document)
 
-    def _preprocess(self, document: List[str]) -> Generator:
-        for string in document:
-            string = unicode_to_ascii(string)
-            string = normalize_whitespace(string)
-            yield string
-
-    def add_token(self, token: str):
+    def add_token(self, token: Union[List[str], str]):
         """Add a single string token (word) to the vocabulary."""
+        # A List[token] can be added only of theres only one string token.
+        if (isinstance(token, list) and len(token) == 1):
+            token = str(token[0])
+
         if token not in self.tokens_to_ids:
             self.tokens_to_ids[token] = self._num_tokens
             self._num_tokens += 1
@@ -218,35 +227,48 @@ class BaseTokenizer(object):
             for token in vocab_file:
                 self.add_token(token.replace("\n", ""))
 
-    def from_doc(self, document: Optional[List[str]] = None,
-                 preprocess: bool = False) -> None:
+    def from_doc(self, document: List[str]) -> None:
         """Add tokens from an iterable of string sequences."""
-        doc = self._preprocess(document) if preprocess else document
-        for string in doc:
+        for string in document:
+            string = self._string_normalizer(string)
             tokens = self.tokenize(string)
             for token in tokens:
-                self.add_token(token.lower())
+                self.add_token(token)
 
-    def encode(self, string: str) -> List[int]:
+    def _encode(self, string: str) -> List[int]:
         """Converts a string in a sequence of integer ids using the tokenizer
         and vocabulary. NOTE: whitespace and ASCII normalization is applied.
         """
         tok2id = self.tokens_to_ids
-        string = normalize_whitespace(unicode_to_ascii(string.lower()))
+        string = self._string_normalizer(string)
         tokens = self.tokenize(string)
         return [tok2id[token] for token in tokens if token in tok2id]
 
-    def decode(self, tokens: List[int],
-               clean_tokenization: bool = False) -> str:
-        """Converts a sequence of integer ids to a string using the vocabulary.
-        Set `clean_tokenization` as true to clean up tokenization.
-        """
+    def _decode(self, tokens: List[int]) -> List[str]:
+        # Root vocab decoder, converts a sequence of toks[id] => toks[str]
         id2tok = {i: t for t, i in self.tokens_to_ids.items()}
         tokens = [id2tok[index] for index in tokens if index in id2tok]
+        return tokens
+
+    def convert_tokens_to_string(
+        self, tokens: List[str], clean_tokenization=True
+    ) -> str:
+        """Convert a sequence of tokens (string) in a single string."""
         string = " ".join(tokens)
         if clean_tokenization:
-            return BaseTokenizer.clean_tokenization(string)
+            string = BaseTokenizer.clean_tokenization(string)
         return string
+
+    def convert_tokens_to_ids(self, tokens: List[str]) -> List[int]:
+        """Converts a single or a list of string tokens, in a single int:id."""
+        tok2id = self.tokens_to_ids
+        return [tok2id[token] for token in tokens if token in tok2id]
+
+    def convert_ids_to_tokens(self, tokens: List[int]) -> List[str]:
+        """Converts a single index or a sequence of indices (integers) in a token,
+        using the vocabulary and tokens.
+        """
+        return self._decode(tokens)
 
     @staticmethod
     def clean_tokenization(string: str) -> str:
@@ -267,5 +289,75 @@ class BaseTokenizer(object):
         )
         return string
 
+
+class SocialMediaTokenizer(BaseTokenizer):
+    r"""Social media aware tokenizer.
+
+    Usage:
+        >>> tokenizer = SocialMediaTokenizer('yt-comments-md')
+        '< SocialMediaTokenizer(tokens=63844) >'
+        >>> text = "Hello world! This is a social media tokenizer 🤗"
+        >>> tokenized_text = tokenizer.tokenize(text)
+        ['hello', 'world', '!', 'this', 'is', 'a', 'social', 'media',
+            'tokenizer', '🤗']
+        >>> indexed_tokens = tokenizer.convert_tokens_to_ids(tokenized_text)
+        [477, 467, 164, 9, 49, 22, 3641, 4202, 1809]
+        >>> tokenizer.convert_ids_to_tokens(indexed_tokens)
+        ['hello', 'world', '!', 'this', 'is', 'a', 'social', 'media', '🤗']
+
+        ## Adding a new token if its not in the vocabulary.
+        >>> tokenizer.add_token("tokenizer") # or ["tokenizer"] of len=1
+        >>> indexed_tokens = tokenizer.convert_tokens_to_ids(tokenized_text)
+        [477, 467, 164, 9, 49, 22, 3641, 4202, 63844, 1809]
+        ## The `token="tokenizer"` was added to `index=63844`.
+        >>> tokenizer.convert_ids_to_tokens(indexed_tokens)
+        ['hello', 'world', '!', 'this', 'is', 'a', 'social', 'media',
+        'tokenizer', '🤗']
+
+    """
+    SM_TOKENIZER_MODELS = {"yt-comments-md": YTCommentsConfig.VOCAB_FILE}
+
+    def __init__(
+        self,
+        vocab_file: Optional["vocab.txt"] = None,
+        document: Optional[List[str]] = None,
+        preserve_case=False,
+        reduce_len=False,
+        strip_handles=False,
+    ):
+        # This is not a true imprementation, Its an emulation of
+        # how I want to load models, after a few days of trying this
+        # I will have something ready and clean.
+        if not os.path.isfile(vocab_file):
+            vocab_file = self.SM_TOKENIZER_MODELS[vocab_file]
+
+        super().__init__(vocab_file=vocab_file, document=document)
+        self.preserve_case = preserve_case
+        self.reduce_len = reduce_len
+        self.strip_handles = strip_handles
+        self._string_normalizer = self.normalize_string
+
+    def normalize_string(self, string: str) -> str:
+        if not self.preserve_case:
+            string = string.lower()
+        return normalize_whitespace(unicode_to_ascii(string))
+
+    def tokenize(self, string: str) -> List[str]:
+        string = _replace_html_entities(string)
+        if self.strip_handles:
+            string = remove_handles(string)
+        if self.reduce_len:
+            string = reduce_lengthening(string)
+
+        safe_string = HANG_RE.sub(r"\1\1\1", string)
+        tokens = WORD_RE.findall(safe_string)
+        if not self.preserve_case:
+            emoji = EMOTICON_RE.search
+            tokens = list(
+                map((lambda token: token if emoji(token)
+                     else token.lower()), tokens)
+            )
+        return tokens
+
     def __repr__(self):
-        return f"< BaseTokenizer(tokens={len(self.tokens_to_ids.keys())}) >"
+        return f"< SocialMediaTokenizer(tokens={self._num_tokens}) >"
