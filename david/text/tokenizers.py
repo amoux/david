@@ -8,21 +8,19 @@ adding more files.
 """
 from __future__ import print_function, unicode_literals
 
-import os
 import re
-import string
-import unicodedata
-from typing import Dict, Iterator, List, NewType, Pattern, Tuple, Union
+from collections import Counter
+from string import ascii_letters
+from typing import (IO, Callable, Dict, Generator, Iterator, List, Optional,
+                    Union)
 
 import spacy
-import tensorflow as tf
 import torch
 from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
                                   _replace_html_entities, reduce_lengthening,
                                   remove_handles)
 
-from ..lang import SPACY_STOP_WORDS, replace_contractions
-from .prep import unicode_to_ascii
+from .prep import normalize_whitespace, unicode_to_ascii
 
 
 class VocabularyBase(object):
@@ -56,7 +54,7 @@ class VocabularyBase(object):
 
 
 class CharacterTokenizer(VocabularyBase):
-    STRING_CHARACTERS: str = string.ascii_letters + " .,;'"
+    STRING_CHARACTERS: str = ascii_letters + " .,;'"
 
     def __init__(self):
         super().__init__("CharTokenizerVocab")
@@ -88,11 +86,12 @@ class CharacterTokenizer(VocabularyBase):
 
 
 class WordTokenizer(CharacterTokenizer):
-
-    def __init__(self,
-                 preserve_case: bool = True,
-                 reduce_len: bool = False,
-                 strip_handles: bool = False):
+    def __init__(
+        self,
+        preserve_case: bool = True,
+        reduce_len: bool = False,
+        strip_handles: bool = False,
+    ):
         super()
         self.preserve_case = preserve_case
         self.reduce_len = reduce_len
@@ -107,10 +106,9 @@ class WordTokenizer(CharacterTokenizer):
         safe_seq = HANG_RE.sub(r"\1\1\1", sequence)
         words = WORD_RE.findall(safe_seq)
         if not self.preserve_case:
-            words = list(
-                map((lambda x: x if EMOTICON_RE.search(x)
-                     else x.lower()), words)
-            )
+            emoji_search = EMOTICON_RE.search
+            words = list(map((
+                lambda w: w if emoji_search(w) else w.lower()), words))
         return words
 
 
@@ -131,17 +129,16 @@ class SentenceTokenizer(VocabularyBase):
     def __init__(self):
         super().__init__("SentTokenizerVocab")
 
-    def pad_punctuation(
-            self, sequence: str, special_tokens: bool = False):
+    def pad_punctuation(self, sequence: str, special_tokens: bool = False):
         """Padding punctuation with white spaces keeping the punctuation."""
-        s = unicode_to_ascii(sequence.lower().strip())
-        s = re.sub(r"([?.!,¿])", r" \1 ", s)
-        s = re.sub(r'[" "]+', " ", s)
-        s = re.sub(r"[^a-zA-Z?.!,¿]+", " ", s)
-        s = s.rstrip().strip()
+        string = unicode_to_ascii(sequence.lower().strip())
+        string = re.sub(r"([?.!,¿])", r" \1 ", string)
+        string = re.sub(r'[" "]+', " ", string)
+        string = re.sub(r"[^a-zA-Z?.!,¿]+", " ", string)
+        string = string.rstrip().strip()
         if special_tokens:
-            s = "<start> " + s + " <end>"
-        return s
+            string = "<start> " + string + " <end>"
+        return string
 
     def tokenize(
         self,
@@ -151,9 +148,11 @@ class SentenceTokenizer(VocabularyBase):
     ) -> Iterator[List[str]]:
         """Basic sentence tokenizer with the option to add a <start> and an
         <end> special token to the sentence so that the model know when to
-        start and stop predicting."""
+        start and stop predicting.
+        """
         if isinstance(sequence, str):
             sequence = [sequence]
+
         nlp = spacy.load(lang)
         for doc in nlp.pipe(sequence):
             for sent in doc.sents:
@@ -162,3 +161,111 @@ class SentenceTokenizer(VocabularyBase):
                     yield self.pad_punctuation(sent, special_tokens=True)
                 else:
                     yield sent
+
+
+class BaseTokenizer(object):
+    """Base tokenizer class for all tokenizers."""
+
+    def __init__(
+        self,
+        vocab_file: Optional["vocab.txt"] = None,
+        document: Optional[List[str]] = None,
+        preprocess: bool = False,
+        tokenizer: Optional[Callable] = None,
+    ):
+        """
+        vocab_file: Either load an existing vocabulary of tokens.
+        document: Or load from an iterable list of string sequences.
+        preprocess: Normalize whitespace and enforce ASCII.
+        tokenizer: Callable method. If None, WordTokenizer is used.
+        """
+        self.tokenizer = tokenizer
+        if not self.tokenizer:
+            self.tokenize = WordTokenizer().tokenize
+        self.tokens_to_ids: Dict[str, int] = {}
+        self.token_counter: Dict[str, int] = Counter()
+        self._num_tokens: int = 0
+
+        if vocab_file and not document:
+            self.from_file(vocab_file)
+        if document and not vocab_file:
+            self.from_doc(document, preprocess)
+
+    def _preprocess(self, document: List[str]) -> Generator:
+        for string in document:
+            string = unicode_to_ascii(string)
+            string = normalize_whitespace(string)
+            yield string
+
+    def add_token(self, token: str):
+        """Add a single string token (word) to the vocabulary."""
+        if token not in self.tokens_to_ids:
+            self.tokens_to_ids[token] = self._num_tokens
+            self._num_tokens += 1
+            self.token_counter[token] = 1
+        else:
+            self.token_counter[token] += 1
+
+    def to_file(self, file_name="vocab.txt") -> IO:
+        """Saves tokens to vocabulary text file."""
+        with open(file_name, "w") as vocab_file:
+            for token in self.tokens_to_ids.keys():
+                vocab_file.write(f"{token}\n")
+
+    def from_file(self, file_name="vocab.txt") -> IO:
+        """Add tokens from a vocaulary text file."""
+        with open(file_name, "r") as vocab_file:
+            for token in vocab_file:
+                self.add_token(token.replace("\n", ""))
+
+    def from_doc(self, document: Optional[List[str]] = None,
+                 preprocess: bool = False) -> None:
+        """Add tokens from an iterable of string sequences."""
+        doc = self._preprocess(document) if preprocess else document
+        for string in doc:
+            tokens = self.tokenize(string)
+            for token in tokens:
+                self.add_token(token.lower())
+
+    def encode(self, string: str) -> List[int]:
+        """Converts a string in a sequence of integer ids using the tokenizer
+        and vocabulary. NOTE: whitespace and ASCII normalization is applied.
+        """
+        tok2id = self.tokens_to_ids
+        string = normalize_whitespace(unicode_to_ascii(string.lower()))
+        tokens = self.tokenize(string)
+        return [tok2id[token] for token in tokens if token in tok2id]
+
+    def decode(self, tokens: List[int],
+               clean_tokenization: bool = False) -> str:
+        """Converts a sequence of integer ids to a string using the vocabulary.
+        Set `clean_tokenization` as true to clean up tokenization.
+        """
+        id2tok = {i: t for t, i in self.tokens_to_ids.items()}
+        tokens = [id2tok[index] for index in tokens if index in id2tok]
+        string = " ".join(tokens)
+        if clean_tokenization:
+            return BaseTokenizer.clean_tokenization(string)
+        return string
+
+    @staticmethod
+    def clean_tokenization(string: str) -> str:
+        """Clean up spaces before punctuations and abreviated forms."""
+        string = (
+            string.replace(" .", ".")
+            .replace(" ?", "?")
+            .replace(" !", "!")
+            .replace(" ,", ",")
+            .replace(" ' ", "'")
+            .replace(" n't", "n't")
+            .replace(" 'm", "'m")
+            .replace(" do not", " don't")
+            .replace(" 's", "'s")
+            .replace(" 've", "'ve")
+            .replace(" 're", "'re")
+            .replace(" / ", "/")
+        )
+        return string
+
+    def __repr__(self):
+        return f"< BaseTokenizer(tokens={len(self.tokens_to_ids.keys())}) >"
