@@ -96,54 +96,49 @@ dataset[:10]
 
 > The base class `david.tokenizers.BaseTokenizer` implements the common methods for loading/saving a tokenizer either from a local file or director. Support for downloading tokenizer models will be added in the future.
 
-  - tokenizing, converting tokens to ids and back and encoding/decoding,
-  - adding new tokens to the vocabulary in a way that is independant of the underlying structure.
+- tokenizing, converting tokens to ids and back and encoding/decoding,
+- adding new tokens to the vocabulary in a way that is independant of the underlying structure.
   
-The code-block below is a demo with a vocabulary available `YoutubeWebMD` for showing basic usage:
+The code-block below is a demo with a vocabulary available `YTCommentsDataset` for showing basic usage:
 
 ```python
-from david.tokenizers import WordTokenizer, YoutubeWebMD
+from david.tokenizers import WordTokenizer, YTCommentsDataset
 
 # loading and existing tokenizer (vocab.txt) from the available models.
 tokenizer = WordTokenizer('yt-web-md')  # you can also pass a path
 '< WordTokenizer(vocab_size=63844) >'
 
 # building the vocabulary from scratch from a iterable of string sequences.
-document = YoutubeWebMD.load_corpus_from_as_doc()  # returns a generator
+document = YTCommentsDataset.load_dataset_as_doc()  # returns a generator
 tokenizer = WordTokenizer(document=document)
 '< WordTokenizer(vocab_size=63844) >'
 
 # tokenizing a string of sequences.
-text = "Hello, world! This a sentence tokenized from youtube comments 🤗"
+text = "Hello, world! This a sentence tokenizer from youtube comments 🤗"
 tokenized_text = tokenizer.tokenize(text)
 ['hello', ',', 'world', '!', 'this', 'a', 'sentence',
-'tokenized', 'from', 'youtube', 'comments', '🤗']
+'tokenizer', 'from', 'youtube', 'comments', '🤗']
 
-# here we see that the token ['tokenizer'] was not indexed since its not in the vocab!
+# here we see that "tokenizer" was not indexed as its not in the vocabulary.
 indexed_tokens = tokenizer.convert_tokens_to_ids(tokenized_text)
 [477, 69, 467, 164, 9, 22, 10785, 146, 630, 4218, 1809]
-
-# we can further see it clearly thay the token is missing, let's now add it.
+# if we decode the indexed tokens we can clearly see this.
 print(tokenizer.convert_ids_to_tokens(indexed_tokens))
-['hello', ',', 'world', '!', 'this', 'a', 'sentence', 'from', 'youtube', 'comments', '🤗']
+['hello', ',', 'world', '!', 'this', 'a', 'sentence',
+'from', 'youtube', 'comments', '🤗']
 
-# Add a new token to the vocabulary
-tokenizer.add_token(["tokenizer"])  # you can also add from str sequences.
-
-# let's now re-index the tokenized text from above:
-indexed_tokens = tokenizer.convert_string_to_ids(text)
-tokenized_text = tokenizer.convert_string_to_tokens(text)
-
-# the token was added and indexed automatically.
-print(f"indexed: {indexed_tokens}\ntokens:{tokenized_text}")
+# fix by adding the token to the vocab and re-index the text:
+tokenizer.add_token(["tokenizer"])
+indexed_tokens2 = tokenizer.convert_string_to_ids(text)
+tokenized_text2 = tokenizer.convert_string_to_tokens(text)
 ...
-indexed: [477, 69, 467, 164, 9, 22, 10785, 146, 630, 4218, 1809]
-tokens:['hello', ',', 'world', '!', 'this', 'a', 'sentence',
-        'tokenized', 'from', 'youtube', 'comments', '🤗']
+indexed :  [477, 69, 467, 164, 9, 22, 10785, 63844, 146, 630, 4218, 1809]
+tokens  :  ['hello', ',', 'world', '!', 'this', 'a', 'sentence',
+            'tokenizer', 'from', 'youtube', 'comments', '🤗']
 
-# lastly you can also convert back to a single string. (There's more methods available!)
-tokenizer.convert_tokens_to_string(tokenized_text)
-'hello, world! this a sentence tokenized from youtube comments 🤗'
+# there are additional helper methods for easy encoding <-OR-> decoding available.
+tokenizer.convert_ids_to_string(indexed_tokens2)
+'hello, world! this a sentence tokenizer from youtube comments 🤗'
 ```
 
 ## pipeline 🛠
