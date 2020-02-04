@@ -92,48 +92,58 @@ dataset[:10]
  ('Would you please make a video on Funcl W1 and Funcl AI earphones.', 0), ...]
 ```
 
-## tokenizers
+## `david.tokenizers.WordTokenizer`
 
-> New tokenizers added in the text module. While the are functional the module is still in progress. The both the `CharacterTokenizer` and `SentenceTokenizer` classes inherent the `VocabularyBase` class.
+> The base class `david.tokenizers.BaseTokenizer` implements the common methods for loading/saving a tokenizer either from a local file or director. Support for downloading tokenizer models will be added in the future.
 
-TODO: Add documentation and more examples for using these classes.
+  - tokenizing, converting tokens to ids and back and encoding/decoding,
+  - adding new tokens to the vocabulary in a way that is independant of the underlying structure.
+  
+The code-block below is a demo with a vocabulary available `YoutubeWebMD` for showing basic usage:
 
 ```python
-from david.text.tokenizers import (CharacterTokenizer,
-                                   WordTokenizer, SentenceTokenizer)
-char_tokenizer = CharacterTokenizer()  # character level tokenizer.
-sm_tokenizer = WordTokenizer()  # word level tokenizer.
-sent_tokenizer = SentenceTokenizer()  # sentence level tokenizer.
+from david.tokenizers import WordTokenizer, YoutubeWebMD
 
-# Perfect for tokenizing social media text.
-sm_tokenizer.tokenize("This is a 👻 emoji #character, and @david is getting new updates!")
+# loading and existing tokenizer (vocab.txt) from the available models.
+tokenizer = WordTokenizer('yt-web-md')  # you can also pass a path
+'< WordTokenizer(vocab_size=63844) >'
+
+# building the vocabulary from scratch from a iterable of string sequences.
+document = YoutubeWebMD.load_corpus_from_as_doc()  # returns a generator
+tokenizer = WordTokenizer(document=document)
+'< WordTokenizer(vocab_size=63844) >'
+
+# tokenizing a string of sequences.
+text = "Hello, world! This a sentence tokenized from youtube comments 🤗"
+tokenized_text = tokenizer.tokenize(text)
+['hello', ',', 'world', '!', 'this', 'a', 'sentence',
+'tokenized', 'from', 'youtube', 'comments', '🤗']
+
+# here we see that the token ['tokenizer'] was not indexed since its not in the vocab!
+indexed_tokens = tokenizer.convert_tokens_to_ids(tokenized_text)
+[477, 69, 467, 164, 9, 22, 10785, 146, 630, 4218, 1809]
+
+# we can further see it clearly thay the token is missing, let's now add it.
+print(tokenizer.convert_ids_to_tokens(indexed_tokens))
+['hello', ',', 'world', '!', 'this', 'a', 'sentence', 'from', 'youtube', 'comments', '🤗']
+
+# Add a new token to the vocabulary
+tokenizer.add_token(["tokenizer"])  # you can also add from str sequences.
+
+# let's now re-index the tokenized text from above:
+indexed_tokens = tokenizer.convert_string_to_ids(text)
+tokenized_text = tokenizer.convert_string_to_tokens(text)
+
+# the token was added and indexed automatically.
+print(f"indexed: {indexed_tokens}\ntokens:{tokenized_text}")
 ...
-['This', 'is', 'a', '👻', 'emoji', '#character', ',',
-'and', '@david', 'is', 'getting', 'new', 'updates', '!']
+indexed: [477, 69, 467, 164, 9, 22, 10785, 146, 630, 4218, 1809]
+tokens:['hello', ',', 'world', '!', 'this', 'a', 'sentence',
+        'tokenized', 'from', 'youtube', 'comments', '🤗']
 
-# This is another functionality that will be included in all tokenizers
-# In the meantime, only the character tokenizer has this feature. Here we
-# embed (torch.TensorType) one single character.
-char_embeddings = char_tokenizer.character_to_tensor("A")
-...
-tensor([[0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-         0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-         0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-         0., 0., 0.]])
-
-# Finally lets tokenize a document of sequences:
-sentences = ("There are the new tokenizers available with david! "
-    "The WordTokenizer properly handles all your emoji's ect. "
-    "The CharacterTokenizer works with a single character (for word embeddings)"
-    "The SentenceTokenizer properly converts chunks of texts into sentences!")
-
-# Tokenized sentences.
-tokenized_sents = sent_tokenizer.tokenize(sentences)
-...
-['<start> there are the new tokenizers available with david ! <end>',
-'<start> the wordtokenizer properly handles all your emoji s ect . <end>',
-'<start> the charactertokenizer works with a single character for word embeddings'
-'the sentencetokenizer properly converts chunks of texts into sentences ! <end>']
+# lastly you can also convert back to a single string. (There's more methods available!)
+tokenizer.convert_tokens_to_string(tokenized_text)
+'hello, world! this a sentence tokenized from youtube comments 🤗'
 ```
 
 ## pipeline 🛠
