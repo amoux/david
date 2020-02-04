@@ -69,16 +69,16 @@ class BaseTokenizer(object):
         """
         self.tokens_to_ids: Dict[str, int] = {}
         self.token_counts: Dict[str, int] = {}
-        BaseTokenizer.__string_normalizer: object = None
-        self.__num_tokens = 0
+        self.num_tokens = 0
+        self._string_normalizer: object = None
 
     def add_token(self, token: Union[List[str], str]):
         """Add a single or more string sequences to the vocabulary."""
         if isinstance(token, list) and len(token) == 1:
             token = str(token[0])
         if token not in self.tokens_to_ids:
-            self.tokens_to_ids[token] = self.__num_tokens
-            self.__num_tokens += 1
+            self.tokens_to_ids[token] = self.num_tokens
+            self.num_tokens += 1
             self.token_counts[token] = 1
         else:
             self.token_counts[token] += 1
@@ -98,7 +98,7 @@ class BaseTokenizer(object):
     def vocab_from_doc(self, document: List[str]):
         """Load the vocabulary from a document of strings."""
         for string in document:
-            string = self.__string_normalizer(string)
+            string = self._string_normalizer(string)
             tokens = self.tokenize(string)
             for token in tokens:
                 self.add_token(token)
@@ -118,7 +118,7 @@ class BaseTokenizer(object):
 
         This method is the same as calling `self.tokenize('string')`.
         """
-        tokens = self.tokenize(self.__string_normalizer(string))
+        tokens = self.tokenize(self._string_normalizer(string))
         return tokens
 
     def convert_string_to_ids(self, string: str) -> List[int]:
@@ -185,12 +185,13 @@ class WordTokenizer(BaseTokenizer):
     ):
         """Word tokenizer with social media aware contenxt."""
         super().__init__()
-        self._BaseTokenizer__string_normalizer: callable = None
+        self._string_normalizer: object = self.normalize_string
 
         if vocab_file and document is None:
-            if self.MODELS[vocab_file]:
-                self.vocab_from_file(self.MODELS[vocab_file])
-            else:
+            if vocab_file.startswith("yt") or vocab_file in self.MODELS.keys():
+                vocab_file_from_pretrained = self.MODELS[vocab_file]
+                self.vocab_from_file(vocab_file_from_pretrained)
+            elif os.path.isfile(vocab_file):
                 self.vocab_from_file(vocab_file)
         elif document and vocab_file is None:
             self.vocab_from_doc(document)
@@ -213,7 +214,7 @@ class WordTokenizer(BaseTokenizer):
         if self.reduce_length:
             string = reduce_lengthening(string)
 
-        safe_string = HANG_RE.findall(r"\1\1\1", string)
+        safe_string = HANG_RE.sub(r"\1\1\1", string)
         tokens = WORD_RE.findall(safe_string)
         if not self.preserve_case:
             emoji = EMOTICON_RE.search
@@ -224,4 +225,4 @@ class WordTokenizer(BaseTokenizer):
 
     def __repr__(self):
         """Return the size of the vocabulary in string format."""  # why do i need to add docs PEP8?
-        return f"< WordTokenizer(vocab_size={self._BaseTokenizer__num_tokens}) >"
+        return f"< WordTokenizer(vocab_size={self.num_tokens}) >"
