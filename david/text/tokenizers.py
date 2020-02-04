@@ -218,9 +218,9 @@ class WordTokenizer(BaseTokenizer):
         tokens = WORD_RE.findall(safe_string)
         if not self.preserve_case:
             emoji = EMOTICON_RE.search
-            tokens = [
+            tokens = list(
                 map((lambda token: token if emoji(token) else token.lower()), tokens)
-            ]
+            )
         return tokens
 
     def __repr__(self):
