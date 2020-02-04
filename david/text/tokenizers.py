@@ -1,6 +1,7 @@
 """
-david.text.tokenizers
-~~~~~~~~~~~~~~~~~~~~~
+David text tokenizer classes.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This is where I will start adding various tokenizers and also
 other classes that do not belog here at the momemnt but do
 depend on each other. I Need to refactor a lot of files before
@@ -11,264 +12,141 @@ from __future__ import print_function, unicode_literals
 import os
 import re
 from collections import Counter
+from pathlib import Path
 from string import ascii_letters
 from typing import IO, Dict, Iterator, List, Optional, Union
 
+import pandas as pd
 import spacy
 import torch
 from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
                                   _replace_html_entities, reduce_lengthening,
                                   remove_handles)
 
-from ..utils import get_data_home
 from .prep import normalize_whitespace, unicode_to_ascii
 
 
-class YTCommentsConfig:
-    """Temporary tokenizer `config` (PROTOTYPE)"""
-    VOCAB_FILE = None
-    if not os.environ["DAVID_TOKENIZERS_SRC"]:
-        vocab_path = os.path.join(get_data_home(), "tokenizers_vocab_files")
-        vocab_file = os.path.join(vocab_path, "yt_comments_md/vocab.txt")
-        if os.path.isfile(vocab_file):
-            VOCAB_FILE = vocab_file
-    else:
-        vocab_path = os.environ["DAVID_TOKENIZERS_SRC"]
-        vocab_file = os.path.join(vocab_path, "yt_comments_md/vocab.txt")
-        if os.path.isfile(vocab_file):
-            VOCAB_FILE = vocab_file
+class YoutubeWebMD:
+    """Temporary `configuration` while prototyping."""
 
+    VOCAB_PATH = "/home/ego/david_data/vocab/yt_web_md/"
+    VOCAB_FILE = os.path.join(VOCAB_PATH, "vocab.txt")
+    CSV_CORPUS = os.path.join(VOCAB_PATH, "corpus.csv")
+    model_name = "yt-web-md"
 
-class VocabularyBase(object):
-    sos_special_token: int = 0
-    eos_special_token: int = 1
+    @staticmethod
+    def load_corpus_from_df() -> Union[pd.DataFrame, None]:
+        """Load the corpus and returns a `pandas.Dataframe` instance."""
+        return pd.read_csv(YoutubeWebMD.CSV_CORPUS)
 
-    def __init__(self, name: str = None):
-        self.name = name
-        self.word2index: Dict[str, int] = {}
-        self.word2count: Dict[str, int] = {}
-        self.index2word: Dict[int, str] = {
-            self.sos_special_token: "SOS",
-            self.eos_special_token: "EOS",
-        }
-        self.num_words: int = 2  # count for both SOS and EOS tokens.
-
-    def add_words_from_split(self, sentence: str) -> None:
-        for word in sentence.split():
-            self.add_word(word)
-
-    def iter_words_from_tokenizer(self, word: str) -> None:
-        self.add_word(word)
-
-    def add_word(self, word: str) -> None:
-        if word not in self.word2index:
-            self.word2index[word] = self.num_words
-            self.word2count[word] = 1
-            self.index2word[self.num_words] = word
-        else:
-            self.word2count[word] += 1
-
-
-class CharacterTokenizer(VocabularyBase):
-    STRING_CHARACTERS: str = ascii_letters + " .,;'"
-
-    def __init__(self):
-        super().__init__("CharTokenizerVocab")
-
-    def get_character_id(self, character: str) -> int:
-        """Finds character index from STRING_LETTERS, e.g. "a" = 0"""
-        return self.STRING_CHARACTERS.find(character)
-
-    def character_to_tensor(self, character: str):
-        """Turn a single character into a <1 x n_characters> Tensor"""
-        char_size = 1
-        if len(character) != char_size:
-            raise ValueError(f"Letter size must be = 1, not: {len(character)}")
-
-        num_characters = len(self.STRING_CHARACTERS)
-        tensor = torch.zeros(char_size, num_characters)
-        tensor[0][self.get_character_id(character)] = char_size
-        return tensor
-
-    def word_to_tensor(self, sequence: str):
-        """Turn a string sequence into an array of one-hot char vectors."""
-        char_size = 1
-        sequence_size = len(sequence)
-        num_letters = len(self.STRING_CHARACTERS)
-        tensor = torch.zeros(sequence_size, char_size, num_letters)
-        for i, char in enumerate(sequence):
-            tensor[i][0][self.get_character_id(char)] = char_size
-        return tensor
-
-
-class WordTokenizer(CharacterTokenizer):
-    def __init__(
-        self,
-        preserve_case: bool = True,
-        reduce_len: bool = False,
-        strip_handles: bool = False,
-    ):
-        super()
-        self.preserve_case = preserve_case
-        self.reduce_len = reduce_len
-        self.strip_handles = strip_handles
-
-    def tokenize(self, sequence: str) -> List[str]:
-        sequence = _replace_html_entities(sequence)
-        if self.strip_handles:
-            sequence = remove_handles(sequence)
-        if self.reduce_len:
-            sequence = reduce_lengthening(sequence)
-        safe_seq = HANG_RE.sub(r"\1\1\1", sequence)
-        words = WORD_RE.findall(safe_seq)
-        if not self.preserve_case:
-            emoji = EMOTICON_RE.search
-            words = list(map((lambda w: w if emoji(w) else w.lower()), words))
-        return words
-
-
-class SentenceTokenizer(VocabularyBase):
-    """Sentence tokenizer built with spacy.
-
-    Usage:
-        >>> tokenizer = SentenceTokenizer()
-        >>> text = ("Hello world's this is one sentence!. "
-                    "Yes? and another sentence.")
-        >>> sent_tokens = tokenizer.tokenize(text)
-            ...
-            ['<start> hello world s this is one sentence ! . <end>',
-             '<start> yes ? <end>',
-             '<start> and another sentence . <end>']
-    """
-
-    def __init__(self):
-        super().__init__("SentTokenizerVocab")
-
-    def pad_punctuation(self, sequence: str, special_tokens: bool = False):
-        """Padding punctuation with white spaces keeping the punctuation."""
-        string = unicode_to_ascii(sequence.lower().strip())
-        string = re.sub(r"([?.!,¿])", r" \1 ", string)
-        string = re.sub(r'[" "]+', " ", string)
-        string = re.sub(r"[^a-zA-Z?.!,¿]+", " ", string)
-        string = string.rstrip().strip()
-        if special_tokens:
-            string = "<start> " + string + " <end>"
-        return string
-
-    def tokenize(
-        self,
-        sequence: Union[List[str], str],
-        special_tokens: bool = True,
-        lang: str = "en_core_web_sm",
-    ) -> Iterator[List[str]]:
-        """Basic sentence tokenizer with the option to add a <start> and an
-        <end> special token to the sentence so that the model know when to
-        start and stop predicting.
-        """
-        if isinstance(sequence, str):
-            sequence = [sequence]
-
-        nlp = spacy.load(lang)
-        for doc in nlp.pipe(sequence):
-            for sent in doc.sents:
-                sent = sent.text.strip()
-                if special_tokens:
-                    yield self.pad_punctuation(sent, special_tokens=True)
-                else:
-                    yield sent
+    @staticmethod
+    def load_corpus_from_as_doc() -> List[str]:
+        """Return an generator of iterable string sequences."""
+        df = YoutubeWebMD.load_corpus_from_df()
+        for sequence in df["text"].tolist():
+            yield sequence
 
 
 class BaseTokenizer(object):
-    """Base tokenizer class for all tokenizers."""
+    """Base tokenization for all tokenizer classes."""
 
-    def __init__(
-        self,
-        vocab_file: Optional["vocab.txt"] = None,
-        document: Optional[List[str]] = None,
-    ):
-        """
-        vocab_file: Either load an existing vocabulary of tokens.
-        document: Or load from an iterable list of string sequences.
-        preprocess: Normalize whitespace and enforce ASCII.
-        tokenizer: Callable method. If None, WordTokenizer is used.
+    def __init__(self):
+        r"""When subclassing the base tokenizer.
+
+        * The following methods are expected (Example):
+        ```python
+        class ChildTokenizer(BaseTokenizer):
+            def __init__(self, *args, **kwargs):
+                super().__init__()
+            self.__string_normalizer = self.my_normalizer_method
+        ...
+            def my_normalizer_method(self, text:str): -> str:
+        ```
+        - Configure how the vocab will be loaded; use the following methods:
+            - `BaseTokenizer.vocab_from_file(vocab_file='<path/to/vocab.txt>')`
+            - `BaseTokenizer.vocab_from_doc(List[str])`
+
         """
         self.tokens_to_ids: Dict[str, int] = {}
-        self.token_counter: Dict[str, int] = Counter()
-        self._num_tokens: int = 0
-        self._string_normalizer: object = None
-
-        if vocab_file and document is None:
-            self.from_file(vocab_file)
-        elif document and vocab_file is None:
-            self.from_doc(document)
+        self.token_counts: Dict[str, int] = {}
+        BaseTokenizer.__string_normalizer: object = None
+        self.__num_tokens = 0
 
     def add_token(self, token: Union[List[str], str]):
-        """Add a single string token (word) to the vocabulary."""
-        # A List[token] can be added only of theres only one string token.
-        if (isinstance(token, list) and len(token) == 1):
+        """Add a single or more string sequences to the vocabulary."""
+        if isinstance(token, list) and len(token) == 1:
             token = str(token[0])
-
         if token not in self.tokens_to_ids:
-            self.tokens_to_ids[token] = self._num_tokens
-            self._num_tokens += 1
-            self.token_counter[token] = 1
+            self.tokens_to_ids[token] = self.__num_tokens
+            self.__num_tokens += 1
+            self.token_counts[token] = 1
         else:
-            self.token_counter[token] += 1
+            self.token_counts[token] += 1
 
-    def to_file(self, file_name="vocab.txt") -> IO:
-        """Saves tokens to vocabulary text file."""
+    def save_vocabulary(self, file_name="vocab.txt") -> IO:
+        """Save the current vocabulary to a vocab.txt file."""
         with open(file_name, "w") as vocab_file:
             for token in self.tokens_to_ids.keys():
                 vocab_file.write(f"{token}\n")
 
-    def from_file(self, file_name="vocab.txt") -> IO:
-        """Add tokens from a vocaulary text file."""
+    def vocab_from_file(self, file_name="vocab.txt") -> IO:
+        """Load the vocabulary from a vocab.txt file."""
         with open(file_name, "r") as vocab_file:
             for token in vocab_file:
                 self.add_token(token.replace("\n", ""))
 
-    def from_doc(self, document: List[str]) -> None:
-        """Add tokens from an iterable of string sequences."""
+    def vocab_from_doc(self, document: List[str]):
+        """Load the vocabulary from a document of strings."""
         for string in document:
-            string = self._string_normalizer(string)
+            string = self.__string_normalizer(string)
             tokens = self.tokenize(string)
             for token in tokens:
                 self.add_token(token)
 
-    def _encode(self, string: str) -> List[int]:
-        """Converts a string in a sequence of integer ids using the tokenizer
-        and vocabulary. NOTE: whitespace and ASCII normalization is applied.
-        """
+    def __vocabulary_encoder(self, tokens: List[str]) -> List[int]:
         tok2id = self.tokens_to_ids
-        string = self._string_normalizer(string)
-        tokens = self.tokenize(string)
-        return [tok2id[token] for token in tokens if token in tok2id]
+        tokens = [tok2id[token] for token in tokens if token in tok2id]
+        return tokens
 
-    def _decode(self, tokens: List[int]) -> List[str]:
-        # Root vocab decoder, converts a sequence of toks[id] => toks[str]
+    def __vocabulary_decoder(self, tokens: List[int]) -> List[str]:
         id2tok = {i: t for t, i in self.tokens_to_ids.items()}
         tokens = [id2tok[index] for index in tokens if index in id2tok]
         return tokens
 
-    def convert_tokens_to_string(
-        self, tokens: List[str], clean_tokenization=True
-    ) -> str:
-        """Convert a sequence of tokens (string) in a single string."""
-        string = " ".join(tokens)
-        if clean_tokenization:
-            string = BaseTokenizer.clean_tokenization(string)
+    def convert_string_to_tokens(self, string: str) -> List[str]:
+        """Covert string to a sequence of string tokens.
+
+        This method is the same as calling `self.tokenize('string')`.
+        """
+        tokens = self.tokenize(self.__string_normalizer(string))
+        return tokens
+
+    def convert_string_to_ids(self, string: str) -> List[int]:
+        """Convert a string to a sequence of integer token ids."""
+        tokens = self.convert_string_to_tokens(string)
+        token_ids = self.convert_tokens_to_ids(tokens)
+        return token_ids
+
+    def convert_tokens_to_string(self, tokens: List[str]) -> str:
+        """Convert a sequence of string tokens to a single string."""
+        string = BaseTokenizer.clean_tokenization(" ".join(tokens))
         return string
 
     def convert_tokens_to_ids(self, tokens: List[str]) -> List[int]:
-        """Converts a single or a list of string tokens, in a single int:id."""
-        tok2id = self.tokens_to_ids
-        return [tok2id[token] for token in tokens if token in tok2id]
+        """Convert a sequence of string tokens to tokens of ids."""
+        token_ids = self.__vocabulary_encoder(tokens)
+        return token_ids
 
     def convert_ids_to_tokens(self, tokens: List[int]) -> List[str]:
-        """Converts a single index or a sequence of indices (integers) in a token,
-        using the vocabulary and tokens.
-        """
-        return self._decode(tokens)
+        """Convert a sequence of integer ids to tokens of strings."""
+        tokens = self.__vocabulary_decoder(tokens)
+        return tokens
+
+    def convert_ids_to_string(self, tokens: List[int]) -> str:
+        """Convert a sequence of integer ids to a single string."""
+        tokens = self.convert_ids_to_tokens(tokens)
+        string = self.convert_tokens_to_string(tokens)
+        return string
 
     @staticmethod
     def clean_tokenization(string: str) -> str:
@@ -290,74 +168,60 @@ class BaseTokenizer(object):
         return string
 
 
-class SocialMediaTokenizer(BaseTokenizer):
-    r"""Social media aware tokenizer.
+class WordTokenizer(BaseTokenizer):
+    """Word tokenizer class with social media aware context."""
 
-    Usage:
-        >>> tokenizer = SocialMediaTokenizer('yt-comments-md')
-        '< SocialMediaTokenizer(tokens=63844) >'
-        >>> text = "Hello world! This is a social media tokenizer 🤗"
-        >>> tokenized_text = tokenizer.tokenize(text)
-        ['hello', 'world', '!', 'this', 'is', 'a', 'social', 'media',
-            'tokenizer', '🤗']
-        >>> indexed_tokens = tokenizer.convert_tokens_to_ids(tokenized_text)
-        [477, 467, 164, 9, 49, 22, 3641, 4202, 1809]
-        >>> tokenizer.convert_ids_to_tokens(indexed_tokens)
-        ['hello', 'world', '!', 'this', 'is', 'a', 'social', 'media', '🤗']
-
-        ## Adding a new token if its not in the vocabulary.
-        >>> tokenizer.add_token("tokenizer") # or ["tokenizer"] of len=1
-        >>> indexed_tokens = tokenizer.convert_tokens_to_ids(tokenized_text)
-        [477, 467, 164, 9, 49, 22, 3641, 4202, 63844, 1809]
-        ## The `token="tokenizer"` was added to `index=63844`.
-        >>> tokenizer.convert_ids_to_tokens(indexed_tokens)
-        ['hello', 'world', '!', 'this', 'is', 'a', 'social', 'media',
-        'tokenizer', '🤗']
-
-    """
-    SM_TOKENIZER_MODELS = {"yt-comments-md": YTCommentsConfig.VOCAB_FILE}
+    # Toy "model" for prototyping with real data :)
+    MODELS = {"yt-web-md": YoutubeWebMD.VOCAB_FILE}
+    # Recommended tokenizer defaults.
+    preserve_case: bool = False
+    reduce_length: bool = False
+    strip_handles: bool = False
 
     def __init__(
         self,
         vocab_file: Optional["vocab.txt"] = None,
         document: Optional[List[str]] = None,
-        preserve_case=False,
-        reduce_len=False,
-        strip_handles=False,
     ):
-        # This is not a true imprementation, Its an emulation of
-        # how I want to load models, after a few days of trying this
-        # I will have something ready and clean.
-        if not os.path.isfile(vocab_file):
-            vocab_file = self.SM_TOKENIZER_MODELS[vocab_file]
+        """Word tokenizer with social media aware contenxt."""
+        super().__init__()
+        self._BaseTokenizer__string_normalizer: callable = None
 
-        super().__init__(vocab_file=vocab_file, document=document)
-        self.preserve_case = preserve_case
-        self.reduce_len = reduce_len
-        self.strip_handles = strip_handles
-        self._string_normalizer = self.normalize_string
+        if vocab_file and document is None:
+            if self.MODELS[vocab_file]:
+                self.vocab_from_file(self.MODELS[vocab_file])
+            else:
+                self.vocab_from_file(vocab_file)
+        elif document and vocab_file is None:
+            self.vocab_from_doc(document)
+        else:
+            raise Exception(
+                "Vocabulary could not be loaded from {}".format(vocab_file or document)
+            )
 
     def normalize_string(self, string: str) -> str:
+        """Normalize strings by encoding ASCII and excessive whitespaces."""
         if not self.preserve_case:
             string = string.lower()
         return normalize_whitespace(unicode_to_ascii(string))
 
     def tokenize(self, string: str) -> List[str]:
+        """Tokenize a sequence of string characters."""
         string = _replace_html_entities(string)
         if self.strip_handles:
             string = remove_handles(string)
-        if self.reduce_len:
+        if self.reduce_length:
             string = reduce_lengthening(string)
 
-        safe_string = HANG_RE.sub(r"\1\1\1", string)
+        safe_string = HANG_RE.findall(r"\1\1\1", string)
         tokens = WORD_RE.findall(safe_string)
         if not self.preserve_case:
             emoji = EMOTICON_RE.search
-            tokens = list(
-                map((lambda token: token if emoji(token)
-                     else token.lower()), tokens)
-            )
+            tokens = [
+                map((lambda token: token if emoji(token) else token.lower()), tokens)
+            ]
         return tokens
 
     def __repr__(self):
-        return f"< SocialMediaTokenizer(tokens={self._num_tokens}) >"
+        """Return the size of the vocabulary in string format."""  # why do i need to add docs PEP8?
+        return f"< WordTokenizer(vocab_size={self._BaseTokenizer__num_tokens}) >"
