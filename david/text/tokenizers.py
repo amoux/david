@@ -10,11 +10,12 @@ adding more files.
 from __future__ import print_function, unicode_literals
 
 import os
+import random
 import re
 from collections import Counter
 from pathlib import Path
 from string import ascii_letters
-from typing import IO, Dict, Iterator, List, Optional, Union
+from typing import IO, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import spacy
@@ -24,6 +25,7 @@ from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
                                   remove_handles)
 
 from .prep import normalize_whitespace, unicode_to_ascii
+from .utils import split_train_test
 
 
 class YTCommentsDataset:
@@ -33,6 +35,7 @@ class YTCommentsDataset:
     VOCAB_FILE = os.path.join(VOCAB_PATH, "vocab.txt")
     CSV_CORPUS = os.path.join(VOCAB_PATH, "corpus.csv")
     model_name = "yt-web-md"
+    num_samples = 61478
 
     @staticmethod
     def load_dataset_as_df() -> Union[pd.DataFrame, None]:
@@ -45,6 +48,20 @@ class YTCommentsDataset:
         df = YTCommentsDataset.load_dataset_as_df()
         for sequence in df["text"].tolist():
             yield sequence
+
+    @staticmethod
+    def split_train_test(k=6000, subset=0.8) -> Tuple[List[str], List[str]]:
+        """Randomly split into train and test iterables.
+
+        `k`: The split decision value or items in the dataset to consider to subset.
+           e.g, If you want to use `k=100` samples from `samples=1000` then -> 
+           train and test sizes: `< Train[80], Test[20] >` are returned.
+
+        Returns `Tuple[List[str], List[str]]`: Two iterables - train_doc is 8/10 of
+            the total while the test_doc is 2/10 of the total.
+        """
+        dataset = YTCommentsDataset.load_dataset_as_doc()
+        return split_train_test(list(dataset), k, subset=subset)
 
 
 class BaseTokenizer(object):
@@ -63,26 +80,26 @@ class BaseTokenizer(object):
             - `BaseTokenizer.vocab_from_doc(document=List[str])`
 
         """
-        self.tokens_to_ids: Dict[str, int] = {}
-        self.token_counter: Dict[str, int] = Counter()
-        self.num_tokens: int = 0
+        self.vocab_index: Dict[str, int] = {}
+        self.vocab_count: Dict[str, int] = Counter()
+        self.token_count: int = 1
 
     def add_token(self, token: Union[List[str], str]):
         """Add a single or more string sequences to the vocabulary."""
         if isinstance(token, list) and len(token) == 1:
             token = token[0]
 
-        if token not in self.tokens_to_ids:
-            self.tokens_to_ids[token] = self.num_tokens
-            self.num_tokens += 1
-            self.token_counter[token] = 1
+        if token not in self.vocab_index:
+            self.vocab_index[token] = self.token_count
+            self.token_count += 1
+            self.vocab_count[token] = 1
         else:
-            self.token_counter[token] += 1
+            self.vocab_count[token] += 1
 
     def save_vocabulary(self, vocab_path="vocab.txt") -> IO:
         """Save the current vocabulary to a vocab.txt file."""
         with open(vocab_path, "w") as vocab_file:
-            for token in self.tokens_to_ids.keys():
+            for token in self.vocab_index.keys():
                 vocab_file.write(f"{token}\n")
 
     def vocab_from_file(self, vocab_path="vocab.txt") -> IO:
@@ -99,12 +116,12 @@ class BaseTokenizer(object):
                 self.add_token(token)
 
     def _encode(self, tokens: List[str]) -> List[int]:
-        tok2id = self.tokens_to_ids
+        tok2id = self.vocab_index
         token_ids = [tok2id[token] for token in tokens if token in tok2id]
         return token_ids
 
     def _decode(self, token_ids: List[int]) -> List[str]:
-        id2tok = {idx: tok for tok, idx in self.tokens_to_ids.items()}
+        id2tok = {idx: tok for tok, idx in self.vocab_index.items()}
         tokens = [id2tok[index] for index in token_ids if index in id2tok]
         return tokens
 
@@ -161,6 +178,44 @@ class BaseTokenizer(object):
             .replace(" / ", "/")
         )
         return string
+
+
+class _DeveloperWordTokenizer(object):
+    """Basic tokenizer to test WordTokenizer.
+    
+    Without if only using the tokenizer and no the
+    vocab features from the BaseTokenizer class.
+    """
+
+    preserve_case: bool = False
+    reduce_length: bool = False
+    strip_handles: bool = False
+
+    @staticmethod
+    def normalize_string(string: str) -> str:
+        """Normalize strings by encoding ASCII and excessive whitespaces."""
+        if not BasicTokenizer.preserve_case:
+            string = string.lower()
+        return normalize_whitespace(unicode_to_ascii(string))
+
+    @staticmethod
+    def tokenize(string: str) -> List[str]:
+        """Tokenize a sequence of string characters."""
+        string = BasicTokenizer.normalize_string(string)
+        string = _replace_html_entities(string)
+        if BaseTokenizer.strip_handles:
+            string = remove_handles(string)
+        if BaseTokenizer.reduce_length:
+            string = reduce_lengthening(string)
+
+        safe_string = HANG_RE.sub(r"\1\1\1", string)
+        tokens = WORD_RE.findall(safe_string)
+        if not BaseTokenizer.preserve_case:
+            emoji = EMOTICON_RE.search
+            tokens = list(
+                map((lambda token: token if emoji(token) else token.lower()), tokens)
+            )
+        return tokens
 
 
 class WordTokenizer(BaseTokenizer):
@@ -220,4 +275,4 @@ class WordTokenizer(BaseTokenizer):
 
     def __repr__(self):
         """Return the size of the vocabulary in string format."""
-        return f"< WordTokenizer(vocab_size={self.num_tokens}) >"
+        return f"< WordTokenizer(vocab_size={self.token_count}) >"

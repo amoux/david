@@ -7,13 +7,9 @@ from urllib.request import Request, URLError, urlopen
 from bs4 import BeautifulSoup
 
 
-def split_train_test(
-    doc: List[str], n: Optional[int] = None
-) -> Tuple[List[str], List[str]]:
+def split_train_test(doc: List[str], n: Optional[int] = None,
+                     seed=12345, subset=0.8) -> Tuple[List[str], List[str]]:
     """Randomly split a doc into train and test iterables.
-
-    Parameters:
-    ----------
 
     `doc` (list[str]):
         A doc of iterable strings that will be split.
@@ -27,12 +23,12 @@ def split_train_test(
         of the total while the test_doc is 2/10 of the total.
 
     """
-    random.seed(12345)
+    random.seed(seed)
     random.shuffle(doc)
     if not n or n > len(doc):
         n = len(doc)
-    train_doc = doc[: int(0.8 * n)]
-    test_doc = doc[int(0.8 * n): n]
+    train_doc = doc[: int(subset * n)]
+    test_doc = doc[int(subset * n) : n]
     return train_doc, test_doc
 
 

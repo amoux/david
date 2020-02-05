@@ -1,3 +1,3 @@
-import .elmo as ElmoModel
-import .trans as TransformersModel
-from .utils import load_bert
+
+from .glove import GloVe
+from .utils import BERT_MODELS, load_bert
