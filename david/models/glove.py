@@ -9,7 +9,7 @@ complete set of modules for all my word embedding needs!
 import os
 from pathlib import Path
 from typing import Dict
-
+from wasabi import msg
 import numpy as np
 
 
@@ -37,7 +37,7 @@ class GloVe:
         """
         vocab_path = Path(vocab_file)
         if not vocab_path.exists():
-            raise FileNotFoundError(f"Could't find glove file in {vocab_file}")
+            msg.fail(f"Could't find glove file in {vocab_file}")
 
         with vocab_path.open("r", encoding="utf8") as glove_file:
             embeddings = {}
@@ -59,16 +59,14 @@ class GloVe:
         the vocab size will be calculated from the vocab index dict.
         """
         vocab_file = GloVe.vocab_files[vocab_dim]
-        print(f"Loading vocab file from {vocab_file}")
+        msg.good(f"Loading vocab file from {vocab_file}")
 
         num_dim = int(vocab_dim.replace("d", ""))
         if vocab_index and vocab_size is None:
             vocab_size = 1 + len(vocab_index.keys())
 
-        print(
-            f"num-dim:({num_dim}), vocab-size: {vocab_size}",
-            "\n*** embedding vocabulary...\n",
-        )
+        msg.good(f"num-dim:({num_dim}), vocab-size: {vocab_size}\n")
+        msg.good("*** embedding vocabulary 🤗 ***")
 
         glove_embeddings = GloVe.build_vocabulary(vocab_file)
         vocab_embeddings = np.zeros((vocab_size, num_dim))

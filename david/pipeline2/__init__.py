@@ -84,8 +84,7 @@ class DavidPipeline(SpacyDocMetric):
         for doc in self._nlp.pipe(batch, batch_size=batch_size):
             yield doc
 
-    def update_stop_words(
-            self, stop_words: Union[List[str], Set[str]]) -> None:
+    def update_stop_words(self, stop_words: Union[List[str], Set[str]]) -> None:
         self._nlp.Defaults.stop_words.update(stop_words)
         for word in stop_words:
             lexemme = self._nlp.vocab[word]

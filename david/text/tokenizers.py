@@ -10,6 +10,7 @@ adding more files.
 from __future__ import print_function, unicode_literals
 
 import os
+import pickle
 import random
 import re
 from collections import Counter
@@ -20,12 +21,45 @@ from typing import IO, Dict, List, Optional, Tuple, Union
 import pandas as pd
 import spacy
 import torch
-from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
-                                  _replace_html_entities, reduce_lengthening,
-                                  remove_handles)
+from nltk.tokenize.casual import (
+    EMOTICON_RE,
+    HANG_RE,
+    WORD_RE,
+    _replace_html_entities,
+    reduce_lengthening,
+    remove_handles,
+)
+from wasabi import msg
 
 from .prep import normalize_whitespace, unicode_to_ascii
 from .utils import split_train_test
+
+WARN_INDEX_NOT_FREQ = (
+    "\nWarning: Vocabulary's index has not been transformed to "
+    "frequency.\nApplying the needed requirements for fitting the "
+    "documents.\nCalling `self.vocab_index_to_frequency` for you...\n"
+)
+
+RECOMD_IO_LOADING = (
+    "INFO: Using `self.save_vectors` and `self.load_vectors` is "
+    "recommended over simply saving the vocabulary as it saves "
+    "both states from the vocab_index and vocab_count dict objects "
+    "Both which improve the tokenizer's features."
+)
+
+
+class TokenizerIO:
+    """Vocab data object loader and writer for the tokenizer."""
+
+    def save_obj(name: str, data_obj: object) -> IO:
+        """Save the object as a pickle file."""
+        with open(name, "wb") as file:
+            pickle.dump(data_obj, file, pickle.HIGHEST_PROTOCOL)
+
+    def load_obj(name: str) -> object:
+        """Load the object from a pickle file."""
+        with open(name, "rb") as file:
+            return pickle.load(file)
 
 
 class YTCommentsDataset:
@@ -64,7 +98,7 @@ class YTCommentsDataset:
         return split_train_test(list(dataset), k, subset=subset)
 
 
-class BaseTokenizer(object):
+class BaseTokenizer:
     """Base tokenization for all tokenizer classes."""
 
     def __init__(self):
@@ -75,14 +109,16 @@ class BaseTokenizer(object):
         - Construct a tokenizer callable method as `tokenize`:
             - `self.tokenize(sequence:str) -> str:`
 
-        - Configure how the vocab is loaded (Available callable methods):
-            - `BaseTokenizer.vocab_from_file(vocab_file='<path/to/vocab.txt>')`
-            - `BaseTokenizer.vocab_from_doc(document=List[str])`
+        - Multiple ways for loading the vocabulary:
+            - `BaseTokenizer.load_vocabulary(vocab_file: str = 'vocab.pkl')`
+            - `BaseTokenizer.load_vectors(vectors_file: str = 'vectors.pkl')`
+            - `BaseTokenizer.fit_on_document(document: List[str])`
 
         """
         self.vocab_index: Dict[str, int] = {}
-        self.vocab_count: Dict[str, int] = Counter()
-        self.token_count: int = 1
+        self.vocab_count: Counter[Dict[str, int]] = Counter()
+        self._token_count: int = 1
+        self._index_vocab_is_frequency = False
 
     def add_token(self, token: Union[List[str], str]):
         """Add a single or more string sequences to the vocabulary."""
@@ -90,66 +126,102 @@ class BaseTokenizer(object):
             token = token[0]
 
         if token not in self.vocab_index:
-            self.vocab_index[token] = self.token_count
-            self.token_count += 1
+            self.vocab_index[token] = self._token_count
+            self._token_count += 1
             self.vocab_count[token] = 1
         else:
             self.vocab_count[token] += 1
 
-    def save_vocabulary(self, vocab_path="vocab.txt") -> IO:
-        """Save the current vocabulary to a vocab.txt file."""
-        with open(vocab_path, "w") as vocab_file:
-            for token in self.vocab_index.keys():
-                vocab_file.write(f"{token}\n")
+    @property
+    def vocab_size(self) -> int:
+        """Return the size of the vocabulary."""
+        return len(self.vocab_index)
 
-    def vocab_from_file(self, vocab_path="vocab.txt") -> IO:
-        """Load the vocabulary from a vocab.txt file."""
-        with open(vocab_path, "r") as vocab_file:
-            for token in vocab_file:
-                self.add_token(token.replace("\n", ""))
+    def bag_of_tokens(self, n: int = 5) -> List[Tuple[str, int]]:
+        """Return `n` [(token, token_id)] from the vocab index dict."""
+        return list(self.vocab_index.items())[:n]
 
-    def vocab_from_doc(self, document: List[str]):
-        """Load the vocabulary from a document of strings.
+    def most_common(self, n: int = 5) -> List[Tuple[str, int]]:
+        """Return `n` most common tokens in the vocabulary."""
+        return self.vocab_count.most_common(n)
+
+    def save_vocabulary(self, vocab_file="vocab.pkl") -> IO:
+        """Save the current vocabulary to a vocab.pkl file."""
+        msg.info(RECOMD_IO_LOADING)
+        TokenizerIO.save_obj(vocab_file, self.vocab_index)
+
+    def load_vocabulary(self, vocab_file="vocab.pkl") -> IO:
+        """Load the vocabulary from a vocab.pkl file."""
+        msg.info(RECOMD_IO_LOADING)
+        self.vocab_index = TokenizerIO.load_obj(vocab_file)
+
+    def save_vectors(
+        self, vectors_file="vectors.pkl", vectors: List[Tuple[str, int, int]] = None
+    ) -> IO:
+        """Save the vectors to a pickle file.
         
-        This method is similar to keras's method `Tokenizer.fit_on_texts`.
+        vectors: (Optional) Pass a vectors object from `self.vocab_to_vectors()`
+        or None, and the method is called automatically.
         """
+        if vectors is None:
+            vectors = self.vocab_to_vectors()
+        TokenizerIO.save_obj(vectors_file, vectors)
+
+    def load_vectors(self, vectors_file="vectors.pkl") -> IO:
+        """Load both (index and count) vocab dicts from a vectors file.
+        
+        This method can be used as a way to restore both vocab and counter states.
+        While `save_vocabulary` and `load_vocabulary` only save/load the
+        self.vocab_index dictionary objects.
+        """
+        (vocab_index, vocab_count) = dict(), Counter()
+        for token, count, token_id in TokenizerIO.load_obj(vectors_file):
+            vocab_index[token] = token_id
+            vocab_count[token] = count
+        self.vocab_index, self.vocab_count = (vocab_index, vocab_count)
+
+    def fit_on_document(self, document: List[str]):
+        """Fit the vocabulary from an iterable document of string sequences."""
         for string in document:
             tokens = self.tokenize(string)
             for token in tokens:
                 self.add_token(token)
 
-    def doc_to_sequences(self, document: List[str], embedd_vocab=False) -> List[int]:
-        """Fit an iterable of string sequences to vocab ids.
+    def vocab_to_vectors(self) -> List[Tuple[str, int, int]]:
+        """Return the index-vocab as vector representation: `[(token, count, id)]`."""
+        vectors = []
+        vocfreq = self.vocab_count.most_common()
+        for token_id, (token, count) in enumerate(vocfreq, start=1):
+            vectors.append((token, count, token_id))
+        return vectors
 
-        `embedd_vocab`: Weather to replace the `vocab_index` with a vocab of embeddings
-            Before transforming the document to sequences of integer ids (vocab_index).
-            This is equal to calling `self.vocab_to_embeddings(inplace=True)` before
-            this method. NOTE: The vocab will be replaced in place.
+    def document_to_sequences(self, document: List[str]) -> List[int]:
+        """Fit a document to a document of vocab ids (Bag of words)."""
+        if not self._index_vocab_is_frequency:
+            msg.warn(WARN_INDEX_NOT_FREQ)
+            self.index_vocab_to_frequency()
+            self._index_vocab_is_frequency = True
 
-        Yields encoded sequences of integers.
-        """
-        if embedd_vocab:
-            self.vocab_to_embeddings(inplace=True)
         for string in document:
             tokens = self.tokenize(string)
             if tokens is not None:
                 yield self._encode(tokens)
 
-    def vocab_to_embeddings(self, inplace: bool = False):
-        """Transform the index vocab to a vocab sorted by frequecy.
+    def index_vocab_to_frequency(self, inplace=True):
+        """Align (Sort) the indexed vocabulary relative to the item(s) frequency.
 
-        `inplace`: Weather to replace the existig `vocab_index` with the new
-        transformed vocab if inplace=True. Otherwise, a dictionary of type
-        `Dict[str, int]` is returned (default).
+        `inplace`: Weather to replace the existig `vocab_index` inplace if true.
+            Otherwise, the dictionary `Dict[str, int]` is returned.
         """
-        embeddings: Dict[str, int] = {}
+        index_frequency: Dict[str, int] = {}
         vocab_index, _ = zip(*self.vocab_count.most_common())
         for index, token in enumerate(vocab_index, start=1):
-            embeddings[token] = index
+            index_frequency[token] = index
         if inplace:
-            self.vocab_index = embeddings
+            self.vocab_index = index_frequency
+            self._index_vocab_is_frequency = True
         else:
-            return embeddings
+            return index_frequency
 
     def _encode(self, tokens: List[str]) -> List[int]:
         tok2id = self.vocab_index
@@ -216,76 +288,31 @@ class BaseTokenizer(object):
         return string
 
 
-class _DeveloperWordTokenizer(object):
-    """Basic tokenizer to test WordTokenizer.
-    
-    Without if only using the tokenizer and no the
-    vocab features from the BaseTokenizer class.
-    """
-
-    preserve_case: bool = False
-    reduce_length: bool = False
-    strip_handles: bool = False
-
-    @staticmethod
-    def normalize_string(string: str) -> str:
-        """Normalize strings by encoding ASCII and excessive whitespaces."""
-        if not BasicTokenizer.preserve_case:
-            string = string.lower()
-        return normalize_whitespace(unicode_to_ascii(string))
-
-    @staticmethod
-    def tokenize(string: str) -> List[str]:
-        """Tokenize a sequence of string characters."""
-        string = BasicTokenizer.normalize_string(string)
-        string = _replace_html_entities(string)
-        if BaseTokenizer.strip_handles:
-            string = remove_handles(string)
-        if BaseTokenizer.reduce_length:
-            string = reduce_lengthening(string)
-
-        safe_string = HANG_RE.sub(r"\1\1\1", string)
-        tokens = WORD_RE.findall(safe_string)
-        if not BaseTokenizer.preserve_case:
-            emoji = EMOTICON_RE.search
-            tokens = list(
-                map((lambda token: token if emoji(token) else token.lower()), tokens)
-            )
-        return tokens
-
-
-class WordTokenizer(BaseTokenizer):
+class Tokenizer(BaseTokenizer):
     """Word tokenizer class with social media aware context."""
-
-    # Toy "model" for prototyping with real data :)
-    MODELS = {"yt-web-md": YTCommentsDataset.VOCAB_FILE}
-    # Recommended tokenizer defaults.
-    preserve_case: bool = False
-    reduce_length: bool = False
-    strip_handles: bool = False
 
     def __init__(
         self,
-        vocab_file: Optional["vocab.txt"] = None,
-        document: Optional[List[str]] = None,
+        vectors_file: str = None,
+        vocab_file: str = None,
+        document: List[str] = None,
+        preserve_case: bool = False,
+        reduce_length: bool = False,
+        strip_handles: bool = False,
     ):
         """Word tokenizer with social media aware contenxt."""
         super().__init__()
+        self.preserve_case = preserve_case
+        self.reduce_length = reduce_length
+        self.strip_handles = strip_handles
+        if vectors_file is not None:
+            self.load_vectors(vectors_file)
+        if vocab_file is not None:
+            self.load_vocabulary(vocab_file)
+        if document is not None:
+            self.fit_on_document(document)
 
-        if vocab_file and document is None:
-            if vocab_file.startswith("yt") or vocab_file in self.MODELS.keys():
-                vocab_file_from_pretrained = self.MODELS[vocab_file]
-                self.vocab_from_file(vocab_file_from_pretrained)
-            elif os.path.isfile(vocab_file):
-                self.vocab_from_file(vocab_file)
-        elif document and vocab_file is None:
-            self.vocab_from_doc(document)
-        else:
-            raise Exception(
-                "Vocabulary could not be loaded from {}".format(vocab_file or document)
-            )
-
-    def normalize_string(self, string: str) -> str:
+    def preprocess_string(self, string: str) -> str:
         """Normalize strings by encoding ASCII and excessive whitespaces."""
         if not self.preserve_case:
             string = string.lower()
@@ -293,7 +320,7 @@ class WordTokenizer(BaseTokenizer):
 
     def tokenize(self, string: str) -> List[str]:
         """Tokenize a sequence of string characters."""
-        string = self.normalize_string(string)
+        string = self.preprocess_string(string)
         string = _replace_html_entities(string)
         if self.strip_handles:
             string = remove_handles(string)
@@ -311,4 +338,4 @@ class WordTokenizer(BaseTokenizer):
 
     def __repr__(self):
         """Return the size of the vocabulary in string format."""
-        return f"< WordTokenizer(vocab_size={self.token_count}) >"
+        return f"<Tokenizer(vocab_size={self.vocab_size})>"

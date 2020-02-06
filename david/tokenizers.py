@@ -7,4 +7,4 @@ other classes that do not belog here at the momemnt but do
 depend on each other. I Need to refactor a lot of files before
 adding more files. Default module path `david.text.tokenizers`
 """
-from .text.tokenizers import BaseTokenizer, WordTokenizer, YTCommentsDataset
+from .text.tokenizers import BaseTokenizer, Tokenizer, YTCommentsDataset
