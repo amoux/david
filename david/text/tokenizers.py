@@ -109,11 +109,47 @@ class BaseTokenizer(object):
                 self.add_token(token.replace("\n", ""))
 
     def vocab_from_doc(self, document: List[str]):
-        """Load the vocabulary from a document of strings."""
+        """Load the vocabulary from a document of strings.
+        
+        This method is similar to keras's method `Tokenizer.fit_on_texts`.
+        """
         for string in document:
             tokens = self.tokenize(string)
             for token in tokens:
                 self.add_token(token)
+
+    def doc_to_sequences(self, document: List[str], embedd_vocab=False) -> List[int]:
+        """Fit an iterable of string sequences to vocab ids.
+
+        `embedd_vocab`: Weather to replace the `vocab_index` with a vocab of embeddings
+            Before transforming the document to sequences of integer ids (vocab_index).
+            This is equal to calling `self.vocab_to_embeddings(inplace=True)` before
+            this method. NOTE: The vocab will be replaced in place.
+
+        Yields encoded sequences of integers.
+        """
+        if embedd_vocab:
+            self.vocab_to_embeddings(inplace=True)
+        for string in document:
+            tokens = self.tokenize(string)
+            if tokens is not None:
+                yield self._encode(tokens)
+
+    def vocab_to_embeddings(self, inplace: bool = False):
+        """Transform the index vocab to a vocab sorted by frequecy.
+
+        `inplace`: Weather to replace the existig `vocab_index` with the new
+        transformed vocab if inplace=True. Otherwise, a dictionary of type
+        `Dict[str, int]` is returned (default).
+        """
+        embeddings: Dict[str, int] = {}
+        vocab_index, _ = zip(*self.vocab_count.most_common())
+        for index, token in enumerate(vocab_index, start=1):
+            embeddings[token] = index
+        if inplace:
+            self.vocab_index = embeddings
+        else:
+            return embeddings
 
     def _encode(self, tokens: List[str]) -> List[int]:
         tok2id = self.vocab_index
