@@ -1,14 +1,29 @@
 import collections
 import random
 import string
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
 from urllib.request import Request, URLError, urlopen
 
 from bs4 import BeautifulSoup
 
 
-def split_train_test(doc: List[str], n: Optional[int] = None,
-                     seed=12345, subset=0.8) -> Tuple[List[str], List[str]]:
+def largest_string_sequence(
+    document: List[str], tokenizer: Callable[[Sequence[str]], List[str]],
+) -> int:
+    """Obtain the value for the largest string in an iterable of string sequences.
+
+    - The tokenizer function can be as simple as:
+        >>> def my_tokenizer(Sequence: str) -> List[str]: return Sequence.split()
+
+    """
+    tokenizer_func = lambda string: len(tokenizer(string))
+    largest_string = max(document, key=tokenizer_func)
+    return len(tokenizer(largest_string))
+
+
+def split_train_test(
+    doc: List[str], n: Optional[int] = None, seed=12345, subset=0.8
+) -> Tuple[List[str], List[str]]:
     """Randomly split a doc into train and test iterables.
 
     `doc` (list[str]):

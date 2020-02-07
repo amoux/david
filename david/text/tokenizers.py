@@ -21,14 +21,9 @@ from typing import IO, Dict, List, Optional, Tuple, Union
 import pandas as pd
 import spacy
 import torch
-from nltk.tokenize.casual import (
-    EMOTICON_RE,
-    HANG_RE,
-    WORD_RE,
-    _replace_html_entities,
-    reduce_lengthening,
-    remove_handles,
-)
+from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
+                                  _replace_html_entities, reduce_lengthening,
+                                  remove_handles)
 from wasabi import msg
 
 from .prep import normalize_whitespace, unicode_to_ascii

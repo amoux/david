@@ -9,13 +9,10 @@ def summarizer(
     document: Union[List[str], str],
     nlargest: int = 7,
     min_sent_toks: int = 30,
-    lang_model: str = "en_core_web_sm",
+    spacy_model: str = "en_core_web_sm",
     stop_words: Optional[Union[List[str], Set[str]]] = None,
 ) -> str:
     """Text summarizer built on top of spaCy.
-
-    Parameters:
-    ----------
 
     `document` (Union[List[str], str]):
         An iterable list of sequences or text of sequences.
@@ -33,7 +30,7 @@ def summarizer(
         and `david.text.prep.normalize_whitespace`.
 
     """
-    nlp = spacy.load(lang_model)
+    nlp = spacy.load(spacy_model)
     spacydoc = None
 
     if isinstance(document, list):

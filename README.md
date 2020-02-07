@@ -11,12 +11,6 @@
   - Semantic analytics application for content creators.
   - Social marketing trends of interest.
 
-- 🤔 **TODO**
-  - Update Readme documentation on recently added/updated classes and methods.
-  - Improve text preprocessing methods (covert all to Generators).
-  - Improve pipeline customization (when switching from Pipeline to a custom recipe).
-  - Update toolkit with `PEP 484` - Support for type hints.
-
 ## configuration 👻
 
 - First clone or download the repo. use `git pull` to have the latest release.
@@ -52,153 +46,90 @@ You can now load the model via spacy.load('en_core_web_lg')
 You can now load the model via spacy.load('en_core_web_sm')
 ```
 
-## server 📡
-
-- Configure the database and build a dataset from a search query. Using an existing database of youtube comments - here we are use the `unbox` database (The database will be downloaded automatically if it doesn't exist in the `david_data` directory).
-
-```python
-from david.server import CommentsSql
-db = CommentsSql('unbox')
-
-# Fetch a batch based on a query.
-query = "%make a video%"
-columns = "id, cid, text"
-batch = db.fetch_comments(query, columns, sort_col='id')
-
-# Access the batch columns by simply passing the index of the batch:
-idx, cid, text = batch[10]
-print(text)
-...
-'Hey dude quick question when are u gonna make a video with the best phone of 2018?'
-```
-
-> Building a simple classification dataset from youtube comments.
-
-```python
-question = 1
-statement = 0
-
-# dataset with 100 samples.
-dataset = []
-for i in range(100):
-    text = batch[i].text.strip()
-    if text is not None:
-      label = question if text.endswith('?') else statement
-      dataset.append((text, label))
-dataset[:10]
-...
- [('Try the samsung a9 and make a video like "the smartphone with 4 cameras"', 0),
- ("Yo you're going to make a video on the pixel Slate bro?", 1),
- ('Would you please make a video on Funcl W1 and Funcl AI earphones.', 0), ...]
-```
-
-## `david.tokenizers.WordTokenizer`
+## `david.tokenizers.Tokenizer`
 
 > The base class `david.tokenizers.BaseTokenizer` implements the common methods for loading/saving a tokenizer either from a local file or director. Support for downloading tokenizer models will be added in the future.
 
 - tokenizing, converting tokens to ids and back and encoding/decoding,
 - adding new tokens to the vocabulary in a way that is independant of the underlying structure.
   
-The code-block below is a demo with a vocabulary available `YTCommentsDataset` for showing basic usage:
+> For this demo, 1600 samples works but you can choose up to 6k samples.
 
 ```python
-from david.tokenizers import WordTokenizer, YTCommentsDataset
+from david.tokenizers import YTCommentsDataset, Tokenizer
+train_dataset, _ = YTCommentsDataset.split_train_test(2000, subset=0.8)
 
-# loading and existing tokenizer (vocab.txt) from the available models.
-tokenizer = WordTokenizer('yt-web-md')  # you can also pass a path
-'< WordTokenizer(vocab_size=63844) >'
+print('comment:', train_dataset[0])
+print('samples:', len(train_dataset))
+'comment: This is very Good Way to Wake up myself from dreaming Fairy Life. Feeling Energetic Now.'
+'samples:' 1600
+```
 
-# building the vocabulary from scratch from a iterable of string sequences.
-document = YTCommentsDataset.load_dataset_as_doc()  # returns a generator
-tokenizer = WordTokenizer(document=document)
-'< WordTokenizer(vocab_size=63844) >'
+> Contruct a Tokenizer object and pass a document to build the vocabulary.
 
-# tokenizing a string of sequences.
-text = "Hello, world! This a sentence tokenizer from youtube comments 🤗"
-tokenized_text = tokenizer.tokenize(text)
-['hello', ',', 'world', '!', 'this', 'a', 'sentence',
-'tokenizer', 'from', 'youtube', 'comments', '🤗']
+```python
+tokenizer = Tokenizer(document=train_dataset)
+print(tokenizer)
+'<Tokenizer(vocab_size=7828)>'
+```
 
-# here we see that "tokenizer" was not indexed as its not in the vocabulary.
-indexed_tokens = tokenizer.convert_tokens_to_ids(tokenized_text)
-[477, 69, 467, 164, 9, 22, 10785, 146, 630, 4218, 1809]
-# if we decode the indexed tokens we can clearly see this.
-print(tokenizer.convert_ids_to_tokens(indexed_tokens))
-['hello', ',', 'world', '!', 'this', 'a', 'sentence',
-'from', 'youtube', 'comments', '🤗']
+> Align the vocabulary's index relative to its term frequency.
 
-# fix by adding the token to the vocab and re-index the text:
-tokenizer.add_token(["tokenizer"])
-indexed_tokens2 = tokenizer.convert_string_to_ids(text)
-tokenized_text2 = tokenizer.convert_string_to_tokens(text)
+```python
+# BEFORE
+* tokens-to-index: [('this', 1), ('is', 2), ('very', 3), ('good', 4), ('way', 5)]
+* tokens-to-count: [('.', 2215), ('the', 2102), (',', 1613), ('i', 1297), ('to', 1286)]
+```
+
+```python
+# ALIGN
+tokenizer.vocab_index_to_frequency(inplace=True)
+```
+
+```python
+# AFTER
+* tokens-to-index: [('.', 1), ('the', 2), (',', 3), ('i', 4), ('to', 5)]
+* tokens-to-count: [('.', 2215), ('the', 2102), (',', 1613), ('i', 1297), ('to', 1286)]
+```
+
+## `david.server.CommentsSql` 📡
+
+- Configure the database and build a dataset from a search query. Using an existing database of youtube comments - here we are use the `unbox` database (The database will be downloaded automatically if it doesn't exist in the `david_data` directory).
+
+```python
+from david.server import CommentsSql
+ # loading an existing database.
+db = CommentsSql('unbox')
+batch = db.fetch_comments(query="%make a video%",
+                          columns="id,cid,text",
+                          sort_col='id')
+idx, cid, text = batch[10]
+print(text)
 ...
-indexed :  [477, 69, 467, 164, 9, 22, 10785, 63844, 146, 630, 4218, 1809]
-tokens  :  ['hello', ',', 'world', '!', 'this', 'a', 'sentence',
-            'tokenizer', 'from', 'youtube', 'comments', '🤗']
-
-# there are additional helper methods for easy encoding <-OR-> decoding available.
-tokenizer.convert_ids_to_string(indexed_tokens2)
-'hello, world! this a sentence tokenizer from youtube comments 🤗'
+'Hey dude quick question when are u gonna make a video with the best phone of 2018?'
 ```
 
-## pipeline 🛠
-
-- export a document to a df with the `export` attribute.
+> Example of 'building' a dataset the batch:
 
 ```python
-from david.pipeline import Pipeline
-pipe = Pipeline(dataset, columns=['text', 'label'])
-pipe.head()
+# dataset with 100 samples.
+question = 1
+statement = 0
+dataset = []
+for i in range(100):
+    text = batch[i].text.strip()
+    if text is not None:
+      label = question if text.endswith('?') else statement
+      dataset.append((text, label))
+
+print(dataset[:3])
 ...
-                                                text  label
-0  Can you make a video about pixel 1 2 and 3 sma...      1
-1  the meme is not because you change your phone,...      1
-2                   Plzz us note 9 and  make a video      1
-3  Lewis Please Make A Video On S10 5G Model I Th...      1
-4  Hey lew\nCan you please make a video on huawei...      1
+ [('Try the samsung a9 and make a video like "the smartphone with 4 cameras"', 0),
+ ("Yo you're going to make a video on the pixel Slate bro?", 1),
+ ('Would you please make a video on Funcl W1 and Funcl AI earphones.', 0), ...]
 ```
 
-> The following metrics are available one call away 🤖
-
-```python
-pipe.get_all_metrics(
-  string=True,
-  words=True,
-  characters=True,
-  tags=True,
-)
-pipe.describe()
-```
-
-- With `tags=True` the following attributes are available. (the amount of tags varies on the size of the dataset)
-
-```ipython
-pipe.authorEmoji.unique()
-...
-array(['👍', '😍😍', '😂💙👄', '😊', '💕💕💕', '✌🏾', '😙', '🤔🤷♂'],
-dtype=object)
-```
-
-## preprocessing 🔬
-
-- Text cleaning routines.
-
-### stop words
-
-> You can access multiple collections of stop words from the lang module. all the following are available: `DAVID_STOP_WORDS, GENSIM_STOP_WORDS, NLTK_STOP_WORDS, SPACY_STOP_WORDS`
-
-```python
-from david.lang import SPACY_STOP_WORDS
-# if stop_words param left as None, it defaults to spaCy's set.
-pipe_stop_words = pipe.custom_stopwords_from_freq(top_n=30, stop_words=SPACY_STOP_WORDS)
-list(pipe_stop_words)[:5]
-```
-
-- Returns a set containing the most frequent words used in a dataset and adds them to any existing collection of stop-words (in this case we have top words from both our corpus and spaCy's set)
-
-```ipython
-['tidees...cardinal', 'into', 'less', 'same', 'under']
-```
+## david.text 🔬
 
 - A quick look at the results from the three possible preprocessing modes.
 
