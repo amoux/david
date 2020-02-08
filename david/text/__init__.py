@@ -21,6 +21,6 @@ from .utils import (
     clean_tokens,
     complete_sentences,
     extract_text_from_url,
-    largest_string_sequence,
+    largest_sequence,
 )
 from .viz import build_wordcloud

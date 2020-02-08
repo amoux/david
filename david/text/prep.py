@@ -101,26 +101,27 @@ def part_of_speech_annotator(sequence: str) -> List[Tuple[str, str]]:
 
     nlp = spacy.load("en_core_web_sm")
     sequence = nlp(sequence)
-    return [(token.text, treebank_to_wordnet_pos(token.pos_))
-            for token in sequence]
+    return [(token.text, treebank_to_wordnet_pos(token.pos_)) for token in sequence]
 
 
 def part_of_speech_lemmatizer(sequence: str):
     """Lemmatize sequences based on part-of-speech tags."""
     Lemmatizer = nltk.stem.WordNetLemmatizer()
     tagged = part_of_speech_annotator(sequence)
-    return " ".join([Lemmatizer.lemmatize(word, tag) if tag else word
-                    for word, tag in tagged])
+    return " ".join(
+        [Lemmatizer.lemmatize(word, tag) if tag else word for word, tag in tagged]
+    )
 
 
 def normalize_whitespace(sequence: str):
+    """Normilize excessive whitespace from a string without formating the original form."""
     LINEBREAK = re.compile(r"(\r\n|[\n\v])+")
     NONBREAKING_SPACE = re.compile(r"[^\S\n\v]+", flags=re.UNICODE)
     return NONBREAKING_SPACE.sub(" ", LINEBREAK.sub(r"\n", sequence)).strip()
 
 
 def normalize_wiggles(sequence, min_words=10):
-    """Normalizes wiggles from sequences.
+    """Normalize wiggles from sequences.
 
     What is a 'wiggle'?  A wiggle is one - two - tree words that are repeated
     over and over by social media users e.g, `hello hello hello hello X 1000.`
@@ -140,12 +141,11 @@ def normalize_wiggles(sequence, min_words=10):
 
 
 def remove_repeating_words(sequence: str):
-    return " ".join(collections.Counter(
-                    [tok for tok in sequence.split()]).keys())
+    return " ".join(collections.Counter([tok for tok in sequence.split()]).keys())
 
 
 def remove_repeating_characters(sequence: str):
-    """Removes repeating characters from one/multiple words in a sequence."""
+    """Remove repeating characters from one/multiple words in a sequence."""
 
     def normalize(sequence):
         if nltk.corpus.wordnet.synsets(sequence):
@@ -161,13 +161,16 @@ def remove_repeating_characters(sequence: str):
 
 
 def remove_punctuation(sequence: str, contractions: bool = False) -> str:
+    """Remove punctuation from a string sequence.
+    
+    The method uses contractions to correctly remove punctuation without
+    hurting the meaning of words like `"y'all"` -> `"you are all"` should
+    be done before actually removing all punctuation.
+    
+    NOTE: punctuations "-" and "_" are not removed.
+    """
     punctuation = re.escape(string.punctuation)
     punctuation = re.compile("[{}]".format(punctuation))
-    # Removing contractions improves removing punctuation without
-    # hurting the meaning of a word e.g, "y'all" => "you are all"
-    # should be done before actually removing all punctuation.
-    # NOTE that punctuations "-" and "_" are not removed.
-
     if contractions:
         sequence = replace_contractions(sequence)
     sequence = nltk_word_tokenizer(sequence)

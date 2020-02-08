@@ -1,61 +1,65 @@
 import collections
 import random
 import string
-from typing import Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 from urllib.request import Request, URLError, urlopen
 
+import numpy as np
 from bs4 import BeautifulSoup
+from wasabi import msg
 
 
-def largest_string_sequence(
-    document: List[str], tokenizer: Callable[[Sequence[str]], List[str]],
-) -> int:
-    """Obtain the value for the largest string in an iterable of string sequences.
-
-    - The tokenizer function can be as simple as:
-        >>> def my_tokenizer(Sequence: str) -> List[str]: return Sequence.split()
-
+def largest_sequence(sequences: Iterable[Sequence[List[int]]]) -> int:
+    """Obtain the value of the largest sequence from an iterable.
+    
+    Usage:
+        >>> largest_sequence([[ 32, 4, 45], [1, 9], [2]])
+            3
     """
-    tokenizer_func = lambda string: len(tokenizer(string))
-    largest_string = max(document, key=tokenizer_func)
-    return len(tokenizer(largest_string))
+    largest = []
+    for seq in sequences:
+        try:
+            largest.append(len(seq))
+        except TypeError or ValueError:
+            msg.fail(
+                "Sequences must be a list of iterables, found "
+                f"item < {str(seq)} > : {type(seq)} not iterable."
+            )
+            break
+    return np.max(largest)
 
 
 def split_train_test(
-    doc: List[str], n: Optional[int] = None, seed=12345, subset=0.8
+    document: List[str], n: Optional[int] = None, seed=12345, subset=0.8
 ) -> Tuple[List[str], List[str]]:
-    """Randomly split a doc into train and test iterables.
+    """Randomly split a document into train and test iterables.
 
-    `doc` (list[str]):
-        A doc of iterable strings that will be split.
-
-    `n` (Optional[int], default=None):
-        The number of items in the doc to consider to subset.
+    `document`: An iterable strings that will be split.
+    `n`: The number of items in the doc to consider to subset.
         e.g, If you want to use 100 samples from 1000 samples then,
         < Train[80], Test[20] > will be the output.
 
-    Returns (List[str], List[str]): Two iterables - train_doc is 8/10
-        of the total while the test_doc is 2/10 of the total.
-
+    Returns (List[str], List[str]): Two iterables - train_documenet is 8/10
+        of the total while the test_document is 2/10 of the total.
     """
     random.seed(seed)
-    random.shuffle(doc)
-    if not n or n > len(doc):
-        n = len(doc)
-    train_doc = doc[: int(subset * n)]
-    test_doc = doc[int(subset * n) : n]
+    random.shuffle(document)
+    if not n or n > len(document):
+        n = len(document)
+    train_doc = document[: int(subset * n)]
+    test_doc = document[int(subset * n) : n]
     return train_doc, test_doc
 
 
-def get_vocab_size(doc: List[str]) -> int:
-    word_map = collections.Counter(doc)
-    unique_words = len(word_map.keys())
-    vocab_size = int(unique_words)
+def get_vocab_size(document: List[str]) -> int:
+    """Obtain the vocab size from a document of strings based on unique words."""
+    word_count = collections.Counter(document)
+    vocab_size = int(len(word_count.keys()))
     return vocab_size
 
 
 def is_tokenized_doc(obj):
-    """Checks whether the object is an iterable of sequence tokens.
+    """Check whether the object is an iterable of sequence tokens.
 
     Minimum valid size of a tokenized document e.g,. `[["hey"]]`.
     """
@@ -71,7 +75,7 @@ def is_tokenized_doc(obj):
 
 
 def extract_text_from_url(url: str, headers: Dict[str, str] = None) -> str:
-    """Extracts all text found in the webpage.
+    """Extract all texts found in the webpage.
 
     Note: Returns an empty string if the connection to the URL failed.
 
@@ -95,7 +99,9 @@ def extract_text_from_url(url: str, headers: Dict[str, str] = None) -> str:
         return text
 
 
-def clean_tokens(doc: list, discard_punct="_", min_seqlen=1):
+def clean_tokens(
+    document: Iterable[List[Sequence[str]]], discard_punct="_", min_seqlen=1
+):
     """Remove tokens consisting of punctuation and/or by minimum N sequences.
 
     Usage:
@@ -109,7 +115,7 @@ def clean_tokens(doc: list, discard_punct="_", min_seqlen=1):
     punctuation = set([p for p in string.punctuation])
     punctuation.discard(discard_punct)
     cleantokens = list()
-    for tokens in doc:
+    for tokens in document:
         tokens = [
             "".join([seq for seq in token if seq not in punctuation])
             for token in tokens
@@ -119,8 +125,8 @@ def clean_tokens(doc: list, discard_punct="_", min_seqlen=1):
     return cleantokens
 
 
-def complete_sentences(raw_doc: List[str]) -> List[str]:
-    """Adds a period at the end of a complete sentence.
+def complete_sentences(document: List[str]) -> List[str]:
+    """Add a period at the end of a complete sentence.
 
     NOTE: A sentence is recognized if the first word starts with an
     uppercase letter while extending the next items into itself and
@@ -148,7 +154,7 @@ def complete_sentences(raw_doc: List[str]) -> List[str]:
 
     """
     doc = list()
-    for sent in raw_doc:
+    for sent in document:
         doc.append(sent if not sent.split()[0].istitle() else f"<sos>{sent}")
     doc = " ".join(doc).split("<sos>")
     doc = [f"{sent.strip()}." for sent in doc]
