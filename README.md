@@ -1,22 +1,22 @@
 # david nlp  💬 (social-media-toolkit)
 
-The goal of this toolkit is to speed the time-consuming steps to obtain, store, and pre-process textual data from youtube, and implementing natural language processing techniques to extract highly specific information, such as the indications of product or service trends across enterprises. There's much potential in being able to get valuable information for analytics.
+The goal of this toolkit is to speed the time-consuming steps to obtain, store, and pre-process textual data from social-media-sites like youtube, and implementing natural language processing techniques to extract highly specific information, such as the indications of product or service trends and similar.
 
 - Projects using this toolkit:
 
   - **vuepoint** (flask-web-app)
-    - Vuepoint is an analytics web-application that helps content creators by automating the tedious task of manually having to scroll and read through multiple pages of comments to understand what an audience wants. Extracting the vital information that is relevant to each content creator without the noise!
+    - Vuepoint is an analytics web-application that will help content creators automate the tedious task of manually having to scroll and read through multiple pages of comments to understand what an audience wants or dislikes. Extracting the vital information that is relevant to each content creator quickly.
 
   - **david-sentiment** (embedding-models):
     - Train an accurate sentiment model based on `meta-learning` and `embedding` techniques with small datasets and a few lines of code.
 
   - **qaam-nlp** (question-answering): 
-    - Given an article or blog URL with text content. The model (based on the BERT) will answer questions on the given context or subject.
+    - Given an article or blog URL with text content. The model (based on `BERT`) will answer questions on the given context or subject.
 
 - 📃 Objectives:
-  - Build a rich toolkit for **end-to-end** *NLP* pipelines
+  - Build a rich toolkit for **end-to-end** ***SM*** pipelines.
   - Specialized text preprocessing techniques for social-media text.
-  - Social-Datasets: Currently working only on ***YouTube***, but then plan to extend to similar sites likes *Reddit*, and *Twitter* in the future.
+  - SM Data: Currently working only on ***YouTube***, but then plan to extend to similar sites like: *Reddit*, *Twitter* in the future.
 
 ## configuration 👻
 
@@ -100,8 +100,47 @@ tokenizer.index_vocab_to_frequency(inplace=True)
 - After alignment
 
 ```python
-* vocab_index: [('.', 1), ('the', 2), (',', 3), ('i', 4), ('to', 5)]
-* vocab_count: [('.', 2215), ('the', 2102), (',', 1613), ('i', 1297), ('to', 1286)]
+* vocab_index: [('.', 1), ('the', 2), (',', 3), ('to', 4), ('i', 5)]
+* vocab_count: [('.', 2215), ('the', 2102), (',', 1613), ('to', 1286), ('i', 1277)]
+```
+
+- Converting ***this-to-that*** and ***that-to-this*** `(encoding|decoding)` ♻
+
+```python
+text = "Hello, this is a text! embedded with youtube comments 😊"
+str2ids = tokenizer.convert_string_to_ids(text)
+ids2tok = tokenizer.convert_ids_to_tokens(str2ids)
+tok2str = tokenizer.convert_tokens_to_string(ids2tok)
+assert len(text) == len(tok2str)
+```
+
+- If a token is missing then it's because is missing from the vocabulary. To add a new token, pass a single token to `Tokenizer.add_token()` instance method (see below).
+
+```python
+* str2ids: [659, 3, 17, 9, 7, 1446, 18, 2648, 21, 391, 766, 787]
+* ids2tok: ['hello', ',', 'this', 'is', 'a', 'text', '!', 'embedded', 'with', 'youtube', 'comments', '😊']
+* tok2str: "hello, this is a text! embedded with youtube comments 😊"
+```
+
+- Add a new token.
+
+```python
+emoji_tok = ["👻"]
+emoji_tok[0] in tokenizer.vocab_index
+...
+False
+# add the missing token
+tokenizer.add_token(emoji_tok)
+# token has been added and indexed
+tokenizer.convert_tokens_to_ids(emoji_tok)
+...
+[7674]
+```
+
+- Embedding an iterable document of string sequences.
+
+```python
+sequences = tokenizer.document_to_sequences(document=train_data)  # returns a generator
 ```
 
 ## `david.server.CommentsSql` 📡
