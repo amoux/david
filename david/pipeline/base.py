@@ -4,7 +4,7 @@ from pandas import DataFrame, Series
 
 from ..io.text import as_jsonl_file, as_txt_file
 from ..lang import SPACY_STOP_WORDS
-from ..text.prep import normalize_wiggles, preprocess_sequence
+from ..text.preprocessing import normalize_wiggles, preprocess_sequence
 from .metric import TextMetrics
 
 TIME_RE = r"(\d{1,2}\:\d{1,2})"
@@ -113,11 +113,7 @@ class Pipeline(DataFrameBase, TextMetrics):
             self, top_num: int = 10,
             stop_words: Optional[Union[List[str], Set[str]]] = None,
             text_col: str = 'text') -> Set[str]:
-        """Construct a frequency word collection from top negative and
-        positive words found across all texts.
-
-        Parameters:
-        ----------
+        """Construct a frequency word collection from top negative and positive words found across all texts.
 
         `stop_words` (Optional[Union[List[str], Set[str]]], default=None):
             The number of most frequent words found in all texts are added

@@ -1,5 +1,6 @@
 """
-david.text._proto_tokenizers
+david.text._proto_tokenizers.
+
 ----------------------------
 This module is a temporary hidden module to all the tokenizers
 until all are optimized properly (And simplified!). In the meantime
@@ -15,16 +16,11 @@ from typing import IO, Dict, Iterator, List, Optional, Union
 
 import spacy
 import torch
-from nltk.tokenize.casual import (
-    EMOTICON_RE,
-    HANG_RE,
-    WORD_RE,
-    _replace_html_entities,
-    reduce_lengthening,
-    remove_handles,
-)
+from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
+                                  _replace_html_entities, reduce_lengthening,
+                                  remove_handles)
 
-from .prep import normalize_whitespace, unicode_to_ascii
+from .preprocessing import normalize_whitespace, unicode_to_ascii
 
 
 class VocabularyBase(object):

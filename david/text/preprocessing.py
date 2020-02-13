@@ -4,6 +4,7 @@ import collections
 import re
 import string
 import unicodedata
+from string import printable as PRINTABLE
 from typing import Generator, List, Tuple
 
 import emoji
@@ -11,6 +12,7 @@ import gensim
 import nltk
 import spacy
 import textblob
+from emoji.unicode_codes import UNICODE_EMOJI
 
 from ..lang import SPACY_STOP_WORDS, replace_contractions
 
@@ -24,22 +26,58 @@ def unicode_to_ascii(sequence: str) -> str:
     )
 
 
+def remove_urls(string: str) -> str:
+    """Remove any url link from a string sequence."""
+    pattern = re.compile(r"(http\S+)")
+    return pattern.sub(" ", string)
+
+
+def string_printable(string: str) -> str:
+    """Return a string of ASCII characters which are consired printable.
+
+    This method checks whether the characters are legal in combination of:
+        digits, ascii_letters, punctuation, whitespace and unicode_emoji.
+    """
+    return "".join(
+        [char for char in string if (char in PRINTABLE or char in UNICODE_EMOJI)]
+    )
+
+
+def clean_tokenization(sequence: str) -> str:
+    """Clean up spaces before punctuations and abreviated forms."""
+    return (
+        sequence.replace(" .", ".")
+        .replace(" ?", "?")
+        .replace(" !", "!")
+        .replace(" ,", ",")
+        .replace(" ' ", "'")
+        .replace(" n't", "n't")
+        .replace(" 'm", "'m")
+        .replace(" do not", " don't")
+        .replace(" 's", "'s")
+        .replace(" 've", "'ve")
+        .replace(" 're", "'re")
+        .replace(" / ", "/")
+    )
+
+
 def extract_emojis(sequence: str):
-    """Extracts all emoji characters found in a sequence."""
+    """Extract all emoji characters found in a sequence."""
     return " ".join([char for char in sequence if char in emoji.UNICODE_EMOJI])
 
 
 def get_sentiment_polarity(sequence: str):
-    # NOTE: Replacing all Textblob methods with optimized sentiment models.
+    """NOTE: Replacing all Textblob methods with optimized sentiment models."""
     return textblob.TextBlob(sequence).sentiment.polarity
 
 
 def get_sentiment_subjectivity(sequence: str):
-    # NOTE: Replacing all Textblob methods with optimized sentiment models.
+    """NOTE: Replacing all Textblob methods with optimized sentiment models."""
     return textblob.TextBlob(sequence).sentiment.subjectivity
 
 
 def lemmatizer(doc: list):
+    """Nltk wordnet lemmmatizer helper function."""
     Lemmatizer = nltk.stem.WordNetLemmatizer()
     return " ".join([Lemmatizer.lemmatize(sent) for sent in doc])
 

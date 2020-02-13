@@ -9,6 +9,7 @@ adding more files.
 """
 from __future__ import print_function, unicode_literals
 
+import json
 import os
 import pickle
 import random
@@ -18,7 +19,6 @@ from pathlib import Path
 from string import ascii_letters
 from typing import IO, Dict, List, Optional, Tuple, Union
 
-import pandas as pd
 import spacy
 import torch
 from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
@@ -26,8 +26,8 @@ from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
                                   remove_handles)
 from wasabi import msg
 
-from .prep import normalize_whitespace, unicode_to_ascii
-from .utils import split_train_test
+from .preprocessing import (clean_tokenization, normalize_whitespace,
+                            remove_urls, string_printable, unicode_to_ascii)
 
 WARN_INDEX_NOT_FREQ = (
     "\nWarning: Vocabulary's index has not been transformed to "
@@ -46,51 +46,30 @@ RECOMD_IO_LOADING = (
 class TokenizerIO:
     """Vocab data object loader and writer for the tokenizer."""
 
+    @staticmethod
     def save_obj(name: str, data_obj: object) -> IO:
         """Save the object as a pickle file."""
         with open(name, "wb") as file:
             pickle.dump(data_obj, file, pickle.HIGHEST_PROTOCOL)
 
+    @staticmethod
     def load_obj(name: str) -> object:
         """Load the object from a pickle file."""
         with open(name, "rb") as file:
             return pickle.load(file)
 
-
-class YTCommentsDataset:
-    """Temporary `configuration` while prototyping."""
-
-    VOCAB_PATH = "/home/ego/david_data/vocab/yt_web_md/"
-    VOCAB_FILE = os.path.join(VOCAB_PATH, "vocab.txt")
-    CSV_CORPUS = os.path.join(VOCAB_PATH, "corpus.csv")
-    model_name = "yt-web-md"
-    num_samples = 61478
+    @staticmethod
+    def save_txt(name: str, dict_obj: Dict[str, int]) -> IO:
+        """Save the indexed vocab to a vocab.txt file."""
+        SEP = (",", ": ")
+        with open(name, "w") as file:
+            file.write(json.dumps(dict_obj, indent=4, separators=SEP))
 
     @staticmethod
-    def load_dataset_as_df() -> Union[pd.DataFrame, None]:
-        """Load the corpus and returns a `pandas.Dataframe` instance."""
-        return pd.read_csv(YTCommentsDataset.CSV_CORPUS)
-
-    @staticmethod
-    def load_dataset_as_doc() -> List[str]:
-        """Return an generator of iterable string sequences."""
-        df = YTCommentsDataset.load_dataset_as_df()
-        for sequence in df["text"].tolist():
-            yield sequence
-
-    @staticmethod
-    def split_train_test(k=6000, subset=0.8) -> Tuple[List[str], List[str]]:
-        """Randomly split into train and test iterables.
-
-        `k`: The split decision value or items in the dataset to consider to subset.
-           e.g, If you want to use `k=100` samples from `samples=1000` then -> 
-           train and test sizes: `< Train[80], Test[20] >` are returned.
-
-        Returns `Tuple[List[str], List[str]]`: Two iterables - train_doc is 8/10 of
-            the total while the test_doc is 2/10 of the total.
-        """
-        dataset = YTCommentsDataset.load_dataset_as_doc()
-        return split_train_test(list(dataset), k, subset=subset)
+    def load_txt(name: str) -> Dict[str, int]:
+        """Load the indexed vocab from a vocab.txt file."""
+        with open(name, "r") as file:
+            return json.load(file)
 
 
 class BaseTokenizer:
@@ -140,14 +119,13 @@ class BaseTokenizer:
         """Return `n` most common tokens in the vocabulary."""
         return self.vocab_count.most_common(n)
 
-    def save_vocabulary(self, vocab_file="vocab.pkl") -> IO:
-        """Save the current vocabulary to a vocab.pkl file."""
+    def save_vocabulary(self, vocab_file="vocab.txt") -> IO:
+        """Save the current vocabulary to a vocab.txt file."""
         msg.info(RECOMD_IO_LOADING)
         TokenizerIO.save_obj(vocab_file, self.vocab_index)
 
-    def load_vocabulary(self, vocab_file="vocab.pkl") -> IO:
-        """Load the vocabulary from a vocab.pkl file."""
-        msg.info(RECOMD_IO_LOADING)
+    def load_vocabulary(self, vocab_file="vocab.txt") -> IO:
+        """Load the vocabulary from a vocab.txt file."""
         self.vocab_index = TokenizerIO.load_obj(vocab_file)
 
     def save_vectors(
@@ -244,7 +222,7 @@ class BaseTokenizer:
 
     def convert_tokens_to_string(self, tokens: List[str]) -> str:
         """Convert a sequence of string tokens to a single string."""
-        string = BaseTokenizer.clean_tokenization(" ".join(tokens))
+        string = clean_tokenization(" ".join(tokens))
         return string
 
     def convert_tokens_to_ids(self, tokens: List[str]) -> List[int]:
@@ -260,26 +238,7 @@ class BaseTokenizer:
     def convert_ids_to_string(self, token_ids: List[int]) -> str:
         """Convert a sequence of integer ids to a single string."""
         tokens = self._decode(token_ids)
-        string = BaseTokenizer.clean_tokenization(" ".join(tokens))
-        return string
-
-    @staticmethod
-    def clean_tokenization(string: str) -> str:
-        """Clean up spaces before punctuations and abreviated forms."""
-        string = (
-            string.replace(" .", ".")
-            .replace(" ?", "?")
-            .replace(" !", "!")
-            .replace(" ,", ",")
-            .replace(" ' ", "'")
-            .replace(" n't", "n't")
-            .replace(" 'm", "'m")
-            .replace(" do not", " don't")
-            .replace(" 's", "'s")
-            .replace(" 've", "'ve")
-            .replace(" 're", "'re")
-            .replace(" / ", "/")
-        )
+        string = clean_tokenization(" ".join(tokens))
         return string
 
 
@@ -291,15 +250,20 @@ class Tokenizer(BaseTokenizer):
         vectors_file: str = None,
         vocab_file: str = None,
         document: List[str] = None,
+        remove_urls: bool = True,
+        enforce_ascii: bool = True,
         preserve_case: bool = False,
         reduce_length: bool = False,
         strip_handles: bool = False,
     ):
         """Word tokenizer with social media aware contenxt."""
         super().__init__()
+        self.remove_urls = remove_urls
+        self.enforce_ascii = enforce_ascii
         self.preserve_case = preserve_case
         self.reduce_length = reduce_length
         self.strip_handles = strip_handles
+
         if vectors_file is not None:
             self.load_vectors(vectors_file)
         if vocab_file is not None:
@@ -308,20 +272,23 @@ class Tokenizer(BaseTokenizer):
             self.fit_on_document(document)
 
     def preprocess_string(self, string: str) -> str:
-        """Normalize strings by encoding ASCII and excessive whitespaces."""
+        """Normalize strings sequences to legal ASCII encoding rules."""
         if not self.preserve_case:
             string = string.lower()
+        if self.remove_urls:
+            string = remove_urls(string)
+        if self.enforce_ascii:
+            string = string_printable(string)
+        if self.strip_handles:
+            string = remove_handles(string)
+        if self.reduce_length:
+            string = reduce_lengthening(string)
+        string = _replace_html_entities(string)
         return normalize_whitespace(unicode_to_ascii(string))
 
     def tokenize(self, string: str) -> List[str]:
         """Tokenize a sequence of string characters."""
         string = self.preprocess_string(string)
-        string = _replace_html_entities(string)
-        if self.strip_handles:
-            string = remove_handles(string)
-        if self.reduce_length:
-            string = reduce_lengthening(string)
-
         safe_string = HANG_RE.sub(r"\1\1\1", string)
         tokens = WORD_RE.findall(safe_string)
         if not self.preserve_case:

@@ -26,8 +26,8 @@ def summarizer(
     Notes: For improving results from the summarizer, e.g,. summarizing
         texts extracted from the web - it's recommended to encode unicode
         strings to ascii and normalizing whitespaces. Methods available in
-        david's API that achieve this: `david.text.prep.unicode_to_ascii`
-        and `david.text.prep.normalize_whitespace`.
+        david's API that achieve this: `david.text.preprocessing.unicode_to_ascii`
+        and `david.text.preprocessing.normalize_whitespace`.
 
     """
     nlp = spacy.load(spacy_model)

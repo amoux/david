@@ -1,4 +1,4 @@
-from .prep import (
+from .preprocessing import (
     nltk_word_tokenizer,
     normalize_whitespace,
     normalize_wiggles,

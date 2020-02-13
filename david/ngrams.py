@@ -4,7 +4,7 @@ import gensim
 import sklearn
 from texttable import Texttable
 
-from .text.prep import gensim_preprocess, spacy_token_lemmatizer
+from .text.preprocessing import gensim_preprocess, spacy_token_lemmatizer
 
 
 def sents_to_ngramTokens(

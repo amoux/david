@@ -7,7 +7,7 @@ from typing import (Any, Dict, Iterable, List, NoReturn, Optional, Set, Tuple,
 import numpy as np
 from pandas.api.types import CategoricalDtype
 
-from ..text.prep import (extract_emojis, get_sentiment_polarity,
+from ..text.preprocessing import (extract_emojis, get_sentiment_polarity,
                          get_sentiment_subjectivity, normalize_whitespace)
 from ..text.utils import change_case
 

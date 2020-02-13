@@ -2,10 +2,11 @@ from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 
 import numpy
 import sklearn
-from david.text.prep import preprocess_doc
 from scipy.sparse.csr import csr_matrix
 from sklearn.feature_extraction.text import (CountVectorizer, TfidfVectorizer,
                                              VectorizerMixin)
+
+from .text.preprocessing import preprocess_doc
 
 Vector = List[float]
 SparseRowMatrix = TypeVar("SparseMatrix", csr_matrix, Tuple[Vector, ...])
@@ -17,17 +18,13 @@ def docsize_mb(doc: List[str]) -> float:
 
 
 def build_feature_matrix(
-        raw_doc: List[str],
-        feature: str = "tfidf",
-        ngram: Tuple[int, int] = (1, 1),
-        min_freq: float = 0.0,
-        max_freq: float = 1.0) -> Tuple[VectorizerMixin, SparseRowMatrix]:
+    raw_doc: List[str],
+    feature: str = "tfidf",
+    ngram: Tuple[int, int] = (1, 1),
+    min_freq: float = 0.0,
+    max_freq: float = 1.0,
+) -> Tuple[VectorizerMixin, SparseRowMatrix]:
     """Convert a collection of text documents to a sparse matrix.
-
-    TODO: Improve, finish add examples to the documentation.
-
-    Parameters:
-    ----------
 
     `raw_doc` (List[str]):
         The corpus is expected to be a sequence of strings or bytes items
@@ -54,23 +51,29 @@ def build_feature_matrix(
     """
     feature = feature.lower().strip()
     if feature == "count":
-        vectorizer = CountVectorizer(binary=False, min_df=min_freq,
-                                     max_df=max_freq, ngram_range=ngram)
+        vectorizer = CountVectorizer(
+            binary=False, min_df=min_freq, max_df=max_freq, ngram_range=ngram
+        )
     if feature == "tfidf":
-        vectorizer = TfidfVectorizer(min_df=min_freq, max_df=max_freq,
-                                     ngram_range=ngram)
+        vectorizer = TfidfVectorizer(
+            min_df=min_freq, max_df=max_freq, ngram_range=ngram
+        )
     else:
-        raise ValueError(f"You entered {feature}, please \
-            choose one: 'count' or 'tfidf'")
+        raise ValueError(
+            f"You entered {feature}, please \
+            choose one: 'count' or 'tfidf'"
+        )
     feature_matrix = vectorizer.fit_transform(raw_doc).astype(float)
     return (vectorizer, feature_matrix)
 
 
-def cosine_similarity(vectorizer: VectorizerMixin,
-                      features: SparseRowMatrix,
-                      top_k: int = 3,
-                      round_float: int = 4) -> List[Tuple[int, float]]:
-    """Computes cosine similarity, as the normalized dot product of X and Y."""
+def cosine_similarity(
+    vectorizer: VectorizerMixin,
+    features: SparseRowMatrix,
+    top_k: int = 3,
+    round_float: int = 4,
+) -> List[Tuple[int, float]]:
+    """Compute cosine similarity, as the normalized dot product of X and Y."""
     vectorizer = vectorizer.toarray()[0]
     features = features.toarray()  # 2 dimensional ndarray.
     similar = numpy.dot(vectorizer, features.T)
@@ -80,6 +83,7 @@ def cosine_similarity(vectorizer: VectorizerMixin,
 
 
 class SimilarDocuments:
+    """Class for searching similar documents from top occurrences of terms."""
 
     def __init__(
         self,
@@ -89,9 +93,6 @@ class SimilarDocuments:
         feature: str = "tfidf",
     ):
         """Get the most similar documents from top occurrences of terms.
-
-        Parameters:
-        ----------
 
         `raw_doc` (List[str], default=None):
             The corpus is expected to be a sequence of strings or bytes items
@@ -115,13 +116,10 @@ class SimilarDocuments:
     def clear_queries(self) -> None:
         self.queries.clear()
 
-    def add_query(self,
-                  query: Union[str, List[str]] = None,
-                  clear_first: bool = False) -> None:
-        """Extends or replaces the existing queries in an instance.
-
-        Parameters:
-        ----------
+    def add_query(
+        self, query: Union[str, List[str]] = None, clear_first: bool = False
+    ) -> None:
+        """Extend or replaces the existing queries in an instance.
 
         `query` (Union[str, List[str]]):
             Add queries from a single string or and iterable of sequences.
@@ -141,17 +139,20 @@ class SimilarDocuments:
     def learn_vocab(self, min_freq: float = 0.0, max_freq: float = 1.0):
         """Learn vocabulary equivalent to fit followed by transform."""
         self.vectorizer, self.features = build_feature_matrix(
-            raw_doc=self.raw_doc, feature=self.feature, ngram=self.ngram,
-            min_freq=min_freq, max_freq=max_freq)
+            raw_doc=self.raw_doc,
+            feature=self.feature,
+            ngram=self.ngram,
+            min_freq=min_freq,
+            max_freq=max_freq,
+        )
 
-    def iter_similar(self,
-                     top_k: Optional[int] = None,
-                     query: Optional[Union[str, List[str]]] = None,
-                     clear_first: bool = False) -> Dict[str, str]:
+    def iter_similar(
+        self,
+        top_k: Optional[int] = None,
+        query: Optional[Union[str, List[str]]] = None,
+        clear_first: bool = False,
+    ) -> Dict[str, str]:
         """Iterate over all the queries returning the most similar document.
-
-        Parameters:
-        ----------
 
         `top_k` (Optional[int], default=None):
             Get the top k (number) of similar documents.
@@ -160,7 +161,6 @@ class SimilarDocuments:
             Add queries from a single string or and iterable of sequences.
 
         Returns (Dict[str, str]): Yields a dictionary of key value pairs.
-
         """
         top_k = self.top_k if not top_k else top_k
         if query:
