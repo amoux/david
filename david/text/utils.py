@@ -4,14 +4,18 @@ import string
 from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 from urllib.request import Request, URLError, urlopen
 
+import matplotlib.pyplot as plt
 import numpy as np
 from bs4 import BeautifulSoup
 from wasabi import msg
+from wordcloud import WordCloud
+
+from ..lang import SPACY_STOP_WORDS
 
 
 def largest_sequence(sequences: Iterable[Sequence[List[int]]]) -> int:
     """Obtain the value of the largest sequence from an iterable.
-    
+
     Usage:
         >>> largest_sequence([[ 32, 4, 45], [1, 9], [2]])
             3
@@ -39,7 +43,7 @@ def split_train_test(
         e.g, If you want to use 100 samples from 1000 samples then,
         < Train[80], Test[20] > will be the output.
 
-    Returns (List[str], List[str]): Two iterables - train_documenet is 8/10
+    Returns (List[str], List[str]): Two iterables - train_document is 8/10
         of the total while the test_document is 2/10 of the total.
     """
     random.seed(seed)
@@ -171,3 +175,37 @@ def change_case(string: str) -> str:
         else:
             case.append(char)
     return "".join(case)
+
+
+def build_wordcloud(
+    doc: list,
+    img_name: str = "wordcloud",
+    width: int = 1600,
+    height: int = 600,
+    margin=3,
+    max_words: int = 200,
+    max_font_size=150,
+    image_dpi=900,
+    random_state=62,
+    background_color="black",
+    stop_words: list = None,
+):
+    """Build a word cloud image from text sequences."""
+    if not stop_words:
+        stop_words = SPACY_STOP_WORDS
+
+    wordcloud = WordCloud(
+        width=width,
+        height=height,
+        margin=margin,
+        max_words=max_words,
+        max_font_size=max_font_size,
+        random_state=random_state,
+        background_color=background_color,
+        stopwords=stop_words,
+    ).generate(str(doc))
+    fig = plt.figure(1)
+    plt.imshow(wordcloud)
+    plt.axis("off")
+    plt.show()
+    fig.savefig(img_name, dpi=image_dpi)

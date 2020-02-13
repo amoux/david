@@ -26,25 +26,25 @@ def unicode_to_ascii(sequence: str) -> str:
     )
 
 
-def remove_urls(string: str) -> str:
+def remove_urls(sequence: str) -> str:
     """Remove any url link from a string sequence."""
     pattern = re.compile(r"(http\S+)")
-    return pattern.sub(" ", string)
+    return pattern.sub(" ", sequence)
 
 
-def string_printable(string: str) -> str:
+def string_printable(sequence: str) -> str:
     """Return a string of ASCII characters which are consired printable.
 
     This method checks whether the characters are legal in combination of:
-        digits, ascii_letters, punctuation, whitespace and unicode_emoji.
+    digits, ascii_letters, punctuation, whitespace and unicode_emoji.
     """
     return "".join(
-        [char for char in string if (char in PRINTABLE or char in UNICODE_EMOJI)]
+        [char for char in sequence if (char in PRINTABLE or char in UNICODE_EMOJI)]
     )
 
 
 def clean_tokenization(sequence: str) -> str:
-    """Clean up spaces before punctuations and abreviated forms."""
+    """Clean up spaces before punctuations and abbreviated forms."""
     return (
         sequence.replace(" .", ".")
         .replace(" ?", "?")
@@ -77,13 +77,13 @@ def get_sentiment_subjectivity(sequence: str):
 
 
 def lemmatizer(doc: list):
-    """Nltk wordnet lemmmatizer helper function."""
+    """NLTK wordnet lemmatizer helper function."""
     Lemmatizer = nltk.stem.WordNetLemmatizer()
     return " ".join([Lemmatizer.lemmatize(sent) for sent in doc])
 
 
 def spacy_token_lemmatizer(tokens, postags=None):
-    """SpaCy's part-of-speech lemmatizer for tokens"""
+    """Part-of-speech spaCy lemmatizer."""
     if not postags:
         postags = ["NOUN", "ADJ", "VERB", "ADV"]
 
@@ -107,7 +107,7 @@ def spacy_sentence_tokenizer(doc: List[str]) -> List[str]:
 
 
 def sentence_tokenizer(doc: List[str]) -> Generator:
-    """Replacing `spacy_sentence_tokenizer` with this generator."""
+    """Yield tokenized sentences from an iterable document of strings."""
     nlp = spacy.load("en_core_web_sm")
     for line in doc:
         line = nlp(normalize_whitespace(line))
@@ -116,7 +116,7 @@ def sentence_tokenizer(doc: List[str]) -> Generator:
 
 
 def treebank_to_wordnet_pos(pos_tag: str) -> str:
-    """NLTK POS-tagger, converts penn treebank tags wordnet tags."""
+    """NLTK part-of-speech-tagger, converts penn treebank tags wordnet tags."""
     if pos_tag.startswith("J"):
         return nltk.corpus.wordnet.ADJ
     elif pos_tag.startswith("V"):
@@ -130,13 +130,10 @@ def treebank_to_wordnet_pos(pos_tag: str) -> str:
 
 
 def part_of_speech_annotator(sequence: str) -> List[Tuple[str, str]]:
-    """Annotates text tokens with pos tags, uses NLTK's Wordnet POS."""
-
-    # This is a temporary patch for eliminating the need for the pattern
-    # library. I will be using spacy's pos tagging for now but this method
-    # of lemmatizing text is not efficient (I will work on a better solution).
-    # In the meantime this will work for apps that are using these methods.
-
+    """Annotate text tokens with pos tags, uses NLTK's wordnet part-of-speech-tags.
+    
+    NOTE: This method needs to be fixed and optimized when batching large chunks.
+    """
     nlp = spacy.load("en_core_web_sm")
     sequence = nlp(sequence)
     return [(token.text, treebank_to_wordnet_pos(token.pos_)) for token in sequence]
@@ -152,7 +149,7 @@ def part_of_speech_lemmatizer(sequence: str):
 
 
 def normalize_whitespace(sequence: str):
-    """Normilize excessive whitespace from a string without formating the original form."""
+    """Normalize excessive whitespace from a string without formating the original form."""
     LINEBREAK = re.compile(r"(\r\n|[\n\v])+")
     NONBREAKING_SPACE = re.compile(r"[^\S\n\v]+", flags=re.UNICODE)
     return NONBREAKING_SPACE.sub(" ", LINEBREAK.sub(r"\n", sequence)).strip()
@@ -246,7 +243,7 @@ def preprocess_sequence(
     stop_words=None,
     tokenize=False,
 ):
-    """Basic text preprocessing for a sequence."""
+    """Preprocess a single string sequence."""
     sequence = normalize_whitespace(unicode_to_ascii(sequence))
     if contractions:
         sequence = replace_contractions(sequence)
@@ -273,7 +270,7 @@ def preprocess_doc(
     stop_words=None,
     tokenize=False,
 ):
-    """Basic text preprocessing for a doc (iterable) of sequences."""
+    """Preprocess an iterable document of string sequences."""
     for sequence in doc:
         yield preprocess_sequence(
             sequence=sequence,

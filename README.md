@@ -1,15 +1,22 @@
-# david nlp 💬
+# david nlp  💬 (social-media-toolkit)
 
-> The goal of this toolkit is to speed the time-consuming steps to obtain, store, and pre-process textual data from youtube, and implementing natural language processing techniques to extract highly specific information, such as the indications of product or service trends across enterprises. There's much potential in being able to get valuable information for analytics.
+The goal of this toolkit is to speed the time-consuming steps to obtain, store, and pre-process textual data from youtube, and implementing natural language processing techniques to extract highly specific information, such as the indications of product or service trends across enterprises. There's much potential in being able to get valuable information for analytics.
 
-- 👨‍💻 In progress ( Web-App )
+- Projects using this toolkit:
 
-  - Vuepoint is an analytics web-application that helps content creators by automating the tedious task of manually having to scroll and read through multiple pages of comments to understand what an audience wants. Extracting the vital information that is relevant to each content creator without the noise!
+  - **vuepoint** (flask-web-app)
+    - Vuepoint is an analytics web-application that helps content creators by automating the tedious task of manually having to scroll and read through multiple pages of comments to understand what an audience wants. Extracting the vital information that is relevant to each content creator without the noise!
 
-- 📃 objectives:
+  - **david-sentiment** (embedding-models):
+    - Train an accurate sentiment model based on `meta-learning` and `embedding` techniques with small datasets and a few lines of code.
 
-  - Semantic analytics application for content creators.
-  - Social marketing trends of interest.
+  - **qaam-nlp** (question-answering): 
+    - Given an article or blog URL with text content. The model (based on the BERT) will answer questions on the given context or subject.
+
+- 📃 Objectives:
+  - Build a rich toolkit for **end-to-end** *NLP* pipelines
+  - Specialized text preprocessing techniques for social-media text.
+  - Social-Datasets: Currently working only on ***YouTube***, but then plan to extend to similar sites likes *Reddit*, and *Twitter* in the future.
 
 ## configuration 👻
 
@@ -28,13 +35,11 @@ pip install -r requirements.txt
 pip install
 ```
 
-### spaCy language models
+### spaCy models
 
-> Download the required language models with one command (you don't need to be in the root project directory).
+Download the required language models with one command (you don't need to be in the root project directory).
 
-- The following models will be downloaded.
-  - `en_core_web_sm`
-  - `en_core_web_lg`
+> The following models will be downloaded: ***en_core_web_sm*** ++ ***en_core_web_lg***
 
 ```bash
 $ download-spacy-models
@@ -48,48 +53,55 @@ You can now load the model via spacy.load('en_core_web_sm')
 
 ## `david.tokenizers.Tokenizer`
 
-> The base class `david.tokenizers.BaseTokenizer` implements the common methods for loading/saving a tokenizer either from a local file or director. Support for downloading tokenizer models will be added in the future.
+The base class `david.tokenizers.BaseTokenizer` implements the common methods for loading/saving a tokenizer either from a local file or director. Support for downloading tokenizer models will be added in the future.
 
 - tokenizing, converting tokens to ids and back and encoding/decoding,
-- adding new tokens to the vocabulary in a way that is independant of the underlying structure.
+- adding new tokens to the vocabulary in a way that is independent of the underlying structure.
   
-> For this demo, 1600 samples works but you can choose up to 6k samples.
+For this demo, 1600 samples works but you can choose up to 6k samples.
 
 ```python
-from david.tokenizers import YTCommentsDataset, Tokenizer
-train_dataset, _ = YTCommentsDataset.split_train_test(2000, subset=0.8)
+from david.datasets import YTCommentsDataset
+train_data, _ = YTCommentsDataset.split_train_test(2000, subset=0.8)
+print('text:', train_dataset[0])
+print('size:', len(train_dataset))
 
-print('comment:', train_dataset[0])
-print('samples:', len(train_dataset))
-'comment: This is very Good Way to Wake up myself from dreaming Fairy Life. Feeling Energetic Now.'
-'samples:' 1600
+* text: 'This is very Good Way to Wake up myself from dreaming Fairy Life. Feeling Energetic Now.'
+* size: 1600
 ```
 
-> Contruct a Tokenizer object and pass a document to build the vocabulary.
+Construct a Tokenizer object and pass a document to build the vocabulary.
 
 ```python
-tokenizer = Tokenizer(document=train_dataset)
+from david.tokenizers import Tokenizer
+tokenizer = Tokenizer(document=train_data,
+                      remove_urls=True,
+                      enforce_ascii=True,
+                      reduce_length=True,
+                      preserve_case=False,
+                      strip_handles=False)
 print(tokenizer)
-'<Tokenizer(vocab_size=7828)>'
+'<Tokenizer(vocab_size=7673)>'
 ```
 
-> Align the vocabulary's index relative to its term frequency.
+Align the vocabulary index relative to its term frequency.
 
 ```python
-# BEFORE
-* tokens-to-index: [('this', 1), ('is', 2), ('very', 3), ('good', 4), ('way', 5)]
-* tokens-to-count: [('.', 2215), ('the', 2102), (',', 1613), ('i', 1297), ('to', 1286)]
+tokenizer.index_vocab_to_frequency(inplace=True)
 ```
 
-```python
-# ALIGN
-tokenizer.vocab_index_to_frequency(inplace=True)
-```
+- Before alignment
 
 ```python
-# AFTER
-* tokens-to-index: [('.', 1), ('the', 2), (',', 3), ('i', 4), ('to', 5)]
-* tokens-to-count: [('.', 2215), ('the', 2102), (',', 1613), ('i', 1297), ('to', 1286)]
+* vocab_index: [('this', 1), ('is', 2), ('very', 3), ('good', 4), ('way', 5)]
+* vocab_count: [('.', 2215), ('the', 2102), (',', 1613), ('to', 1286), ('i', 1277)]
+```
+
+- After alignment
+
+```python
+* vocab_index: [('.', 1), ('the', 2), (',', 3), ('i', 4), ('to', 5)]
+* vocab_count: [('.', 2215), ('the', 2102), (',', 1613), ('i', 1297), ('to', 1286)]
 ```
 
 ## `david.server.CommentsSql` 📡
@@ -109,7 +121,7 @@ print(text)
 'Hey dude quick question when are u gonna make a video with the best phone of 2018?'
 ```
 
-> Example of 'building' a dataset the batch:
+Example of 'building' a dataset the batch:
 
 ```python
 # dataset with 100 samples.
@@ -131,7 +143,7 @@ print(dataset[:3])
 
 ## david.text 🔬
 
-- A quick look at the results from the three possible preprocessing modes.
+A quick look at the results from the three possible preprocessing modes.
 
 ```python
 from david.text import preprocess_docs

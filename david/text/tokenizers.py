@@ -2,10 +2,6 @@
 David text tokenizer classes.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This is where I will start adding various tokenizers and also
-other classes that do not belog here at the momemnt but do
-depend on each other. I Need to refactor a lot of files before
-adding more files.
 """
 from __future__ import print_function, unicode_literals
 
@@ -84,7 +80,7 @@ class BaseTokenizer:
             - `self.tokenize(sequence:str) -> str:`
 
         - Multiple ways for loading the vocabulary:
-            - `BaseTokenizer.load_vocabulary(vocab_file: str = 'vocab.pkl')`
+            - `BaseTokenizer.load_vocabulary(vocab_file: str = 'vocab.txt')`
             - `BaseTokenizer.load_vectors(vectors_file: str = 'vectors.pkl')`
             - `BaseTokenizer.fit_on_document(document: List[str])`
 
@@ -122,11 +118,11 @@ class BaseTokenizer:
     def save_vocabulary(self, vocab_file="vocab.txt") -> IO:
         """Save the current vocabulary to a vocab.txt file."""
         msg.info(RECOMD_IO_LOADING)
-        TokenizerIO.save_obj(vocab_file, self.vocab_index)
+        TokenizerIO.save_txt(vocab_file, self.vocab_index)
 
     def load_vocabulary(self, vocab_file="vocab.txt") -> IO:
         """Load the vocabulary from a vocab.txt file."""
-        self.vocab_index = TokenizerIO.load_obj(vocab_file)
+        self.vocab_index = TokenizerIO.load_txt(vocab_file)
 
     def save_vectors(
         self, vectors_file="vectors.pkl", vectors: List[Tuple[str, int, int]] = None
@@ -183,7 +179,7 @@ class BaseTokenizer:
     def index_vocab_to_frequency(self, inplace=True):
         """Align (Sort) the indexed vocabulary relative to the item(s) frequency.
 
-        `inplace`: Weather to replace the existig `vocab_index` inplace if true.
+        `inplace`: Weather to replace the existing `vocab_index` inplace if true.
             Otherwise, the dictionary `Dict[str, int]` is returned.
         """
         index_frequency: Dict[str, int] = {}
@@ -243,7 +239,7 @@ class BaseTokenizer:
 
 
 class Tokenizer(BaseTokenizer):
-    """Word tokenizer class with social media aware context."""
+    """Core tokenizer class for processing social media texts."""
 
     def __init__(
         self,
@@ -256,7 +252,7 @@ class Tokenizer(BaseTokenizer):
         reduce_length: bool = False,
         strip_handles: bool = False,
     ):
-        """Word tokenizer with social media aware contenxt."""
+        """Tokenizer for social media text."""
         super().__init__()
         self.remove_urls = remove_urls
         self.enforce_ascii = enforce_ascii
@@ -272,7 +268,7 @@ class Tokenizer(BaseTokenizer):
             self.fit_on_document(document)
 
     def preprocess_string(self, string: str) -> str:
-        """Normalize strings sequences to legal ASCII encoding rules."""
+        """Normalize strings sequences to valid ASCII and printable format."""
         if not self.preserve_case:
             string = string.lower()
         if self.remove_urls:

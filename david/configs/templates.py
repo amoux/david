@@ -1,15 +1,9 @@
-"""TEMPLATES FOR VARIOUS INI-FILE CONFIGURATIONS.
+"""
+Configuration file templates.
 
-TODOS:
-* The following descriptions are the different templates I need
-to add here to make it easier to save the various settings used
-with experimenting with models.
-
-    - database files
-    - gensim w2v models
-    - TFIDF models
-    - Tensorflow-Hub models (bert, elmo ect.)
-    - Tensorboard word embeddings
+-----------------------------
+The templates in this module are used mostly by models
+where many pararameters are needed to initialize.
 """
 
 INI_TEMPLATE_TENSORBOARD = """
@@ -37,3 +31,25 @@ negative: 10
 cbow_mean: 1
 iter: iter
 null_word: 0"""
+
+INI_TEMPLATE_YTSENTIMENT = """
+[Corpus]
+max_strlen: {max_strlen}
+min_strlen: {min_strlen}
+spacy_model: {spacy_model}
+[Tokenizer]
+max_seqlen: {max_seqlen}
+glove_ndim: {glove_ndim}
+vocab_shape: {vocab_shape}
+[Model]
+activation: {activation}
+trainable: {trainable}
+epochs: {epochs}
+loss: {loss}
+optimizer: {optimizer}
+padding: {padding}
+[Output]
+project_dir: {project_dir}
+model_file: {model_file}
+vocab_file: {vocab_file}
+config_file: {config_file}"""
