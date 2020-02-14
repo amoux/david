@@ -5,13 +5,13 @@ The goal of this toolkit is to speed the time-consuming steps to obtain, store, 
 - Projects using this toolkit:
 
   - **vuepoint** (flask-web-app)
-    - Vuepoint is an analytics web-application that will help content creators automate the tedious task of manually having to scroll and read through multiple pages of comments to understand what an audience wants or dislikes. Extracting the vital information that is relevant to each content creator quickly.
+    - Vuepoint is a text-analytics tool for content creators. Creators want to hear their audience, beyond click-rates or watch-time. They also want to make decisions on what the audience is saying or but today; they have to manually read some K number of comments to formulate a global summary of what the audience wants. Vuepoint helps them see what the most popular topic discussed was. What the audience whats to see next, how the audience felt at some time-stamp.
 
-  - **david-sentiment** (embedding-models):
-    - Train an accurate sentiment model based on `meta-learning` and `embedding` techniques with small datasets and a few lines of code.
+  - **david-sentiment** (embedding-models): `|Experimental|`
+    - Train sentiment models based on `meta-learning` or/and `embedding` techniques with small datasets and a few lines of code.
 
   - **qaam-nlp** (question-answering): 
-    - Given an article or blog URL with text content. The model (based on `BERT`) will answer questions on the given context or subject.
+    - Given an article or blog URL with text content. The model (based on [`BERT`)](https://github.com/tensorflow/models/tree/master/official/nlp/bert) will answer questions on the given context or subject.
 
 - 📃 Objectives:
   - Build a rich toolkit for **end-to-end** ***SM*** pipelines.
@@ -182,7 +182,7 @@ print(dataset[:3])
 
 ## david.text 🔬
 
-Proper documentation for the `david.text` module will be added as soon. In the meantime, here are the main text preprocessing functions I use every day (daily actually!) for my NLP tasks. I frequently look for approaches to optimize and enhance these methods to the smallest detail!
+Proper documentation for the `david.text` module will be added as soon. In the meantime, here are the main text preprocessing functions I use every day (daily actually!) for my NLP tasks.
 
 ```bash
 ## Text preprocessing methods
