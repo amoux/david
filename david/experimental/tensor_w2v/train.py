@@ -12,16 +12,23 @@ from .models import (Bigram, CsvConnector, TxtConnector, Word2Vec,
 
 def get_args():
     parser = argparse.ArgumentParser()
-
     parser.add_argument("--file", default="data/movie_reviews.csv")
-    parser.add_argument("--input_type", choices=['csv', 'txt'],
-                        default="csv", help="The kind of input data")
-    parser.add_argument("--separator", type=str,
-                        default=',', help="csv separator.")
-    parser.add_argument("--text_columns", type=str,
-                        default="Phrase", help="column names comma separated.")
-    parser.add_argument("--columns_joining_token", type=str,
-                        default='. ', help="join multiple columns.")
+    parser.add_argument(
+        "--input_type",
+        choices=["csv", "txt"],
+        default="csv",
+        help="The kind of input data",
+    )
+    parser.add_argument("--separator", type=str, default=",", help="csv separator.")
+    parser.add_argument(
+        "--text_columns",
+        type=str,
+        default="Phrase",
+        help="column names comma separated.",
+    )
+    parser.add_argument(
+        "--columns_joining_token", type=str, default=". ", help="join multiple columns."
+    )
     parser.add_argument("--folder", default="models/movie_reviews")
     parser.add_argument("--size", type=int, default=100)
     parser.add_argument("--alpha", type=float, default=0.025)
@@ -46,35 +53,36 @@ def preprocessing(sentence):
     return preprocess_doc(sentence)
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     opt = get_args()
     opt.folder = os.path.realpath(opt.folder)
     print(opt)
     logging.basicConfig(
-        format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-
+        format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO
+    )
     prefix = int(time.time())
     os.makedirs(opt.folder, exist_ok=True)
-    json.dump(vars(opt), open(os.path.join(opt.folder, "opt.json"),
-                              'w', encoding='utf-8'), indent=2)
-
-    if opt.input_type == 'csv':
+    json.dump(
+        vars(opt),
+        open(os.path.join(opt.folder, "opt.json"), "w", encoding="utf-8"),
+        indent=2,
+    )
+    if opt.input_type == "csv":
         sentence_generator = CsvConnector(
             filepath=opt.file,
             preprocessing=preprocessing,
             separator=opt.separator,
             text_columns=opt.text_columns.split(","),
-            columns_joining_token=opt.columns_joining_token)
-
-    elif opt.input_type == 'txt':
+            columns_joining_token=opt.columns_joining_token,
+        )
+    elif opt.input_type == "txt":
         sentence_generator = TxtConnector(
-            filepath=opt.file, preprocessing=preprocessing)
+            filepath=opt.file, preprocessing=preprocessing
+        )
     else:
         raise
 
     generator = Bigram(sentence_generator)
-
     w2v = Word2Vec(save_folder=opt.folder)
     w2v.fit(
         generator,

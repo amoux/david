@@ -6,32 +6,40 @@ import gensim
 import tensorflow as tf
 from tensorboard.plugins import projector
 
-from ...text.nltk_textpipe import preprocess_doc
+from ...text import preprocess_doc
 
 
 class CsvConnector(object):
-    def __init__(self,
-                 filepath=None,
-                 separator=',',
-                 text_columns=(),
-                 concate_by='. ',
-                 preprocessing=None):
+    def __init__(
+        self,
+        filepath=None,
+        separator=",",
+        text_columns=(),
+        concate_by=". ",
+        preprocessing=None,
+    ):
         """CSV data loader class."""
         if not text_columns:
             raise ValueError(
-                "You have to select at least one column on your input data")
+                "You have to select at least one column on your input data"
+            )
 
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             self.reader = csv.DictReader(f, delimiter=separator, quotechar='"')
             column_names = self.reader.fieldnames
 
             for column in text_columns:
                 if column not in column_names:
-                    print("{} is not a valid column. Found {}".format(
-                        column, column_names))
+                    print(
+                        "{} is not a valid column. Found {}".format(
+                            column, column_names
+                        )
+                    )
 
         if not preprocessing:
-            def preprocessing(x): return x
+
+            def preprocessing(x):
+                return x
 
         self.filepath = filepath
         self.separator = separator
@@ -40,12 +48,13 @@ class CsvConnector(object):
         self.preprocessing = preprocessing
 
     def __iter__(self):
-        with open(self.filepath, 'r', encoding='utf-8') as f:
+        with open(self.filepath, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f, delimiter=self.separator, quotechar='"')
 
             for line in reader:
                 sentence = self.concate_by.join(
-                    [line[col] for col in self.text_columns if line[col]])
+                    [line[col] for col in self.text_columns if line[col]]
+                )
                 yield self.preprocessing(sentence).split()
 
 
@@ -54,7 +63,7 @@ class TxtConnector(object):
         self.filepath = filepath
 
     def __iter__(self):
-        for text in open(self.filepath, 'r', encoding='utf-8'):
+        for text in open(self.filepath, "r", encoding="utf-8"):
             yield preprocess_doc(text)
 
 
@@ -72,7 +81,7 @@ class Bigram(object):
 class Word2Vec(object):
     def __init__(self, model=None, save_folder=None, phrases=False):
         self.model = model
-        self.save_folder = join(save_folder, 'gensim-model.cpkt')
+        self.save_folder = join(save_folder, "gensim-model.cpkt")
         self.phrases = phrases
 
     def fit(self, *args, **kwargs):
@@ -98,29 +107,29 @@ def create_embeddings(gensim_model, model_folder, trainable=False):
     vocab_size = weights.shape[0]
     embedding_dim = weights.shape[1]
 
-    with open(join(model_folder, 'metadata.tsv'), 'w') as tsv_file:
-        tsv_file.writelines('\n'.join(idx2words))
+    with open(join(model_folder, "metadata.tsv"), "w") as tsv_file:
+        tsv_file.writelines("\n".join(idx2words))
 
     tf.compat.v1.reset_default_graph()
-
     X = tf.constant(0.0, shape=[vocab_size, embedding_dim])
-    W = tf.Variable(X, trainable=trainable, name='W')
+    W = tf.Variable(X, trainable=trainable, name="W")
     embedding_placeholder = tf.compat.v1.placeholder(
-        tf.float32, [vocab_size, embedding_dim])
+        tf.float32, [vocab_size, embedding_dim]
+    )
     embedding_init = W.assign(embedding_placeholder)
 
     writer = tf.compat.v1.summary.FileWriter(
-        model_folder, graph=tf.compat.v1.get_default_graph())
+        model_folder, graph=tf.compat.v1.get_default_graph()
+    )
     saver = tf.compat.v1.train.Saver()
     config = projector.ProjectorConfig()
-
     embedding = config.embeddings.add()
     embedding.tensor_name = W.name
-    embedding.metadata_path = join(model_folder, 'metadata.tsv')
+    embedding.metadata_path = join(model_folder, "metadata.tsv")
     projector.visualize_embeddings(writer, config)
 
     with tf.compat.v1.Session() as sess:
-        tf_model_filepath = join(model_folder, 'tf-model.cpkt')
+        tf_model_filepath = join(model_folder, "tf-model.cpkt")
         sess.run(embedding_init, feed_dict={embedding_placeholder: weights})
         save_path = saver.save(sess, tf_model_filepath)
     return save_path

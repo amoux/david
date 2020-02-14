@@ -28,7 +28,7 @@ BERT_MODELS = {
     "cased-lg": [_BERT_MODEL_URLS["large-cased"]],
     "multi-lang-v2": [_BERT_MODEL_URLS["base-multi-lang-new"]],
     "multi-lang-v1": [_BERT_MODEL_URLS["base-multi-lang-old"]],
-    "all": _BERT_MODEL_URLS.values()
+    "all": _BERT_MODEL_URLS.values(),
 }
 
 
@@ -39,17 +39,14 @@ class TQDM(tqdm):
         self.update(b * bsize - self.n)
 
 
-def _extract_compressed_file(filename: str,
-                             save_path: str,
-                             extension: str = None) -> None:
+def _extract_compressed_file(
+    filename: str, save_path: str, extension: str = None
+) -> None:
     """Extract a compressed file to directory.
 
-    Parameters:
-    ----------
-    `filename` (str): Compressed file.
-    `save_path` (str): Extract to directory.
-    `extension` (str, optional):
-        Extension of the file; Otherwise, attempts to extract extension
+    `filename`: Compressed file.
+    `save_path`: Extract to directory.
+    `extension`: Extension of the file; Otherwise, attempts to extract extension
         from the filename.
     """
     logger.info("Extracting {}".format(filename))
@@ -60,68 +57,52 @@ def _extract_compressed_file(filename: str,
         with zipfile.ZipFile(filename, "r") as zip_:
             zip_.extractall(save_path)
     elif "tar.gz" in extension or "tgz" in extension:
-        subprocess.call(["tar", "-C", save_path, '-zxvf', filename])
+        subprocess.call(["tar", "-C", save_path, "-zxvf", filename])
     elif "tar" in extension:
-        subprocess.call(["tar", "-C", save_path, '-xvf', filename])
+        subprocess.call(["tar", "-C", save_path, "-xvf", filename])
     logger.info("Extracted {}".format(filename))
 
 
-def load_bert(model: str,
-              save_path: str = "models",
-              extension: str = ".zip") -> Dict[str, str]:
-    """Downloads or/and loads original BERT models.
+def load_bert(
+    model: str, save_path: str = "models", extension: str = ".zip"
+) -> Dict[str, str]:
+    """Download or load original BERT models.
 
-    Parameters:
-    ----------
-
-    `model` (str):
-        The name of the bert model to download. Choose one of the following:
+    `model`: The name of the bert model to download. Choose one of the following:
         'uncased-sm', 'uncased-lg', 'cased-sm', 'cased-lg', 'multi-lang-v2',
         'multi-lang-v1'. If you need to download all models simply pass 'all'.
-
-    `save_path` (str, default=None):
-        The path directory where the models will be downloaded and unzipped.
-
-    Returns:
-    `Dict[str, str]`: A dictionary with keys mapped to the absolute path of
-        each file unzipped in the model's directory. If the model's directory
-        exist - It returns the mapping of the existing files. Otherwise, it
-        will create the directory, download the model, unzip the files, before
-        returning the dictionary mapping.
+    `save_path`: The path directory where the models will be downloaded and unzipped.
 
     Usage:
-    ------
         >>> bert_model_paths = load_bert("uncased-sm", save_path="models")
         >>> bert_model_paths.keys()
         dict_keys(['meta', 'index', 'config', 'vocab', 'data'])
         # Each key contains the absolute file path.
         >>> bert_model_paths["vocab"]
         '$HOME/../models/uncased_L-12_H-768_A-12/vocab.txt'
-
     """
     if model not in BERT_MODELS.keys():
-        raise ValueError("{}, is not a valid name. Choose one: {}".format(
-            model, BERT_MODELS.keys()))
-
+        raise ValueError(
+            "{}, is not a valid name. Choose one: {}".format(model, BERT_MODELS.keys())
+        )
     if not os.path.exists(save_path):
         os.makedirs(save_path)
-
     model_file_paths = dict()
+
     for bert_url in BERT_MODELS[model]:
         filename = os.path.basename(bert_url)
         filepath = os.path.join(save_path, filename)
-
         if not os.path.isfile(filepath):
-            logger.info(
-                "Directory for {} not found. Downloading...".format(model))
+            logger.info("Directory for {} not found. Downloading...".format(model))
             # Start downloading the compressed file and display progress.
-            with TQDM(unit="B", unit_scale=True,
-                      unit_divisor=1024, miniters=1, desc=filename) as t:
+            with TQDM(
+                unit="B", unit_scale=True, unit_divisor=1024, miniters=1, desc=filename
+            ) as t:
                 urllib.urlretrieve(
-                    bert_url, filepath, reporthook=t.update_stream, data=None)
+                    bert_url, filepath, reporthook=t.update_stream, data=None
+                )
             # Extract the files from the compressed file downloaded.
             _extract_compressed_file(filepath, save_path, extension=extension)
-
         # Build the dictionary from the model's files. Assing clean key names.
         key_names = ["meta", "index", "config", "vocab", "data"]
         extlen = len(extension)

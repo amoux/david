@@ -182,48 +182,53 @@ print(dataset[:3])
 
 ## david.text 🔬
 
-A quick look at the results from the three possible preprocessing modes.
+Proper documentation for the `david.text` module will be added as soon. In the meantime, here are the main text preprocessing functions I use every day (daily actually!) for my NLP tasks. I frequently look for approaches to optimize and enhance these methods to the smallest detail!
 
-```python
-from david.text import preprocess_docs
-doc_a = preprocess_docs(docs, stopwords=False, tokenize=True)
-doc_b = preprocess_docs(docs, stopwords=True, tokenize=True)
-doc_c = preprocess_docs(docs, stopwords=False, tokenize=False)
-doc_d = preprocess_docs(docs, stopwords=True, tokenize=True, lemma=True)
+```bash
+## Text preprocessing methods
+  clean_tokenization
+  get_sentiment_polarity
+  get_sentiment_subjectivity
+  nltk_word_tokenizer
+  normalize_whitespace
+  normalize_wiggles
+  part_of_speech_annotator
+  part_of_speech_lemmatizer
+  preprocess_doc
+  preprocess_sequence
+  remove_punctuation
+  remove_repeating_characters
+  remove_repeating_words
+  remove_stopwords
+  remove_urls
+  spacy_token_lemmatizer
+  string_printable
+  treebank_to_wordnet_pos
+  unicode_to_ascii
+
+## Summarizer built with spaCy
+  summarizer
+
+## Other/Text utility methods
+  build_wordcloud
+  clean_tokens
+  complete_sentences
+  extract_text_from_url
+  get_vocab_size
+  is_tokenized_doc
+  largest_sequence
+  split_train_test
 ```
 
-```python
-doc_a[:3] # stopwords=False, tokenize=True
-...
-[['Love', 'it'],
- ['Put', 'the', 'solar', 'kit', 'on', 'top', 'during', 'the', 'day'],
- ['Police', 'car', 'runs', 'out', 'of', 'gas', 'during', 'chase']]
+## david.youtube
 
-doc_b[:3] # stopwords=True, tokenize=True
-...
- [['Love'],
- ['Put', 'solar', 'kit', 'top', 'day'],
- ['Police', 'car', 'runs', 'gas', 'chase']]
-
-doc_c[:3] # stopwords=False, tokenize=False
-...
- ['Love it',
-  'Put the solar kit on top during the day',
-  'Police car runs out of gas during chase']
-```
-
-- Applying lemma vs not
+Main YouTube scraper - No `API` needed! It scrapes comments from a `video_id` or a `video_url`. If you want to extract before passing. the utility function `david.youtube.utils.extract_videoid(url: str)` can extract the `video_id` (including broken urls).
 
 ```python
-doc_b[5:6] # lemma not applied
-...
-[['Except', 'filling', 'gas', 'takes', 'like', '10', 'minutes',
-  'charging', 'Tesla', 'takes', 'several', 'hours']]
-
-doc_d[5:6] # lemma applied
-...
-[['except', 'fill', 'gas', 'take', 'like', '10', 'minute',
-'charge', 'tesla', 'take', 'several', 'hour']]
+from david.youtube import YTCommentScraper
+scraper = YTCommentScraper()
+scrape_job = scraper.scrape_comments(video_id="bCtOFZoCvBE", video_url=None)  # returns a generator
+comments = list(scrape_job)  # initialize the scraper!
 ```
 
 ### general info

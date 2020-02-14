@@ -13,17 +13,15 @@ MOVIELENS_DATASETS = {
     "lg": [_MOVIELENS_URLS["ml-full"]],
     "sm": [_MOVIELENS_URLS["ml-small"]],
     "yt": [_MOVIELENS_URLS["ml-youtube"]],
-    "all": _MOVIELENS_URLS.values()}
+    "all": _MOVIELENS_URLS.values(),
+}
 
 
 def download_movielens(dataset: str, savepath="data"):
-    """Downloads and configures MovieLens datasets.
+    """Download and configure MovieLens datasets.
 
     About MovieLens: The data are contained in the files links.csv, movies.csv,
     ratings.csv and tags.csv.
-
-    Parameters:
-    ----------
 
     `dataset` : (str, choices: ['sm', 'lg', 'yt', 'all'])
         Choices for the MovieLens datasets: `sm` or `lg`. To download the
@@ -35,7 +33,6 @@ def download_movielens(dataset: str, savepath="data"):
         If the downloaded the datasets (e.g, dataset="all") exists already,
         you can use this method and pass the same argument "all" to reload
         the dataset contents into memory. (It wont re-download if exists).
-
     """
     extlen = len(".zip")
     if not os.path.exists(savepath):
@@ -50,5 +47,6 @@ def download_movielens(dataset: str, savepath="data"):
                 zf.extractall(savepath)
         dataset_fpaths[filename[:-extlen]] = {
             fn[:-extlen]: os.path.join(filepath[:-extlen], fn)
-            for fn in os.listdir(filepath[:-extlen])}
+            for fn in os.listdir(filepath[:-extlen])
+        }
     return dataset_fpaths
