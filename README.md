@@ -5,7 +5,7 @@ The goal of this toolkit is to speed the time-consuming steps to obtain, store, 
 - Projects using this toolkit:
 
   - **vuepoint** (flask-web-app)
-    - Vuepoint is a text-analytics tool for content creators. Creators want to hear their audience, beyond click-rates or watch-time. They also want to make decisions on what the audience is saying or but today; they have to manually read some K number of comments to formulate a global summary of what the audience wants. Vuepoint helps them see what the most popular topic discussed was. What the audience whats to see next, how the audience felt at some time-stamp.
+    - Vuepoint is a text-analytics tool for content creators. Creators want to hear their audience, beyond click-rates or watch-time. They also want to make decisions on what the audience is saying or but today; they have to manually read some K number of comments to formulate a global summary of what the audience wants. Vuepoint helps them see what the most popular topic discussed was + What an audience wants to-see-next, how the audience/groups felt at some time-stamp of the video.
 
   - **david-sentiment** (embedding-models): `|Experimental|`
     - Train sentiment models based on `meta-learning` or/and `embedding` techniques with small datasets and a few lines of code.
