@@ -5,6 +5,7 @@ David text tokenizer classes.
 """
 from __future__ import print_function, unicode_literals
 
+import copy
 import json
 import os
 import pickle
@@ -165,7 +166,11 @@ class BaseTokenizer:
         return vectors
 
     def document_to_sequences(self, document: List[str]) -> List[int]:
-        """Fit a document to a document of vocab ids (Bag of words)."""
+        """Transform an iterable of string sequences to an iterable of intergers."""
+        return list(self.document_to_sequences_generator(document))
+
+    def document_to_sequences_generator(self, document: List[str]) -> List[int]:
+        """Transform an iterable of string sequences to an iterable of intergers."""
         if not self._index_vocab_is_frequency:
             msg.warn(WARN_INDEX_NOT_FREQ)
             self.index_vocab_to_frequency()
@@ -191,6 +196,33 @@ class BaseTokenizer:
             self._index_vocab_is_frequency = True
         else:
             return index_frequency
+
+    def vectors_to_frequency(self, mincount=1):
+        """Index vocabulary based on term frequency.
+
+        mincount: Remove tokens with a count frequency of 1 or more.
+            Default of 1 removes all uncommon tokens.
+        """
+        countmin = 0
+        voc_size = len(self.vocab_index)
+        freq_vocab_index = dict()
+        freq_vocab_count = dict()
+        vocab_count = copy.copy(self.vocab_count)
+        vocab_count = sorted(vocab_count.items(), key=lambda x: x[1])
+        for index, (token, count) in enumerate(vocab_count, start=1):
+            if count > mincount:
+                freq_vocab_index[token] = index
+                freq_vocab_count[token] = count
+            else:
+                countmin += 1
+
+        self.vocab_index = freq_vocab_index
+        self.vocab_count = freq_vocab_count
+        self._index_vocab_is_frequency = True
+        del vocab_count
+        del freq_vocab_index
+        del freq_vocab_count
+        msg.info(f"* Removed {voc_size - countmin} from original size {voc_size}")
 
     def _encode(self, tokens: List[str]) -> List[int]:
         tok2id = self.vocab_index

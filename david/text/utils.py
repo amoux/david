@@ -103,6 +103,40 @@ def extract_text_from_url(url: str, headers: Dict[str, str] = None) -> str:
         return text
 
 
+def what_is_another_word_for(word: str, maxwords=10, by="sim", headers=None):
+    """Fetch all words for what is another word for.
+
+    `by`: How to sort the words. Choose by 'words' or 'similar'.
+    """
+    if headers is None:
+        headers = {"User-Agent": "Mozilla/5.0"}
+
+    query = "/what-is/another-word-for/"
+    link = f"https://www.wordhippo.com{query}{word}.html"
+    page = urlopen(Request(link, headers=headers))
+    soup = BeautifulSoup(page, features="html.parser")
+
+    words = {}
+    index = 0
+    maxwords = maxwords + 1
+    for link in soup.find_all("a"):
+        link = link.get("href")
+        if link and link.startswith("/"):
+            if link.startswith(query):
+                link = link.replace(query, "")
+                word = link.replace(".html", "")
+                if index >= maxwords:
+                    break
+                if word in words:
+                    continue
+                else:
+                    words[word] = index
+                    index += 1
+
+    index = 0 if by.lower().strip().startswith("w") else 1
+    return sorted(words.items(), key=lambda k: k[index])
+
+
 def clean_tokens(
     document: Iterable[List[Sequence[str]]], discard_punct="_", min_seqlen=1
 ):
