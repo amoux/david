@@ -5,7 +5,7 @@ The goal of this toolkit is to speed the time-consuming steps to obtain, store, 
 - Projects using this toolkit:
 
   - **vuepoint** (flask-web-app)
-    - Vuepoint is a text-analytics tool for content creators. Creators want to hear their audience, beyond click-rates or watch-time. They also want to make decisions on what the audience is saying or but today; they have to manually read some K number of comments to formulate a global summary of what the audience wants. Vuepoint helps them see what the most popular topic discussed was + What an audience wants to-see-next, how the audience/groups felt at some time-stamp of the video.
+    - Vuepoint is a text-analytics tool for content creators. Creators want to hear their audience, beyond click-rates or watch-time. They also want to make decisions on what the audience is saying; Today content creators have to manually read and take notes on many comments to formulate a global summary of what the audience wants. Vuepoint helps them see what the most popular topic discussed was + What an audience wants to-see-next, how the audience/groups felt at some time-stamp of the video.
 
   - **david-sentiment** (embedding-models): `|Experimental|`
     - Train sentiment models based on `meta-learning` or/and `embedding` techniques with small datasets and a few lines of code.
@@ -86,8 +86,10 @@ print(tokenizer)
 
 Align the vocabulary index relative to its term frequency.
 
+- `mincount` Remove tokens with a count rate of 1 or more. The default of mincount=1 excludes all uncommon tokens. Note that the count frequency for the remaining tokens stays the same (See below for examples)
+
 ```python
-tokenizer.index_vocab_to_frequency(inplace=True)
+tokenizer.vocabulary_to_frequency(mincount=1)
 ```
 
 - Before alignment
@@ -104,7 +106,26 @@ tokenizer.index_vocab_to_frequency(inplace=True)
 * vocab_count: [('.', 2215), ('the', 2102), (',', 1613), ('to', 1286), ('i', 1277)]
 ```
 
-- Converting ***this-to-that*** and ***that-to-this*** `(encoding|decoding)` ♻
+> Removing tokens with count frequency of `1`
+
+- *before* : `<Tokenizer(vocab_size=60338)>`
+
+```python
+* [('.', 1), ('the', 2), (',', 3), ('i', 4), ('to', 5)]
+* [('.', 80763), ('the', 72336), (',', 56467), ('i', 46123), ('to', 45655)]
+```
+
+- *after* : `<Tokenizer(vocab_size=28129)>`
+
+```python
+tokenizer.vocabulary_to_frequency(mincount=1)
+'ℹ * Removed 32209 tokens from 60338'
+
+* [('.', 1), ('the', 2), (',', 3), ('i', 4), ('to', 5)]
+* [('.', 80763), ('the', 72336), (',', 56467), ('i', 46123), ('to', 45655)]
+```
+
+Converting ***this-to-that*** and ***that-to-this*** `(encoding|decoding)` ♻
 
 ```python
 text = "Hello, this is a text! embedded with youtube comments 😊"

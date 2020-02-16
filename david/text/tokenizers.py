@@ -157,7 +157,7 @@ class BaseTokenizer:
             for token in tokens:
                 self.add_token(token)
 
-    def vocab_to_vectors(self) -> List[Tuple[str, int, int]]:
+    def get_vectors(self) -> List[Tuple[str, int, int]]:
         """Return the index-vocab as vector representation: `[(token, count, id)]`."""
         vectors = []
         vocfreq = self.vocab_count.most_common()
@@ -165,15 +165,21 @@ class BaseTokenizer:
             vectors.append((token, count, token_id))
         return vectors
 
-    def document_to_sequences(self, document: List[str]) -> List[int]:
-        """Transform an iterable of string sequences to an iterable of intergers."""
-        return list(self.document_to_sequences_generator(document))
+    def document_to_sequences(self, document: List[str], mincount=1) -> List[int]:
+        """Transform an iterable of string sequences to an iterable of intergers.
 
-    def document_to_sequences_generator(self, document: List[str]) -> List[int]:
-        """Transform an iterable of string sequences to an iterable of intergers."""
+        mincount: Remove tokens with a count frequency of 1 or more.
+        """
+        return list(self.document_to_sequences_generator(document, mincount))
+
+    def document_to_sequences_generator(self, document: List[str], mincount=1):
+        """Transform an iterable of string sequences to an iterable of intergers.
+
+        mincount: Remove tokens with a count frequency of 1 or more.
+        """
         if not self._index_vocab_is_frequency:
             msg.warn(WARN_INDEX_NOT_FREQ)
-            self.index_vocab_to_frequency()
+            self.vocabulary_to_frequency(mincount)
             self._index_vocab_is_frequency = True
 
         for string in document:
@@ -181,35 +187,19 @@ class BaseTokenizer:
             if tokens is not None:
                 yield self._encode(tokens)
 
-    def index_vocab_to_frequency(self, inplace=True):
+    def vocabulary_to_frequency(self, mincount=1):
         """Align (Sort) the indexed vocabulary relative to the item(s) frequency.
 
-        `inplace`: Weather to replace the existing `vocab_index` inplace if true.
-            Otherwise, the dictionary `Dict[str, int]` is returned.
-        """
-        index_frequency: Dict[str, int] = {}
-        vocab_index, _ = zip(*self.vocab_count.most_common())
-        for index, token in enumerate(vocab_index, start=1):
-            index_frequency[token] = index
-        if inplace:
-            self.vocab_index = index_frequency
-            self._index_vocab_is_frequency = True
-        else:
-            return index_frequency
-
-    def vectors_to_frequency(self, mincount=1):
-        """Index vocabulary based on term frequency.
-
         mincount: Remove tokens with a count frequency of 1 or more.
-            Default of 1 removes all uncommon tokens.
+            Default of mincount=1 removes all uncommon tokens.
         """
         countmin = 0
         voc_size = len(self.vocab_index)
         freq_vocab_index = dict()
-        freq_vocab_count = dict()
+        freq_vocab_count = Counter()
+
         vocab_count = copy.copy(self.vocab_count)
-        vocab_count = sorted(vocab_count.items(), key=lambda x: x[1])
-        for index, (token, count) in enumerate(vocab_count, start=1):
+        for index, (token, count) in enumerate(vocab_count.items(), start=1):
             if count > mincount:
                 freq_vocab_index[token] = index
                 freq_vocab_count[token] = count
@@ -222,7 +212,7 @@ class BaseTokenizer:
         del vocab_count
         del freq_vocab_index
         del freq_vocab_count
-        msg.info(f"* Removed {voc_size - countmin} from original size {voc_size}")
+        msg.info(f"* Removed {countmin} tokens from {voc_size}")
 
     def _encode(self, tokens: List[str]) -> List[int]:
         tok2id = self.vocab_index
