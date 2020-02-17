@@ -86,41 +86,33 @@ print(tokenizer)
 
 Align the vocabulary index relative to its term frequency.
 
-- `mincount` Remove tokens with a count rate of 1 or more. The default of mincount=1 excludes all uncommon tokens. Note that the count frequency for the remaining tokens stays the same (See below for examples)
+- `mincount` Remove tokens with a count rate of 1 or more. The default of mincount=1 excludes all uncommon tokens. Note that the count frequency for the remaining tokens stays the same (see below).
 
 ```python
 tokenizer.vocabulary_to_frequency(mincount=1)
 ```
 
-- Before alignment
-
 ```python
+# before alignment
 * vocab_index: [('this', 1), ('is', 2), ('very', 3), ('good', 4), ('way', 5)]
 * vocab_count: [('.', 2215), ('the', 2102), (',', 1613), ('to', 1286), ('i', 1277)]
-```
-
-- After alignment
-
-```python
+# after alignment
 * vocab_index: [('.', 1), ('the', 2), (',', 3), ('to', 4), ('i', 5)]
 * vocab_count: [('.', 2215), ('the', 2102), (',', 1613), ('to', 1286), ('i', 1277)]
 ```
 
-> Removing tokens with count frequency of `1`
+Removing tokens with count frequency of `1`
 
-- *before* : `<Tokenizer(vocab_size=60338)>`
+- Note that this method can be used to reduce further and apply a higher value, e.g., from `1 => 2 i...` Lastly, To avoid tokenizing a document again, save the tokenizers vectors state with `self.save_vectors('vectors.pkl')` and re-load with `Tokenizer('vectors.pkl')` before using this method.
 
-```python
-* [('.', 1), ('the', 2), (',', 3), ('i', 4), ('to', 5)]
-* [('.', 80763), ('the', 72336), (',', 56467), ('i', 46123), ('to', 45655)]
-```
-
-- *after* : `<Tokenizer(vocab_size=28129)>`
+  - before : `<Tokenizer(vocab_size=60338)>`
+  - after  : `<Tokenizer(vocab_size=28129)>`
 
 ```python
 tokenizer.vocabulary_to_frequency(mincount=1)
 'ℹ * Removed 32209 tokens from 60338'
 
+# token frequency weights remain and the token-ids are re-index from 1.
 * [('.', 1), ('the', 2), (',', 3), ('i', 4), ('to', 5)]
 * [('.', 80763), ('the', 72336), (',', 56467), ('i', 46123), ('to', 45655)]
 ```
@@ -162,6 +154,75 @@ tokenizer.convert_tokens_to_ids(emoji_tok)
 
 ```python
 sequences = tokenizer.document_to_sequences(document=train_data)  # returns a generator
+```
+
+## Demo
+
+This is a small script showing how the `Tokenizer` and `GloVe` classes can be used to query similar tokens after embedding the tokenizer's vocabulary-index with GloVe's embedding weights.
+
+```python
+import numpy as np
+from david.models import GloVe
+from david.tokenizers import Tokenizer
+from david.datasets import YTCommentsDataset
+
+dataset, _ = YTCommentsDataset.split_train_test(4000)
+tokenizer = Tokenizer(remove_urls=True, reduce_length=True)
+tokenizer.fit_on_document(document=dataset)
+tokenizer.vocabulary_to_frequency(mincount=2)
+vocab_matrix = GloVe.fit_embeddings(tokenizer.vocab_index, vocab_dim="100d")
+
+def most_similar(token: str, k=5):
+    """Fetch a token-query, retrieving the top `k` most similar tokens."""
+    embedding = vocab_matrix[tokenizer.vocab_index[token]]
+    dst = (np.dot(vocab_matrix, embedding)
+           / np.linalg.norm(vocab_matrix, ord=None, axis=1)
+           / np.linalg.norm(embedding)))
+
+    token_ids = np.argsort(-dst)
+    id2tok = {idx: tok for tok, idx in tokenizer.vocab_index.items()}
+    return [(id2tok[i], dst[i]) for i in token_ids if i in id2tok][1: k+1]
+```
+
+> Similarity results vary on the dataset, here the dataset used contains youtube comments scrapped on multiple video categories.
+
+```python
+# most similar tokens to google.
+most_similar("google", k=7)
+
+[('facebook', 0.7516581668453545),
+ ('internet', 0.7383222858698717),
+ ('online', 0.6866507281595066),
+ ('users', 0.6830479303146789),
+ ('software', 0.6750386018261412),
+ ('twitter', 0.6647332902232169),
+ ('youtube', 0.6424136902092844)]
+```
+
+```python
+# most similar tokens to comment
+most_similar("comment", k=7)
+
+[('statement', 0.7802159956616586),
+ ('comments', 0.7776707404754829),
+ ('details', 0.7315377076004379),
+ ('asked', 0.7290169506697899),
+ ('saying', 0.7005583039383192),
+ ('statements', 0.6972063046229513),
+ ('suggestion', 0.6785569811078331)]
+```
+
+```python
+# most similar tokens to text
+most_similar("text", k=7)
+
+[('copy', 0.7238825476517837),
+ ('read', 0.6996822841314503),
+ ('word', 0.6890853296117396),
+ ('language', 0.6855949467826302),
+ ('written', 0.6851852192519321),
+ ('message', 0.6818807319180759),
+ ('words', 0.6647998271472749)]
 ```
 
 ## `david.server.CommentsSql` 📡
