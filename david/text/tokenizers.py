@@ -32,13 +32,6 @@ WARN_INDEX_NOT_FREQ = (
     "documents.\nCalling `self.vocab_index_to_frequency` for you...\n"
 )
 
-RECOMD_IO_LOADING = (
-    "INFO: Using `self.save_vectors` and `self.load_vectors` is "
-    "recommended over simply saving the vocabulary as it saves "
-    "both states from the vocab_index and vocab_count dict objects "
-    "Both which improve the tokenizer's features."
-)
-
 
 class TokenizerIO:
     """Vocab data object loader and writer for the tokenizer."""
@@ -118,7 +111,6 @@ class BaseTokenizer:
 
     def save_vocabulary(self, vocab_file="vocab.txt") -> IO:
         """Save the current vocabulary to a vocab.txt file."""
-        msg.info(RECOMD_IO_LOADING)
         TokenizerIO.save_txt(vocab_file, self.vocab_index)
 
     def load_vocabulary(self, vocab_file="vocab.txt") -> IO:
@@ -130,11 +122,11 @@ class BaseTokenizer:
     ) -> IO:
         """Save the vectors to a pickle file.
         
-        vectors: (Optional) Pass a vectors object from `self.vocab_to_vectors()`
+        vectors: (Optional) Pass a vectors object from `self.get_vectors()`
         or None, and the method is called automatically.
         """
         if vectors is None:
-            vectors = self.vocab_to_vectors()
+            vectors = self.get_vectors()
         TokenizerIO.save_obj(vectors_file, vectors)
 
     def load_vectors(self, vectors_file="vectors.pkl") -> IO:

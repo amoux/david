@@ -15,64 +15,89 @@ import numpy as np
 from wasabi import msg
 
 
+def _load_vocab_files(glove_dirname: str) -> Dict[str, str]:
+    GLOVE_DIR = os.environ.get("GLOVE_DIR")
+    GLOVE6B_PATH = os.path.join(GLOVE_DIR, glove_dirname)
+    GLOVE6B_FILES = os.listdir(GLOVE6B_PATH)
+    glove_files = {}
+    for i, file in enumerate(GLOVE6B_FILES):
+        ndim = [d for d in file.split(".") if d.endswith("d")][: i + 1][0]
+        glove_files[ndim] = os.path.join(GLOVE6B_PATH, file)
+    return glove_files
+
+
 class GloVe:
     """Global Vectors for Word Representation.
 
     Returns an embedded matrix containing the pretrained word embeddings.
     """
 
-    GLOVE_DIR = os.environ.get("GLOVE_DIR")
-    GLOVE6B_PATH = os.path.join(GLOVE_DIR, "glove.6B")
-    GLOVE6B_FILES = os.listdir(GLOVE6B_PATH)
-    vocab_files: Dict[str, str] = {}
-    for i, glove_file in enumerate(GLOVE6B_FILES):
-        ndim = [d for d in glove_file.split(".") if d.endswith("d")][: i + 1][0]
-        vocab_files[ndim] = os.path.join(GLOVE6B_PATH, glove_file)
+    vocab_files = _load_vocab_files("glove.6B")
 
     @staticmethod
     def build_vocabulary(vocab_file: str) -> Dict[str, np.float]:
-        """Load glove embeddings from file.
-    
+        """Build glove embeddings from file.
+
         Creates a dictionary with words as keys and the corresponding
         `N-dim` vectors as values, in the form of an array.
         """
         vocab_path = Path(vocab_file)
         if not vocab_path.exists():
             msg.fail(f"Could not find glove file in {vocab_file}")
+        else:
+            msg.good(f"Glove embeddings loaded from path: {vocab_file}")
 
-        with vocab_path.open("r", encoding="utf8") as glove_file:
-            embeddings = {}
-            for line in glove_file:
-                ndims = line.split()
-                token = ndims[0]
-                embeddings[token] = np.asarray(ndims[1:], dtype="float32")
-            return embeddings
+        with vocab_path.open("r", encoding="utf8") as file:
+            glove_embeddings = {}
+            for line in file:
+                values = line.split()
+                token = values[0]
+                vector = np.asarray(values[1:], dtype="float32")
+                glove_embeddings[token] = vector
+
+            return glove_embeddings
+
+    @staticmethod
+    def load_vocabulary(vocab_ndim: str = "100d") -> Dict[str, np.float]:
+        """Return the built GloVe embeddings given a available dimension."""
+        vocab_file = GloVe.vocab_files[vocab_ndim]
+        return GloVe.build_vocabulary(vocab_file)
 
     @staticmethod
     def fit_embeddings(
-        vocab_index: Dict[str, int], vocab_dim="100d", vocab_size: int = None
+        vocab_index: Dict[str, int],
+        vocab_dim: str = "100d",
+        vocab_size: int = None,
+        max_tokens: int = None,
     ):
         """Fit an indexed vocab with GloVe's pretrained word embeddings.
 
-        `vocab_index`: A mapped index to tokens dictionary.
-        `vocab_dim`: The vocab dimension to load from file.
-        `vocab_size`: The size of the indexed vocabulary. If None,
-        the vocab size will be calculated from the vocab index dict.
+        vocab_index: A mapped index to tokens dictionary.
+        vocab_dim: The vocab dimension to load from file.
+        vocab_size: The size of the indexed vocabulary. If None,
+            the vocab size will be calculated from the vocab index dict.
+        max_tokens: Maximum number of tokens to consider embedding.
         """
-        vocab_file = GloVe.vocab_files[vocab_dim]
-        msg.good(f"Loading vocab file from {vocab_file}")
-        num_dim = int(vocab_dim.replace("d", ""))
+        if max_tokens is None:
+            max_tokens = len(vocab_index)
+        if vocab_size is None:
+            vocab_size = 1 + max_tokens
+        dimensions = int(vocab_dim.replace("d", ""))
 
-        if vocab_index and vocab_size is None:
-            vocab_size = 1 + len(vocab_index.keys())
+        msg.good(f"<✔(tokens={max_tokens}, ndim={dimensions}, vocab={vocab_size})>")
+        msg.good("*** embedding vocabulary 👻 ***")
 
-        msg.good(f"num-dim:({num_dim}), vocab-size: {vocab_size}\n")
-        msg.good("*** embedding vocabulary 🤗 ***")
-        glove_embeddings = GloVe.build_vocabulary(vocab_file)
-        vocab_embeddings = np.zeros((vocab_size, num_dim))
+        glove_embeddings = GloVe.load_vocabulary(vocab_dim)
+        vocab_embeddings = np.zeros((vocab_size, dimensions))
+        for token, token_id in vocab_index.items():
+            if token_id < max_tokens:
+                try:
+                    embedded_token = glove_embeddings[token]
+                # skip any token not in glove's vocabulary
+                except KeyError:
+                    continue
+                # otherwise, add the token_id and its embedding form
+                else:
+                    vocab_embeddings[token_id] = embedded_token
 
-        for token, index in vocab_index.items():
-            embedding = glove_embeddings.get(token)
-            if embedding is not None:
-                vocab_embeddings[index] = embedding
         return vocab_embeddings
