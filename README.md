@@ -172,9 +172,9 @@ tokenizer.fit_on_document(document=dataset)
 tokenizer.vocabulary_to_frequency(mincount=2)
 vocab_matrix = GloVe.fit_embeddings(tokenizer.vocab_index, vocab_dim="100d")
 
-def most_similar(token: str, k=5):
-    """Fetch a token-query, retrieving the top `k` most similar tokens."""
-    embedding = vocab_matrix[tokenizer.vocab_index[token]]
+def most_similar(word: str, k=5):
+    """Fetch a word-query, retrieving the top `k` most similar tokens."""
+    embedding = vocab_matrix[tokenizer.convert_string_to_ids(word)[0]]
     dst = (np.dot(vocab_matrix, embedding)
            / np.linalg.norm(vocab_matrix, ord=None, axis=1)
            / np.linalg.norm(embedding)))
