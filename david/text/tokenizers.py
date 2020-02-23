@@ -18,7 +18,6 @@ from typing import IO, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import spacy
-import torch
 from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
                                   _replace_html_entities, reduce_lengthening,
                                   remove_handles)
@@ -27,6 +26,7 @@ from wasabi import msg
 from .preprocessing import (clean_tokenization, normalize_whitespace,
                             remove_urls, string_printable, unicode_to_ascii)
 
+EMPTY_VOCAB_INDEX_MSG = "Found index vocab empty, fit the documents first."
 WARN_INDEX_NOT_FREQ = (
     "\nWarning: Vocabulary's index has not been transformed to "
     "frequency.\nApplying the needed requirements for fitting the "
@@ -78,10 +78,11 @@ class BaseTokenizer:
             - `BaseTokenizer.load_vocabulary(vocab_file: str = 'vocab.txt')`
             - `BaseTokenizer.load_vectors(vectors_file: str = 'vectors.pkl')`
             - `BaseTokenizer.fit_on_document(document: List[str])`
-
         """
         self.vocab_index: Dict[str, int] = {}
+        self.index_vocab: Dict[int, str] = {}
         self.vocab_count: Counter[Dict[str, int]] = Counter()
+        self.num_docs = 0
         self._token_count: int = 1
         self._index_vocab_is_frequency = False
 
@@ -132,44 +133,44 @@ class BaseTokenizer:
 
     def load_vectors(self, vectors_file="vectors.pkl") -> IO:
         """Load both (index and count) vocab dicts from a vectors file.
-        
+
         This method can be used as a way to restore both vocab and counter states.
         While `save_vocabulary` and `load_vocabulary` only save/load the
         self.vocab_index dictionary objects.
         """
-        (vocab_index, vocab_count) = dict(), Counter()
-        for token, count, token_id in TokenizerIO.load_obj(vectors_file):
-            vocab_index[token] = token_id
+        vocab_index = defaultdict(int)
+        vocab_count = Counter()
+        for token, count, index in TokenizerIO.load_obj(vectors_file):
+            vocab_index[token] = index
             vocab_count[token] = count
-        self.vocab_index, self.vocab_count = (vocab_index, vocab_count)
+
+        self.vocab_index = vocab_index
+        self.vocab_count = vocab_count
 
     def fit_on_document(self, document: List[str]):
         """Fit the vocabulary from an iterable document of string sequences."""
         for string in document:
+            self.num_docs += 1
             tokens = self.tokenize(string)
             for token in tokens:
                 self.add_token(token)
+        # convert the token to index vocab to index to token.
+        self.index_vocab = self.indices_to_tokens(self.vocab_index)
 
     def get_vectors(self) -> List[Tuple[str, int, int]]:
         """Return the index-vocab as vector representation: `[(token, count, id)]`."""
         vectors = []
-        vocfreq = self.vocab_count.most_common()
-        for token_id, (token, count) in enumerate(vocfreq, start=1):
+        counts = self.vocab_count.most_common()
+        for token_id, (token, count) in enumerate(counts, start=1):
             vectors.append((token, count, token_id))
         return vectors
 
     def document_to_sequences(self, document: List[str], mincount=1) -> List[int]:
-        """Transform an iterable of string sequences to an iterable of intergers.
-
-        mincount: Remove tokens with a count frequency of 1 or more.
-        """
+        """Transform an iterable of string sequences to an iterable of intergers."""
         return list(self.document_to_sequences_generator(document, mincount))
 
     def document_to_sequences_generator(self, document: List[str], mincount=1):
-        """Transform an iterable of string sequences to an iterable of intergers.
-
-        mincount: Remove tokens with a count frequency of 1 or more.
-        """
+        """Transform an iterable of string sequences to an iterable of intergers."""
         if not self._index_vocab_is_frequency:
             msg.warn(WARN_INDEX_NOT_FREQ)
             self.vocabulary_to_frequency(mincount)
@@ -180,34 +181,77 @@ class BaseTokenizer:
             if tokens is not None:
                 yield self._encode(tokens)
 
-    def vocabulary_to_frequency(self, mincount=1):
-        """Align (Sort) the indexed vocabulary relative to the item(s) frequency.
+    def vocabulary_to_frequency(self, mincount=0):
+        """Align the vocabulary relative to its token counts.
 
-        mincount: Remove tokens with a count frequency of 1 or more.
-            Default of mincount=1 removes all uncommon tokens.
+        NOTE: The name of this method will be removed in the future use
+         `self.fit_vocabulary()` method instead.
+        """
+        self.fit_vocabulary(mincount=mincount)
+
+    def fit_vocabulary(self, mincount=0):
+        """Fit/Align the vocabulary indices relative to the term/token count.
+
+        `mincount`: Remove tokens with counts of 1 or more.
+
+        None that index `0` is reserved automatically, which means the first
+            token index starts at `1`.
         """
         countmin = 0
-        voc_size = len(self.vocab_index)
-
-        freq_voc_count = Counter()
-        vocab_count = copy.copy(self.vocab_count)
-        for token, freq in vocab_count.most_common():
-            if freq > mincount:
-                freq_voc_count[token] = freq
+        vocab_size = len(self.vocab_index)
+        most_common = self.vocab_count.most_common()
+        vocab_count = Counter()
+        for token, count in most_common:
+            if count >= mincount:
+                vocab_count[token] = count
             else:
                 countmin += 1
+        vocab_index = defaultdict(int)
+        for index, (token, _) in enumerate(most_common, start=1):
+            vocab_index[token] = index
 
-        freq_voc_index = defaultdict(int)
-        for idx, (token, _) in enumerate(freq_voc_count.most_common(), start=1):
-            freq_voc_index[token] = idx
+        msg.info(f"* Removed {countmin} tokens from {vocab_size}")
 
-        self.vocab_index = freq_voc_index
-        self.vocab_count = freq_voc_count
+        self.vocab_index = vocab_index
+        self.index_vocab = self.indices_to_tokens(vocab_index)
+        self.vocab_count = vocab_count
         self._index_vocab_is_frequency = True
-        del vocab_count
-        del freq_voc_index
-        del freq_voc_count
-        msg.info(f"* Removed {countmin} tokens from {voc_size}")
+
+    def sequences_to_matrix(self, sequences: List[List[int]], mode="count"):
+        """Convert a list of sequences into a Numpy matrix.
+
+        `sequences`: An iterable of sequence indice. Use the `self.document_to_sequences()`
+            method to convert a document of string sequences (texts) first.
+        `modes`: Matrix modes available: `"count", "freq", "binary", "tfidf"`.
+        """
+        if self.vocab_index:
+            vocab_size = len(self.vocab_index) + 1
+        else:
+            raise ValueError(EMPTY_VOCAB_INDEX_MSG)
+
+        matrix = np.zeros((len(sequences), vocab_size))
+        for i, sequence in enumerate(sequences):
+            if not sequence:
+                continue
+            counts = defaultdict(int)
+            for token_id in sequence:
+                if token_id >= vocab_size:
+                    continue
+                counts[token_id] += 1
+            for token_id, count in list(counts.items()):
+                if mode == "count":
+                    matrix[i][token_id] = count
+                elif mode == "freq":
+                    matrix[i][token_id] = count / len(sequence)
+                elif mode == "binary":
+                    matrix[i][token_id] = 1
+                elif mode == "tfidf":
+                    tf = 1 + np.log(count)
+                    idf = np.log(1 + self.num_docs / (1 + self.vocab_index.get(token_id, 0)))
+                    matrix[i][token_id] = tf * idf
+                else:
+                    raise ValueError(f"Mode '{mode}' is not a valid mode.")
+        return matrix
 
     def _encode(self, tokens: List[str]) -> List[int]:
         tok2id = self.vocab_index
@@ -215,15 +259,19 @@ class BaseTokenizer:
         return token_ids
 
     def _decode(self, token_ids: List[int]) -> List[str]:
-        id2tok = {idx: tok for tok, idx in self.vocab_index.items()}
+        id2tok = self.index_vocab
         tokens = [id2tok[index] for index in token_ids if index in id2tok]
         return tokens
 
-    def convert_string_to_tokens(self, string: str) -> List[str]:
-        """Covert string to a sequence of string tokens.
+    def indices_to_tokens(self, vocab_index: Dict[str, int]) -> Dict[int, str]:
+        """Convert a dictionary of {token: index} pairs to {index: token} pairs."""
+        if not self.vocab_index:
+            raise ValueError(EMPTY_VOCAB_INDEX_MSG)
+        else:
+            return {idx: tok for tok, idx in self.vocab_index.items()}
 
-        This is the same as using `self.tokenize(string)`.
-        """
+    def convert_string_to_tokens(self, string: str) -> List[str]:
+        """Covert string to a sequence of string tokens."""
         tokens = self.tokenize(string)
         return tokens
 
