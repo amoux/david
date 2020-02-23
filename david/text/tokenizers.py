@@ -11,11 +11,12 @@ import os
 import pickle
 import random
 import re
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 from string import ascii_letters
 from typing import IO, Dict, List, Optional, Tuple, Union
 
+import numpy as np
 import spacy
 import torch
 from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
@@ -187,23 +188,25 @@ class BaseTokenizer:
         """
         countmin = 0
         voc_size = len(self.vocab_index)
-        freq_vocab_index = dict()
-        freq_vocab_count = Counter()
 
+        freq_voc_count = Counter()
         vocab_count = copy.copy(self.vocab_count)
-        for index, (token, count) in enumerate(vocab_count.items(), start=1):
-            if count > mincount:
-                freq_vocab_index[token] = index
-                freq_vocab_count[token] = count
+        for token, freq in vocab_count.most_common():
+            if freq > mincount:
+                freq_voc_count[token] = freq
             else:
                 countmin += 1
 
-        self.vocab_index = freq_vocab_index
-        self.vocab_count = freq_vocab_count
+        freq_voc_index = defaultdict(int)
+        for idx, (token, _) in enumerate(freq_voc_index.most_common(), start=1):
+            freq_voc_index[token] = idx
+
+        self.vocab_index = freq_voc_index
+        self.vocab_count = freq_voc_count
         self._index_vocab_is_frequency = True
         del vocab_count
-        del freq_vocab_index
-        del freq_vocab_count
+        del freq_voc_index
+        del freq_voc_count
         msg.info(f"* Removed {countmin} tokens from {voc_size}")
 
     def _encode(self, tokens: List[str]) -> List[int]:
