@@ -198,7 +198,7 @@ class BaseTokenizer:
                 countmin += 1
 
         freq_voc_index = defaultdict(int)
-        for idx, (token, _) in enumerate(freq_voc_index.most_common(), start=1):
+        for idx, (token, _) in enumerate(freq_voc_count.most_common(), start=1):
             freq_voc_index[token] = idx
 
         self.vocab_index = freq_voc_index
