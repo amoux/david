@@ -199,15 +199,15 @@ class BaseTokenizer:
         """
         countmin = 0
         vocab_size = len(self.vocab_index)
-        most_common = self.vocab_count.most_common()
         vocab_count = Counter()
-        for token, count in most_common:
+        for token, count in self.vocab_count.most_common():
             if count >= mincount:
                 vocab_count[token] = count
             else:
                 countmin += 1
+
         vocab_index = defaultdict(int)
-        for index, (token, _) in enumerate(most_common, start=1):
+        for index, (token, _) in enumerate(vocab_count.most_common(), start=1):
             vocab_index[token] = index
 
         msg.info(f"* Removed {countmin} tokens from {vocab_size}")
