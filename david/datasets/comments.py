@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import IO, List, Tuple, Union
 
 import pandas as pd
@@ -46,9 +47,10 @@ def download_sqlite_database(
 class YTCommentsDataset:
     """Temporary `configuration` while prototyping."""
 
-    VOCAB_PATH = "/home/ego/david_data/vocab/yt_web_md/"
-    VOCAB_FILE = os.path.join(VOCAB_PATH, "vocab.txt")
-    CSV_CORPUS = os.path.join(VOCAB_PATH, "corpus.csv")
+    DAVID_HOME = Path(os.environ.get("DAVID_DATA"))
+    VOCAB_PATH = DAVID_HOME.joinpath("vocab/yt_web_md")
+    VOCAB_FILE = VOCAB_PATH.joinpath("vocab.txt")
+    CSV_CORPUS = VOCAB_PATH.joinpath("corpus.csv")
     model_name = "yt-web-md"
     num_samples = 61478
 
