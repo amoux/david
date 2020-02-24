@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import IO, List, Tuple, Union
 
 import pandas as pd
+from ..io import DataIO, GoogleDriveDownloader
 
-from ..io.utils import GoogleDriveDownloader
 from ..text.utils import split_train_test
 from ..utils import get_data_home
 
@@ -79,3 +79,19 @@ class YTCommentsDataset:
         """
         dataset = YTCommentsDataset.load_dataset_as_doc()
         return split_train_test(list(dataset), k, subset=subset)
+
+    @staticmethod
+    def load_data() -> Tuple[Tuple[List[str], List[int]], Tuple[List[str], List[int]]]:
+        """Return a data ready object for binary classification tasks `(x1, y1), (x2, y2)`.
+
+        - About the data:
+            - learning task         : `sentiment`
+            - split/subset          : `0.8`
+            - text format           : `Strings transformed to sentences`
+            - train data            : `(samples=66359, labels=66359)`
+            - test data             : `(samples=16590, labels=16590)`
+            - class labels          : `[0, 1] : numpy array dtype`
+    
+        Returns tuples of list objects (x_train, y_train), (x_test, y_test).
+        """
+        return DataIO.load_data("yt-pretrained", YTCommentsDataset.VOCAB_PATH)
