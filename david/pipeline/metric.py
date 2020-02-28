@@ -1,17 +1,15 @@
 import copy
 import re
 from collections import MutableSequence
-from typing import Any, Dict, Iterable, List, NoReturn, Optional, Set, Tuple, Union
+from typing import (Any, Dict, Iterable, List, NoReturn, Optional, Set, Tuple,
+                    Union)
 
 import numpy as np
 from pandas.api.types import CategoricalDtype
 
-from ..text.preprocessing import (
-    extract_emojis,
-    get_sentiment_polarity,
-    get_sentiment_subjectivity,
-    normalize_whitespace,
-)
+from ..text.preprocessing import (extract_emojis, get_sentiment_polarity,
+                                  get_sentiment_subjectivity,
+                                  normalize_whitespace)
 from ..text.utils import change_case
 
 # Regex patterns used. (replacing these soon)
