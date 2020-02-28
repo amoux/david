@@ -1,17 +1,22 @@
 import json
 import logging
+import sys
 import time
 
 import lxml.html
 import requests
 from lxml.cssselect import CSSSelector
+from tqdm import tqdm
 
+from ..text import normalize_whitespace, unicode_to_ascii
 from .utils import extract_videoid
 
 logger = logging.getLogger(__name__)
 
 
 class YTCommentScraper(object):
+    """YouTube Comments Scraper Class."""
+
     YOUTUBE_AJAX_URL = "https://www.youtube.com/comment_ajax"
     USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 \
         (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36"
@@ -32,10 +37,14 @@ class YTCommentScraper(object):
         text_sel = CSSSelector(".comment-text-content")
         time_sel = CSSSelector(".time")
         author_sel = CSSSelector(".user-name")
+
         for item in item_sel(tree):
+            text = normalize_whitespace(
+                unicode_to_ascii(text_sel(item)[0].text_content())
+            )
             yield {
                 "cid": item.get("data-cid"),
-                "text": text_sel(item)[0].text_content(),
+                "text": text,
                 "time": time_sel(item)[0].text_content().strip(),
                 "author": author_sel(item)[0].text_content(),
             }
@@ -57,24 +66,16 @@ class YTCommentScraper(object):
             else:
                 time.sleep(self.sleep_per_retry)
 
-    def scrape_comments(self, video_id: str = None, video_url: str = None, sleep=1):
-        """Scrapes Comments from a video id or a video url.
-
-        `video_id`: The video id to use for extracting the comments:
-        `video_url`: The the url containing the video id. It uses a method which can
-            handle multiple forms of an url or string with the id. For more
-            info check: `david.youtube.utils.extract_videoid`.
-        """
+    def _yield_scraped_items(self, video_id=None, video_url=None, sleep=1):
         if video_url:
             video_id = extract_videoid(video_url)
         if not video_id:
-            raise Exception(f"You need to pass a valid id, not: {video_id}")
+            raise ValueError(f"You need to pass a valid id, not: {video_id}")
 
         session = requests.Session()
         session.headers["User-Agent"] = self.USER_AGENT
-        response = session.get(
-            "https://www.youtube.com/all_comments?v={}".format(video_id)
-        )
+        youtube_video_url = f"https://www.youtube.com/all_comments?v={video_id}"
+        response = session.get(youtube_video_url)
 
         html = response.text
         reply_cids = self._extract_from_comment_replies(html)
@@ -138,4 +139,40 @@ class YTCommentScraper(object):
                 if page["cid"] not in ret_cids:
                     ret_cids.append(page["cid"])
                     yield page
+
             time.sleep(sleep)
+
+    def scrape_comments_generator(
+        self, video_id: str = None, video_url: str = None, limit: int = None, sleep=1
+    ):
+        """Scrapes Comments from a video id or a video url.
+
+        `video_id`: The video id to use for extracting the comments:
+        `video_url`: The the url containing the video id. It uses a method which can
+            handle multiple forms of an url or string with the id. For more
+            info check: `david.youtube.utils.extract_videoid`.
+        `limit`: Limit the number of comments to download. The scraper will scrape all
+            available comments if limit=None.
+        """
+        count = 0
+        for comment in self._yield_scraped_items(video_id, video_url, sleep):
+            yield comment
+            count += 1
+            sys.stdout.write(f"* 🛰 {count} comments scraped\r")
+            sys.stdout.flush()
+            if limit and count >= limit:
+                break
+
+    def scrape_comments(
+        self, video_id: str = None, video_url: str = None, limit: int = None, sleep=1
+    ):
+        """Scrapes Comments from a video id or a video url.
+
+        `video_id`: The video id to use for extracting the comments:
+        `video_url`: The the url containing the video id. It uses a method which can
+            handle multiple forms of an url or string with the id. For more
+            info check: `david.youtube.utils.extract_videoid`.
+        `limit`: Limit the number of comments to download. The scraper will scrape all
+            available comments if limit=None.
+        """
+        return list(self.scrape_comments_generator(video_id, video_url, limit, sleep))

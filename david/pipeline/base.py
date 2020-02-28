@@ -2,7 +2,7 @@ from typing import IO, Dict, Iterable, List, NoReturn, Optional, Set, Union
 
 from pandas import DataFrame, Series
 
-from ..io.text import as_jsonl_file, as_txt_file
+from ..io import as_jsonl_file, as_txt_file
 from ..lang import SPACY_STOP_WORDS
 from ..text.preprocessing import normalize_wiggles, preprocess_sequence
 from .metric import TextMetrics
@@ -22,37 +22,35 @@ class Pipeline(DataFrameBase, TextMetrics):
 
     @property
     def to_dict_obj(self) -> Dict:
-        return self.to_dict(orient='index')
+        return self.to_dict(orient="index")
 
-    def to_text_file(
-            self, fn: str, dirpath: str = '.', text_col: str = 'text') -> IO:
+    def to_text_file(self, fn: str, dirpath: str = ".", text_col: str = "text") -> IO:
         texts = self[text_col].values.tolist()
         as_txt_file(texts, fn, dirpath)
 
-    def to_jsonl_file(
-            self, fn: str, dirpath: str = '.', text_col: str = 'text') -> IO:
+    def to_jsonl_file(self, fn: str, dirpath: str = ".", text_col: str = "text") -> IO:
         texts = self[text_col].values.tolist()
         as_jsonl_file(texts, fn, dirpath)
 
-    def replace_authortags(self, text_col: str = 'text') -> NoReturn:
+    def replace_authortags(self, text_col: str = "text") -> NoReturn:
         self[text_col] = self[text_col].str.replace(TIME_RE, " ")
         self[text_col] = self[text_col].str.replace(URL_RE, " ")
         self[text_col] = self[text_col].str.replace(TAG_RE, " ")
 
     def clean_sequences(
-            self,
-            contractions: bool = True,
-            lemmatize: bool = False,
-            punctuation: bool = True,
-            norm_chars: bool = True,
-            rm_stopwords: bool = True,
-            tokenize: bool = False,
-            tags: bool = False,
-            wiggles: bool = False,
-            text_col: str = "text",
-            stop_words: Optional[Union[List[str], Set[str]]] = None,
+        self,
+        contractions: bool = True,
+        lemmatize: bool = False,
+        punctuation: bool = True,
+        norm_chars: bool = True,
+        rm_stopwords: bool = True,
+        tokenize: bool = False,
+        tags: bool = False,
+        wiggles: bool = False,
+        text_col: str = "text",
+        stop_words: Optional[Union[List[str], Set[str]]] = None,
     ) -> NoReturn:
-        """Cleans all texts in a chained operation.
+        """Clean all texts in a chained operation.
 
         Parameters:
         -----------
@@ -62,7 +60,7 @@ class Pipeline(DataFrameBase, TextMetrics):
             over the replacing contractions with regex.
 
         `lemmatize` (bool, default=False):
-            Lemmatizes words by part-of-speech tags using NLTK's wordnet and
+            Lemmatize words by part-of-speech tags using NLTK's wordnet and
             pattern's treebank pos tagger.
 
         `punctuation` (bool, default=True):
@@ -85,8 +83,8 @@ class Pipeline(DataFrameBase, TextMetrics):
             At the moment by default it uses NLTK's word tokenizer.
             tokenization is left as False and optional as the last step for
             reasons that its not used right after preprocessing sequences. If
-            you have't done any preprocessing or for future reference. I
-            recommend using the `david.YTCommentTokenizer` as its desinged
+            you haven't done any preprocessing or for future reference. I
+            recommend using the `david.YTCommentTokenizer` as its deigned
             to tokenize social media content (e.g, youtube comments).
 
         """
@@ -110,9 +108,11 @@ class Pipeline(DataFrameBase, TextMetrics):
         )
 
     def get_most_frequent_words(
-            self, top_num: int = 10,
-            stop_words: Optional[Union[List[str], Set[str]]] = None,
-            text_col: str = 'text') -> Set[str]:
+        self,
+        top_num: int = 10,
+        stop_words: Optional[Union[List[str], Set[str]]] = None,
+        text_col: str = "text",
+    ) -> Set[str]:
         """Construct a frequency word collection from top negative and positive words found across all texts.
 
         `stop_words` (Optional[Union[List[str], Set[str]]], default=None):
@@ -122,17 +122,23 @@ class Pipeline(DataFrameBase, TextMetrics):
             then simply pass an empty dict object to the stop_word argument.
 
         """
-        common = Series(' '.join(
-            self[text_col]).lower().split()).value_counts()[:top_num]
-        uncommon = Series(' '.join(
-            self[text_col]).lower().split()).value_counts()[-top_num:]
+        common = Series(" ".join(self[text_col]).lower().split()).value_counts()[
+            :top_num
+        ]
+        uncommon = Series(" ".join(self[text_col]).lower().split()).value_counts()[
+            -top_num:
+        ]
         stop_words = set(stop_words if stop_words else self.STOP_WORDS)
         stop_words = stop_words.union(list(common.keys()))
         return stop_words.union(list(uncommon.keys()))
 
-    def slice_shape(self, ref_col: str = 'stringLength',
-                    min_val: int = None, max_val: int = None,
-                    as_copy: bool = True) -> DataFrameBase:
+    def slice_shape(
+        self,
+        ref_col: str = "stringLength",
+        min_val: int = None,
+        max_val: int = None,
+        as_copy: bool = True,
+    ) -> DataFrameBase:
         """Use a reference metric table to reduce the size of the dataframe.
 
         Usage:

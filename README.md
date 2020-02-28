@@ -309,7 +309,7 @@ Main YouTube scraper - No `API` needed! It scrapes comments from a `video_id` or
 ```python
 from david.youtube import YTCommentScraper
 scraper = YTCommentScraper()
-scrape_job = scraper.scrape_comments(video_id="bCtOFZoCvBE", video_url=None)  # returns a generator
+scrape_job = scraper.scrape_comments_generator(video_id="bCtOFZoCvBE", video_url=None)  # returns a generator
 comments = list(scrape_job)  # initialize the scraper!
 ```
 

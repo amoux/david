@@ -68,7 +68,6 @@ class GloVe:
         vocab_index: Dict[str, int],
         vocab_dim: str = "100d",
         vocab_size: int = None,
-        max_tokens: int = None,
     ):
         """Fit an indexed vocab with GloVe's pretrained word embeddings.
 
@@ -78,26 +77,18 @@ class GloVe:
             the vocab size will be calculated from the vocab index dict.
         max_tokens: Maximum number of tokens to consider embedding.
         """
-        if max_tokens is None:
-            max_tokens = len(vocab_index)
         if vocab_size is None:
-            vocab_size = 1 + max_tokens
-        dimensions = int(vocab_dim.replace("d", ""))
+            vocab_size = len(vocab_index) + 1
+        embedding_dim = int(vocab_dim.replace("d", ""))
 
-        msg.good(f"<✔(tokens={max_tokens}, ndim={dimensions}, vocab={vocab_size})>")
+        msg.good(f"<✔(dim={embedding_dim}, vocab={vocab_size})>")
         msg.good("*** embedding vocabulary 👻 ***")
 
-        glove_embeddings = GloVe.load_vocabulary(vocab_dim)
-        vocab_embeddings = np.zeros((vocab_size, dimensions))
-        for token, token_id in vocab_index.items():
-            if token_id < max_tokens:
-                try:
-                    embedded_token = glove_embeddings[token]
-                # skip any token not in glove's vocabulary
-                except KeyError:
-                    continue
-                # otherwise, add the token_id and its embedding form
-                else:
-                    vocab_embeddings[token_id] = embedded_token
-
-        return vocab_embeddings
+        embedding_index = GloVe.load_vocabulary(vocab_dim)
+        embedding_matrix = np.zeros((vocab_size, embedding_dim))
+        for token, index in vocab_index.items():
+            embedding_vector = embedding_index.get(token)
+            if embedding_vector is not None:
+                # tokens not found in embedding index will be all-zeros
+                embedding_matrix[index] = embedding_vector
+        return embedding_matrix
