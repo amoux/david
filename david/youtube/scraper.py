@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import sys
@@ -5,6 +6,7 @@ import time
 
 import lxml.html
 import requests
+from dateutil.relativedelta import relativedelta
 from lxml.cssselect import CSSSelector
 from tqdm import tqdm
 
@@ -14,6 +16,45 @@ from .utils import extract_videoid
 logger = logging.getLogger(__name__)
 
 
+def to_timestamp(timestamp: str, time_format="%m/%d/%Y, %H:%M:%S"):
+    """Convert YouTube comments timestamps to datetime.
+
+    Note: If the date type is 'days', 'months', or 'years' the time used is not
+        The actual time of the posted comment as the only information for these
+        types lacks information from types with the format:
+        `'1 hour ago' or '3 hours ago'`.
+
+    Usage:
+        >>> timestamp_to_datetime('3 days ago', "%m/%d/%Y, %H:%M:%S")
+        >>> '02/24/2020, 22:01:22'
+
+    """
+    if not isinstance(timestamp, str):
+        timestamp = str(timestamp).lower()
+
+    now = datetime.datetime.now()
+    stamp = timestamp.split()
+
+    if stamp[1].startswith("d"):
+        date = now - datetime.timedelta(days=int(stamp[0]))
+        return date.strftime(time_format)
+    elif stamp[1].startswith("h"):
+        date = now - datetime.timedelta(hours=int(stamp[0]))
+        return date.strftime(time_format)
+    elif stamp[1].startswith("mi"):
+        date = now - datetime.timedelta(minutes=int(stamp[0]))
+        return date.strftime(time_format)
+    elif stamp[1].startswith("w"):
+        date = now - relativedelta(weeks=int(stamp[0]))
+        return date.strftime(time_format)
+    elif stamp[1].startswith("mo"):
+        date = now - relativedelta(months=int(stamp[0]))
+        return date.strftime(time_format)
+    elif stamp[2].startswith("y"):
+        date = now - relativedelta(years=int(stamp[0]))
+        return date.strftime(time_format)
+
+
 class YTCommentScraper(object):
     """YouTube Comments Scraper Class."""
 
@@ -21,10 +62,19 @@ class YTCommentScraper(object):
     USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 \
         (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36"
 
-    def __init__(self, retries=10, sleep_per_retry=20, order_by_time=True):
+    def __init__(
+        self,
+        retries=10,
+        sleep_per_retry=20,
+        order_by_time=True,
+        format_time=True,
+        time_format="%m/%d/%Y, %H:%M:%S",
+    ):
         self.order_by_time = order_by_time
         self.retries = retries
         self.sleep_per_retry = sleep_per_retry
+        self.format_time = format_time
+        self.time_format = time_format
 
     def _from_html_keys(self, html, key, num_chars=2):
         pos_begin = html.find(key) + len(key) + num_chars
@@ -40,12 +90,15 @@ class YTCommentScraper(object):
 
         for item in item_sel(tree):
             text = normalize_whitespace(
-                unicode_to_ascii(text_sel(item)[0].text_content())
-            )
+                unicode_to_ascii(text_sel(item)[0].text_content()))
+            post_time = time_sel(item)[0].text_content().strip()
+            if self.format_time:
+                post_time = to_timestamp(post_time, self.time_format)
+
             yield {
                 "cid": item.get("data-cid"),
                 "text": text,
-                "time": time_sel(item)[0].text_content().strip(),
+                "time": post_time,
                 "author": author_sel(item)[0].text_content(),
             }
 

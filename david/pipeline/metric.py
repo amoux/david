@@ -1,14 +1,17 @@
 import copy
 import re
 from collections import MutableSequence
-from typing import (Any, Dict, Iterable, List, NoReturn, Optional, Set, Tuple,
-                    Union)
+from typing import Any, Dict, Iterable, List, NoReturn, Optional, Set, Tuple, Union
 
 import numpy as np
 from pandas.api.types import CategoricalDtype
 
-from ..text.preprocessing import (extract_emojis, get_sentiment_polarity,
-                         get_sentiment_subjectivity, normalize_whitespace)
+from ..text.preprocessing import (
+    extract_emojis,
+    get_sentiment_polarity,
+    get_sentiment_subjectivity,
+    normalize_whitespace,
+)
 from ..text.utils import change_case
 
 # Regex patterns used. (replacing these soon)
@@ -26,21 +29,18 @@ DEFAULT_COLUMNS = {
 }
 
 
-def avg_word_length(
-        sequence: str, stop_words: Union[List[str], Set[str]]) -> float:
+def avg_word_length(sequence: str, stop_words: Union[List[str], Set[str]]) -> float:
     word_lengths = [len(w) for w in sequence.split() if w not in stop_words]
     if len(word_lengths) == 0:
         return 0.0
     return np.mean(word_lengths)
 
 
-def count_stop_words(
-        sequence: str, stop_words: Union[List[str], Set[str]]) -> int:
+def count_stop_words(sequence: str, stop_words: Union[List[str], Set[str]]) -> int:
     return len([w for w in sequence.split() if w in stop_words])
 
 
-def count_true_words(
-        sequence: str, stop_words: Union[List[str], Set[str]]) -> int:
+def count_true_words(sequence: str, stop_words: Union[List[str], Set[str]]) -> int:
     return len([w for w in sequence.split() if w not in stop_words])
 
 
@@ -70,6 +70,7 @@ def columns_to_snakecase(cols: Dict[str, List[str]]) -> Dict[str, List[str]]:
 
 
 class TextMetrics(MutableSequence, object):
+
     _DEFAULT_COLS: Dict[str, List[str]] = DEFAULT_COLUMNS
     COLUMNS = {"string": [], "word": [], "char": [], "senti": [], "author": []}
     SENTI_LABELS = ["positive", "negative", "neutral"]
@@ -94,9 +95,7 @@ class TextMetrics(MutableSequence, object):
 
     def string_metric(self, text_col: str = "text") -> None:
         strcol = self._DEFAULT_COLS["string"]
-        self[text_col] = self[text_col].apply(
-            lambda w: normalize_whitespace(w)
-        )
+        self[text_col] = self[text_col].apply(lambda w: normalize_whitespace(w))
         self[strcol[0]] = self[text_col].apply(lambda w: count_words(w))
         self._update_columns("string")
 
@@ -122,15 +121,13 @@ class TextMetrics(MutableSequence, object):
 
     def senti_metric(self, text_col: str = "text") -> None:
         senti_cols = self._DEFAULT_COLS["senti"]
-        self[senti_cols[0]] = self[text_col].apply(
-            lambda w: get_sentiment_polarity(w)
-        )
+        self[senti_cols[0]] = self[text_col].apply(lambda w: get_sentiment_polarity(w))
         self[senti_cols[1]] = self[text_col].apply(
             lambda w: get_sentiment_subjectivity(w)
         )
         # Assing sentiment labels as a categorical data type.
         cat_dtype = CategoricalDtype(self.SENTI_LABELS, ordered=False)
-        self[senti[2]] = (
+        self[senti_cols[2]] = (
             self[senti_cols[0]]
             .apply(lambda w: self.sentiment_label(w))
             .astype(cat_dtype)
@@ -138,13 +135,18 @@ class TextMetrics(MutableSequence, object):
         self._update_columns("senti")
 
     def author_metric(self, text_col: str = "text") -> None:
+        """Extract author tags.
+
+        - time-tag  : extracts video time tags, e.g. 1:20.
+        - url-link  : extracts urls links if found.
+        - hash-tag  : extracts hash tags, e.g. #numberOne.
+        - emojis    : extracts emojis  👾.
+        """
         AUTHOR_COLS = self._DEFAULT_COLS["author"]
         self[AUTHOR_COLS[0]] = self[text_col].str.extract(TIME_RE)
         self[AUTHOR_COLS[1]] = self[text_col].str.extract(URL_RE)
         self[AUTHOR_COLS[2]] = self[text_col].str.extract(TAG_RE)
-        self[AUTHOR_COLS[3]] = self[text_col].apply(
-            lambda x: extract_emojis(x)
-        )
+        self[AUTHOR_COLS[3]] = self[text_col].apply(lambda x: extract_emojis(x))
         self._update_columns("author")
 
     def load_text_metrics(
@@ -160,9 +162,6 @@ class TextMetrics(MutableSequence, object):
         sentilabels: Optional[Union[List[str], Tuple[str]]] = None,
     ) -> NoReturn:
         """Single function call to extract standard information from sequences.
-
-        Parameters:
-        ----------
 
         `stopwords` (Optional[Union[List[str], Set[str]]], default=None):
             default, STOP_WORDS=spacy.lang.en.STOP_WORDS
