@@ -18,13 +18,24 @@ from typing import IO, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import spacy
-from nltk.tokenize.casual import (EMOTICON_RE, HANG_RE, WORD_RE,
-                                  _replace_html_entities, reduce_lengthening,
-                                  remove_handles)
+from keras.preprocessing.sequence import pad_sequences as _pad_sequences
+from nltk.tokenize.casual import (
+    EMOTICON_RE,
+    HANG_RE,
+    WORD_RE,
+    _replace_html_entities,
+    reduce_lengthening,
+    remove_handles,
+)
 from wasabi import msg
 
-from .preprocessing import (clean_tokenization, normalize_whitespace,
-                            remove_urls, string_printable, unicode_to_ascii)
+from .preprocessing import (
+    clean_tokenization,
+    normalize_whitespace,
+    remove_urls,
+    string_printable,
+    unicode_to_ascii,
+)
 
 EMPTY_VOCAB_INDEX_MSG = "Found index vocab empty, fit the documents first."
 WARN_INDEX_NOT_FREQ = (
@@ -247,11 +258,39 @@ class BaseTokenizer:
                     matrix[i][token_id] = 1
                 elif mode == "tfidf":
                     tf = 1 + np.log(count)
-                    idf = np.log(1 + self.num_docs / (1 + self.vocab_index.get(token_id, 0)))
+                    idf = np.log(
+                        1 + self.num_docs / (1 + self.vocab_index.get(token_id, 0))
+                    )
                     matrix[i][token_id] = tf * idf
                 else:
                     raise ValueError(f"Mode '{mode}' is not a valid mode.")
         return matrix
+
+    def pad_sequences(
+        self,
+        sequences: List[List[Union[float, int]]],
+        maxlen: int = None,
+        dtype="float64",
+        padding="post",
+        truncating="pre",
+        value=0.0,
+    ):
+        """Pad sequences to the same length (Shortcut to keras `pad_sequences` method).
+
+        # Argument docs mostly from the original Keras method:
+
+        `sequences`: List of lists, where each element is a sequence. Including outputs
+            from the `self.sequences_to_matrix()` method.
+        `maxlen`: Maximum length of all sequences. If None, the sequences will be padded
+            to maxlen of the `vocabulary shape + 1`.
+        `padding` ('pre' or 'post'): Pad either before or after each sequence.
+        `truncating`('pre' or 'post'): Remove values from sequences larger than `maxlen`,
+            either at the beginning or at the end of the sequences.
+        `value`: Float or String, padding value.
+        """
+        if maxlen is None:
+            maxlen = self.vocab_size + 1
+        return _pad_sequences(sequences, maxlen, dtype, padding, truncating, value)
 
     def _encode(self, tokens: List[str]) -> List[int]:
         tok2id = self.vocab_index
