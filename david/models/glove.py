@@ -39,7 +39,7 @@ class GloVe:
     Returns an embedded matrix containing the pretrained word embeddings.
     """
 
-    vocab_files = None
+    vector_files = None
     glove_modules = {
         "6b": "glove.6B",
         "27b": "glove.twitter.27B",
@@ -58,7 +58,7 @@ class GloVe:
                 f"Valid names: {self.glove_modules.keys()}"
             )
         module_name = self.glove_modules[module]
-        self.vocab_files = load_glove_files(module_name)
+        self.vector_files = load_glove_files(module_name)
 
     @staticmethod
     def build(vocab_file: str) -> Dict[str, np.float]:
@@ -84,8 +84,8 @@ class GloVe:
 
     def load(self, ndim: str) -> Dict[str, np.float]:
         """Return the built GloVe embeddings given a available dimension."""
-        vocab_file = self.glove_modules[ndim]
-        return self.build(vocab_file)
+        file = self.vector_files[ndim]
+        return self.build(file)
 
     def embedd(self, ndim: str, vocab: Dict[str, int], vocab_size: int = None):
         """Fit an indexed vocab with GloVe's pretrained word embeddings.
@@ -117,4 +117,4 @@ class GloVe:
         return self.embedd(ndim, vocab, vocab_size=size)
 
     def __repr__(self):
-        return f"< GloVe(dims={list(self.vocab_files.keys())}) >"
+        return f"< GloVe(dims={list(self.vector_files.keys())}) >"
