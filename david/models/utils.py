@@ -73,13 +73,14 @@ def load_bert(
         'multi-lang-v1'. If you need to download all models simply pass 'all'.
     `save_path`: The path directory where the models will be downloaded and unzipped.
 
-    Usage:
-        >>> bert_model_paths = load_bert("uncased-sm", save_path="models")
-        >>> bert_model_paths.keys()
-        dict_keys(['meta', 'index', 'config', 'vocab', 'data'])
-        # Each key contains the absolute file path.
-        >>> bert_model_paths["vocab"]
-        '$HOME/../models/uncased_L-12_H-768_A-12/vocab.txt'
+    ```python
+    >>> bert_model_paths = load_bert("uncased-sm", save_path="models")
+    >>> bert_model_paths.keys()
+    dict_keys(['meta', 'index', 'config', 'vocab', 'data'])
+    # Each key contains the absolute file path.
+    >>> bert_model_paths["vocab"]
+    '$HOME/../models/uncased_L-12_H-768_A-12/vocab.txt'
+    ```
     """
     if model not in BERT_MODELS.keys():
         raise ValueError(

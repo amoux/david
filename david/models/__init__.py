@@ -1,3 +1,2 @@
-
-from .glove import GloVe, GloVeTwitter
+from .glove import GloVe
 from .utils import BERT_MODELS, load_bert
