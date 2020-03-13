@@ -39,26 +39,31 @@ class GloVe:
     Returns an embedded matrix containing the pretrained word embeddings.
     """
 
-    vector_files = None
-    glove_modules = {
+    files = None
+    modules = {
         "6b": "glove.6B",
         "27b": "glove.twitter.27B",
-        "34b": "glove.34B",
+        "42b": "glove.42B",
         "840b": "glove.840B",
     }
 
     def __init__(self, module: str = None):
         """Initialize a GloVe module.
 
-        `module`: name of the modules available: `6b`, `27b`, `34b`, `840b`.
+        - Load the vectors from one of the following modules:
+
+            - module: `6b`    -> glove.6B
+            - module: `27b`   -> glove.twitter.27B
+            - module: `42b`   -> glove.42B
+            - module: `840b`  -> glove.840B
         """
-        if module not in self.glove_modules:
+        if module.lower() not in self.modules:
             raise ValueError(
                 f"Invalid module name, got '{module}'. "
-                f"Valid names: {self.glove_modules.keys()}"
+                f"Valid names: {self.modules.keys()}"
             )
-        module_name = self.glove_modules[module]
-        self.vector_files = load_glove_files(module_name)
+        module = self.modules[module.lower()]
+        self.files = load_glove_files(module)
 
     @staticmethod
     def build(vocab_file: str) -> Dict[str, np.float]:
@@ -84,8 +89,7 @@ class GloVe:
 
     def load(self, ndim: str) -> Dict[str, np.float]:
         """Return the built GloVe embeddings given a available dimension."""
-        file = self.vector_files[ndim]
-        return self.build(file)
+        return self.build(self.files[ndim])
 
     def embedd(self, ndim: str, vocab: Dict[str, int], vocab_size: int = None):
         """Fit an indexed vocab with GloVe's pretrained word embeddings.
@@ -117,4 +121,4 @@ class GloVe:
         return self.embedd(ndim, vocab, vocab_size=size)
 
     def __repr__(self):
-        return f"< GloVe(dims={list(self.vector_files.keys())}) >"
+        return f"< GloVe(dims={list(self.files.keys())}) >"
