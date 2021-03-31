@@ -2,7 +2,7 @@ regex==2020.1.8
 transformers==2.3.0
 texttable==1.6.2
 matplotlib==3.1.2
-lxml==4.6.2
+lxml==4.6.3
 scipy==1.4.1
 textsearch==0.0.17
 numpy==1.17.3
