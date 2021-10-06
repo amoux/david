@@ -1,5 +1,7 @@
 # david nlp  💬 (social-media-toolkit)
 
+> **NOTE**: The project is unmaintained; I wrote the code when I started programming and to gain intuition with NLP and put a library together. 
+
 The goal of this toolkit is to speed the time-consuming steps to obtain, store, and pre-process textual data from social-media-sites like youtube, and implementing natural language processing techniques to extract highly specific information, such as the indications of product or service trends and similar.
 
 - Projects using this toolkit:
